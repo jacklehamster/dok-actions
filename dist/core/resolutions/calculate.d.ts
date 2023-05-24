@@ -1,0 +1,10 @@
+import * as math from "mathjs";
+import { Context } from "../context/Context";
+import { TypedArray } from "../types/TypedArray";
+import { ValueOf } from "../types/ValueOf";
+import { Resolution } from "./Resolution";
+import { Expression, Formula } from "./Formula";
+export declare function calculateResolution(value: Resolution): ValueOf<SupportedTypes | undefined>;
+export declare type SupportedTypes = string | number | TypedArray;
+export declare function calculateEvaluator<T>(evaluator: math.EvalFunction, context: Context | undefined, formula: Formula | Expression, defaultValue: T): T;
+export declare function getFormulaEvaluator(value: Formula | Expression): math.EvalFunction;
