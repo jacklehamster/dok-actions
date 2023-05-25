@@ -46,13 +46,11 @@ function convertScriptAction(action: ScriptAction, getSteps: (name: string) => E
                 }
             }
         }
-        const obj = context.parameters.pop();
-        if (obj) {
-            for (let k in obj) {
-                delete obj[k];
-            }
-            context.objectPool?.push(obj);
+        context.parameters.pop();
+        for (let k in paramValues) {
+            delete paramValues[k];
         }
+        context.objectPool?.push(paramValues);
     };
 }
 
