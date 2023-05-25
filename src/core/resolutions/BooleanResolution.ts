@@ -1,7 +1,7 @@
 import { Expression, Formula } from "./Formula";
 import { ValueOf } from "../types/ValueOf";
 import { Context } from "../context/Context";
-import { calculateEvaluator, getFormulaEvaluator } from "./calculate";
+import { calculateEvaluator, getFormulaEvaluator } from "./calculateEvaluator";
 import { NumberResolution } from "./NumberResolution";
 
 export type BooleanResolution = boolean | Formula | Expression | undefined;

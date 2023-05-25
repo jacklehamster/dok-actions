@@ -3,7 +3,7 @@ import { ScriptAction } from "../actions/ScriptAction";
 import { Context } from "../context/Context";
 import { ExecutionStep } from "../execution/ExecutionStep";
 import { calculateBoolean } from "../resolutions/BooleanResolution";
-import { calculateNumber } from "../resolutions/NumberResolution";
+import { calculateNumber } from "../resolutions/calculateNumber";
 import { Resolution } from "../resolutions/Resolution";
 import { SupportedTypes, calculateResolution } from "../resolutions/calculate";
 import { Script } from "../scripts/Script";
@@ -25,7 +25,6 @@ function convertScriptAction(action: ScriptAction, getSteps: (name: string) => E
     return (context, parameters) => {
         const paramValues: Record<string, SupportedTypes | undefined> = context.objectPool?.pop() ?? {};
         context.parameters.push(paramValues);
-        paramValues.time = context.time;
         for (let k in parameters) {
             paramValues[k] = parameters[k];
         }

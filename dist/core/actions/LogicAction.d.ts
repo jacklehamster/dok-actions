@@ -4,6 +4,6 @@ import { DokAction } from "./Action";
 export interface LogicAction {
     action: DokAction;
     loop?: NumberResolution;
-    condition?: BooleanResolution;
+    condition?: BooleanResolution | NumberResolution;
     else?: DokAction;
 }

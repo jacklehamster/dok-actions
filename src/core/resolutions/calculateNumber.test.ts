@@ -1,9 +1,8 @@
 import { Context } from "../context/Context";
-import { calculateNumber } from "./NumberResolution";
+import { calculateNumber } from "./calculateNumber";
 
 describe('calculateNumber', () => {
     const context: Context = {
-        time: 123,
         parameters: [{x: 10}],
     };
 

@@ -7,7 +7,6 @@ import { LogAction } from "../actions/LogAction";
 describe('convertor', () => {
     const getSteps = jest.fn();
     const context: Context = {
-        time: 1000,
         parameters: [],
         cleanupActions: [],
     };
@@ -27,9 +26,9 @@ describe('convertor', () => {
         expect(getSteps).toBeCalledWith("myScript");
         assert(step);
         step(context, {x: 5});
-        expect(mockStep).toBeCalledWith(context, { time: 1000, x: 3, index: 0 });
+        expect(mockStep).toBeCalledWith(context, { x: 3, index: 0 });
         step(context, {});
-        expect(mockStep).toBeCalledWith(context, { time: 1000, x: 3, index: 0 });
+        expect(mockStep).toBeCalledWith(context, { x: 3, index: 0 });
     });
 
     it('converts script action2', () => {
@@ -46,9 +45,9 @@ describe('convertor', () => {
         expect(getSteps).toBeCalledWith("myScript");
         assert(step);
         step(context, {x: 5});
-        expect(mockStep).toBeCalledWith(context, { time: 1000, x: 5, index: 0 });
+        expect(mockStep).toBeCalledWith(context, { x: 5, index: 0 });
         step(context, {});
-        expect(mockStep).toBeCalledWith(context, { time: 1000, x: undefined, index: 0 });
+        expect(mockStep).toBeCalledWith(context, { x: undefined, index: 0 });
     });
 
     it('convert log action', () => {
@@ -92,15 +91,6 @@ describe('convertor', () => {
                 ],
             },
             {
-                name: "LogTime",
-                actions: [
-                    {
-                        action: "log",
-                        messages: ["hello", "{time}"],
-                    }
-                ]
-            },
-            {
                 name: "ScriptTest",
                 actions: [
                     {
@@ -111,9 +101,6 @@ describe('convertor', () => {
                         script: "LogTest",
                         parameters: {"name": "world"}
                     },
-                    {
-                        script: "LogTime",
-                    }
                 ]
             }
         ], undefined,
@@ -124,7 +111,6 @@ describe('convertor', () => {
         scriptMap["ScriptTest"].forEach(step => step(context, {}));
         expect(log).toBeCalledWith("hello", "test");
         expect(log).toBeCalledWith("hello", "world");
-        expect(log).toBeCalledWith("hello", 1000);
     });
 
     it('execute script with loop', () => {
@@ -135,7 +121,7 @@ describe('convertor', () => {
                 actions: [
                     {
                         action: "log",
-                        messages: ["{index + time}", "hello", "{name}"],    
+                        messages: ["{index}", "hello", "{name}"],    
                     },
                 ],
             },
@@ -150,11 +136,11 @@ describe('convertor', () => {
                 ],
             },
         ], context, undefined, {log});
-        expect(log).toBeCalledWith(1000, "hello", "test");
-        expect(log).toBeCalledWith(1001, "hello", "test");
-        expect(log).toBeCalledWith(1002, "hello", "test");
-        expect(log).toBeCalledWith(1003, "hello", "test");
-        expect(log).toBeCalledWith(1004, "hello", "test");
+        expect(log).toBeCalledWith(0, "hello", "test");
+        expect(log).toBeCalledWith(1, "hello", "test");
+        expect(log).toBeCalledWith(2, "hello", "test");
+        expect(log).toBeCalledWith(3, "hello", "test");
+        expect(log).toBeCalledWith(4, "hello", "test");
     });
 
 
@@ -166,7 +152,7 @@ describe('convertor', () => {
                 actions: [
                     {
                         action: "log",
-                        messages: ["{index + time}", "hello", "{name}"],    
+                        messages: ["{index}", "hello", "{name}"],    
                     },
                 ],
             },
@@ -192,11 +178,11 @@ describe('convertor', () => {
                 ],
             },
         ], context, undefined, {log});
-        expect(log).toBeCalledWith(1000, "hello", "test");
-        expect(log).not.toBeCalledWith(1000, "hello", "test2");
-        expect(log).not.toBeCalledWith(1000, "hello", "loopingtest");
-        expect(log).not.toBeCalledWith(1001, "hello", "loopingtest");
-        expect(log).toBeCalledWith(1002, "hello", "loopingtest");
+        expect(log).toBeCalledWith(0, "hello", "test");
+        expect(log).not.toBeCalledWith(0, "hello", "test2");
+        expect(log).not.toBeCalledWith(0, "hello", "loopingtest");
+        expect(log).not.toBeCalledWith(1, "hello", "loopingtest");
+        expect(log).toBeCalledWith(2, "hello", "loopingtest");
     });
 
     it('execute script nesting', () => {

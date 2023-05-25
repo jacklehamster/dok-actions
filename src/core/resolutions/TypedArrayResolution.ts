@@ -2,8 +2,9 @@ import { Context } from "../context/Context";
 import { TypedArray } from "../types/TypedArray";
 import { ValueOf } from "../types/ValueOf";
 import { Expression, Formula } from "./Formula";
-import { NumberResolution, calculateNumber } from "./NumberResolution";
-import { calculateEvaluator, getFormulaEvaluator } from "./calculate";
+import { NumberResolution } from "./NumberResolution";
+import { calculateNumber } from "./calculateNumber";
+import { calculateEvaluator, getFormulaEvaluator } from "./calculateEvaluator";
 
 export type TypedArrayResolution = TypedArray | NumberResolution[] | Formula | Expression;
 

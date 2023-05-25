@@ -3,7 +3,6 @@ import { calculateTypedArray } from "./TypedArrayResolution";
 
 describe('calculateTypedArray', () => {
     const context: Context = {
-        time: 123,
         parameters: [{x: new Float32Array([1, 2, 3])}],
     };
 

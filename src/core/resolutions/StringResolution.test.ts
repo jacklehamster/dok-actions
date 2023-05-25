@@ -3,7 +3,6 @@ import { calculateString } from "./StringResolution";
 
 describe('calculateString', () => {
     const context: Context = {
-        time: 123,
         parameters: [{x: "test"}],
     };
 

@@ -32,6 +32,47 @@ function _createForOfIteratorHelperLoose(o, allowArrayLike) {
   throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 }
 
+function calculateEvaluator(evaluator, context, formula, defaultValue) {
+  var scope = context === null || context === void 0 ? void 0 : context.parameters[context.parameters.length - 1];
+  try {
+    var _evaluator$evaluate;
+    return (_evaluator$evaluate = evaluator.evaluate(scope != null ? scope : {})) != null ? _evaluator$evaluate : defaultValue;
+  } catch (e) {
+    console.error("Error: " + e + " on formula: " + formula + ", scope: ", scope);
+  }
+  return defaultValue;
+}
+function getFormulaEvaluator(value) {
+  var formula = typeof value === "string" ? value : value.formula;
+  if (formula.charAt(0) !== "{" || formula.charAt(formula.length - 1) !== "}") {
+    throw new Error("Formula: " + value + " must start and end with brackets.");
+  }
+  var mathEvaluator = math.parse(formula.substring(1, formula.length - 1)).compile();
+  return mathEvaluator;
+}
+
+function calculateBoolean(value, defaultValue) {
+  if (defaultValue === void 0) {
+    defaultValue = false;
+  }
+  if (typeof value === "boolean" || typeof value === "number") {
+    return !!value;
+  }
+  if (value === undefined) {
+    return {
+      valueOf: function valueOf() {
+        return defaultValue;
+      }
+    };
+  }
+  var evaluator = getFormulaEvaluator(value);
+  return {
+    valueOf: function valueOf(context) {
+      return !!calculateEvaluator(evaluator, context, value, defaultValue);
+    }
+  };
+}
+
 function calculateNumber(value, defaultValue) {
   if (defaultValue === void 0) {
     defaultValue = 0;
@@ -125,46 +166,6 @@ function calculateResolution(value) {
     }
   };
 }
-function calculateEvaluator(evaluator, context, formula, defaultValue) {
-  var scope = context === null || context === void 0 ? void 0 : context.parameters[context.parameters.length - 1];
-  try {
-    var _evaluator$evaluate;
-    return (_evaluator$evaluate = evaluator.evaluate(scope != null ? scope : {})) != null ? _evaluator$evaluate : defaultValue;
-  } catch (e) {
-    console.error("Error: " + e + " on formula: " + formula + ", scope: ", scope);
-  }
-  return defaultValue;
-}
-function getFormulaEvaluator(value) {
-  var formula = typeof value === "string" ? value : value.formula;
-  if (formula.charAt(0) !== "{" || formula.charAt(formula.length - 1) !== "}") {
-    throw new Error("Formula: " + value + " must start and end with brackets.");
-  }
-  var mathEvaluator = math.parse(formula.substring(1, formula.length - 1)).compile();
-  return mathEvaluator;
-}
-
-function calculateBoolean(value, defaultValue) {
-  if (defaultValue === void 0) {
-    defaultValue = false;
-  }
-  if (typeof value === "boolean") {
-    return value;
-  }
-  if (value === undefined) {
-    return {
-      valueOf: function valueOf() {
-        return defaultValue;
-      }
-    };
-  }
-  var evaluator = getFormulaEvaluator(value);
-  return {
-    valueOf: function valueOf(context) {
-      return calculateEvaluator(evaluator, context, value, defaultValue);
-    }
-  };
-}
 
 var DEFAULT_EXTERNALS = {
   log: console.log
@@ -185,7 +186,6 @@ function convertScriptAction(action, getSteps) {
     var _context$objectPool$p, _context$objectPool;
     var paramValues = (_context$objectPool$p = (_context$objectPool = context.objectPool) === null || _context$objectPool === void 0 ? void 0 : _context$objectPool.pop()) != null ? _context$objectPool$p : {};
     context.parameters.push(paramValues);
-    paramValues.time = context.time;
     for (var k in parameters) {
       paramValues[k] = parameters[k];
     }
@@ -359,8 +359,6 @@ function getByName(scripts, name) {
 
 exports.DEFAULT_CONVERTORS = DEFAULT_CONVERTORS;
 exports.DEFAULT_EXTERNALS = DEFAULT_EXTERNALS;
-exports.calculateEvaluator = calculateEvaluator;
-exports.calculateNumber = calculateNumber;
 exports.calculateResolution = calculateResolution;
 exports.calculateString = calculateString;
 exports.calculateTypedArray = calculateTypedArray;
@@ -369,5 +367,4 @@ exports.convertScripts = convertScripts;
 exports.executeScript = executeScript;
 exports.getByName = getByName;
 exports.getByTags = getByTags;
-exports.getFormulaEvaluator = getFormulaEvaluator;
 //# sourceMappingURL=index.js.map

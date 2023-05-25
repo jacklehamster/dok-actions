@@ -1,7 +1,7 @@
 import { Context } from "../context/Context";
 import { ValueOf } from "../types/ValueOf";
 import { Expression, Formula } from "./Formula";
-import { calculateEvaluator, getFormulaEvaluator } from "./calculate";
+import { calculateEvaluator, getFormulaEvaluator } from "./calculateEvaluator";
 
 export type StringResolution = string | Formula | Expression | undefined;
 

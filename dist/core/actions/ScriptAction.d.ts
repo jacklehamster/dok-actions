@@ -7,6 +7,6 @@ export interface ScriptAction extends Action {
     script: string;
     parameters?: Record<string, Resolution>;
     loop?: NumberResolution;
-    condition?: BooleanResolution;
+    condition?: BooleanResolution | NumberResolution;
     else?: string;
 }

@@ -3,7 +3,6 @@ import { calculateBoolean } from "./BooleanResolution";
 
 describe('calculateBoolean', () => {
     const context: Context = {
-        time: 123,
         parameters: [{x: 10}],
     };
 
