@@ -4,7 +4,7 @@ import { Expression, Formula } from "./Formula";
 
 
 export function calculateEvaluator<T>(evaluator: math.EvalFunction, context: Context | undefined, formula: Formula | Expression, defaultValue: T): T {
-    const scope = context?.parameters[context.parameters.length - 1];
+    const scope = context?.parameters?.[context.parameters.length - 1];
     try {
         return evaluator.evaluate(scope ?? {}) ?? defaultValue;
     } catch (e) {

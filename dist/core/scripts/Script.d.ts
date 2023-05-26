@@ -8,4 +8,5 @@ export interface Script {
     tags?: Tag[];
 }
 export declare function getByTags(scripts: Script[], tags: Tag[]): Script[];
+export declare function getScriptNamesByTags(scripts: Script[], tags: Tag[]): string[];
 export declare function getByName(scripts: Script[], name: string | string[]): Script[];

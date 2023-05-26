@@ -1,5 +1,14 @@
 import { parse } from 'mathjs';
 
+var ConvertBehavior;
+(function (ConvertBehavior) {
+  ConvertBehavior[ConvertBehavior["NONE"] = 0] = "NONE";
+  ConvertBehavior[ConvertBehavior["SKIP_REMAINING"] = 1] = "SKIP_REMAINING";
+})(ConvertBehavior || (ConvertBehavior = {}));
+var DEFAULT_EXTERNALS = {
+  log: console.log
+};
+
 function _unsupportedIterableToArray(o, minLen) {
   if (!o) return;
   if (typeof o === "string") return _arrayLikeToArray(o, minLen);
@@ -32,6 +41,13 @@ function _createForOfIteratorHelperLoose(o, allowArrayLike) {
   throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 }
 
+function execute(steps, context, parameters) {
+  for (var _iterator = _createForOfIteratorHelperLoose(steps), _step; !(_step = _iterator()).done;) {
+    var step = _step.value;
+    step(context, parameters);
+  }
+}
+
 function calculateEvaluator(evaluator, context, formula, defaultValue) {
   var scope = context === null || context === void 0 ? void 0 : context.parameters[context.parameters.length - 1];
   try {
@@ -49,28 +65,6 @@ function getFormulaEvaluator(value) {
   }
   var mathEvaluator = parse(formula.substring(1, formula.length - 1)).compile();
   return mathEvaluator;
-}
-
-function calculateBoolean(value, defaultValue) {
-  if (defaultValue === void 0) {
-    defaultValue = false;
-  }
-  if (typeof value === "boolean" || typeof value === "number") {
-    return !!value;
-  }
-  if (value === undefined) {
-    return {
-      valueOf: function valueOf() {
-        return defaultValue;
-      }
-    };
-  }
-  var evaluator = getFormulaEvaluator(value);
-  return {
-    valueOf: function valueOf(context) {
-      return !!calculateEvaluator(evaluator, context, value, defaultValue);
-    }
-  };
 }
 
 function calculateNumber(value, defaultValue) {
@@ -167,151 +161,6 @@ function calculateResolution(value) {
   };
 }
 
-var DEFAULT_EXTERNALS = {
-  log: console.log
-};
-function convertScriptAction(action, getSteps) {
-  var _action$parameters;
-  var steps = getSteps(action.script);
-  var elseSteps = action["else"] ? getSteps(action["else"]) : undefined;
-  var resolutions = (_action$parameters = action.parameters) != null ? _action$parameters : {};
-  var entries = Object.entries(resolutions).map(function (_ref) {
-    var key = _ref[0],
-      resolution = _ref[1];
-    return [key, calculateResolution(resolution)];
-  });
-  var loopResolution = action.loop ? calculateNumber(action.loop) : 1;
-  var conditionResolution = action.condition ? calculateBoolean(action.condition) : true;
-  return function (context, parameters) {
-    var _context$objectPool$p, _context$objectPool;
-    var paramValues = (_context$objectPool$p = (_context$objectPool = context.objectPool) === null || _context$objectPool === void 0 ? void 0 : _context$objectPool.pop()) != null ? _context$objectPool$p : {};
-    context.parameters.push(paramValues);
-    for (var k in parameters) {
-      paramValues[k] = parameters[k];
-    }
-    for (var _iterator = _createForOfIteratorHelperLoose(entries), _step; !(_step = _iterator()).done;) {
-      var entry = _step.value;
-      var key = entry[0];
-      paramValues[key] = entry[1].valueOf(context);
-    }
-    var numLoops = loopResolution.valueOf(context);
-    for (var index = 0; index < numLoops; index++) {
-      paramValues.index = index;
-      if (conditionResolution.valueOf(context)) {
-        for (var _iterator2 = _createForOfIteratorHelperLoose(steps), _step2; !(_step2 = _iterator2()).done;) {
-          var step = _step2.value;
-          step(context, paramValues);
-        }
-      } else if (elseSteps) {
-        for (var _iterator3 = _createForOfIteratorHelperLoose(elseSteps), _step3; !(_step3 = _iterator3()).done;) {
-          var _step4 = _step3.value;
-          _step4(context, paramValues);
-        }
-      }
-    }
-    var obj = context.parameters.pop();
-    if (obj) {
-      var _context$objectPool2;
-      for (var _k in obj) {
-        delete obj[_k];
-      }
-      (_context$objectPool2 = context.objectPool) === null || _context$objectPool2 === void 0 ? void 0 : _context$objectPool2.push(obj);
-    }
-  };
-}
-var convertAction = function convertAction(action, getSteps, external) {
-  if (external === void 0) {
-    external = DEFAULT_EXTERNALS;
-  }
-  if (typeof action.action === "string" || !action.action) {
-    switch (action.action) {
-      case "log":
-        {
-          var messages = action.messages;
-          var resolutions = messages.map(function (m) {
-            return calculateResolution(m);
-          });
-          return function (context) {
-            external.log.apply(null, resolutions.map(function (r) {
-              return r.valueOf(context);
-            }));
-          };
-        }
-      case undefined:
-      case "execute-script":
-        {
-          return convertScriptAction(action, getSteps);
-        }
-    }
-  } else {
-    var dokAction = action.action;
-    var elseAction = action["else"];
-    var step = convertAction(dokAction, getSteps, external);
-    var elseStep = action["else"] ? convertAction(elseAction, getSteps, external) : undefined;
-    var loopResolution = action.loop ? calculateNumber(action.loop) : 1;
-    var conditionResolution = action.condition ? calculateBoolean(action.condition) : true;
-    return function (context, parameters) {
-      var numLoops = loopResolution.valueOf(context);
-      for (var i = 0; i < numLoops; i++) {
-        parameters.index = i;
-        if (conditionResolution.valueOf(context)) {
-          step === null || step === void 0 ? void 0 : step(context, parameters);
-        } else {
-          elseStep === null || elseStep === void 0 ? void 0 : elseStep(context, parameters);
-        }
-      }
-    };
-  }
-  return;
-};
-var DEFAULT_CONVERTORS = {
-  "log": convertAction,
-  "execute-script": convertAction,
-  "actionAction": convertAction
-};
-function convertScripts(scripts, convertors, external) {
-  if (convertors === void 0) {
-    convertors = DEFAULT_CONVERTORS;
-  }
-  if (external === void 0) {
-    external = DEFAULT_EXTERNALS;
-  }
-  var scriptMap = {};
-  var getSteps = function getSteps(name) {
-    return scriptMap[name];
-  };
-  scripts.forEach(function (script) {
-    if (!scriptMap[script.name]) {
-      scriptMap[script.name] = [];
-    }
-    var scriptSteps = scriptMap[script.name];
-    script.actions.forEach(function (action) {
-      var _action$action;
-      var convertAction = typeof action.action === "string" ? convertors[(_action$action = action.action) != null ? _action$action : "execute-script"] : convertors.actionAction;
-      var step = convertAction(action, getSteps, external);
-      if (step) {
-        scriptSteps.push(step);
-      }
-    });
-  });
-  return scriptMap;
-}
-function executeScript(scriptName, scripts, context, convertors, external) {
-  if (convertors === void 0) {
-    convertors = DEFAULT_CONVERTORS;
-  }
-  if (external === void 0) {
-    external = DEFAULT_EXTERNALS;
-  }
-  var scriptMap = convertScripts(scripts, convertors, external);
-  var scriptExecutionStep = convertScriptAction({
-    script: scriptName
-  }, function (name) {
-    return scriptMap[name];
-  });
-  scriptExecutionStep(context, {});
-}
-
 function calculateString(value, defaultValue) {
   if (defaultValue === void 0) {
     defaultValue = "";
@@ -351,11 +200,17 @@ function getByTags(scripts, tags) {
     });
   });
 }
+function getScriptNamesByTags(scripts, tags) {
+  return getByTags(scripts, tags).map(function (_ref) {
+    var name = _ref.name;
+    return name;
+  });
+}
 function getByName(scripts, name) {
   return scripts.filter(function (script) {
     return name.includes(script.name);
   });
 }
 
-export { DEFAULT_CONVERTORS, DEFAULT_EXTERNALS, calculateResolution, calculateString, calculateTypedArray, convertAction, convertScripts, executeScript, getByName, getByTags };
+export { ConvertBehavior, DEFAULT_EXTERNALS, calculateResolution, calculateString, calculateTypedArray, execute, getByName, getByTags, getScriptNamesByTags };
 //# sourceMappingURL=index.modern.js.map

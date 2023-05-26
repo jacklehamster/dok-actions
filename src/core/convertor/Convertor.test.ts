@@ -1,9 +1,9 @@
 import assert from "assert";
 import { ScriptAction } from "../actions/ScriptAction";
 import { Context } from "../context/Context";
-import { convertAction, convertScripts, execute, executeScript } from "./Convertor";
 import { LogAction } from "../actions/LogAction";
-import { ExecutionStep } from "../execution/ExecutionStep";
+import { ExecutionStep, execute } from "../execution/ExecutionStep";
+import { convertAction, convertScripts, executeScript } from "./convert-action";
 
 describe('convertor', () => {
     const getSteps = jest.fn();
@@ -28,9 +28,9 @@ describe('convertor', () => {
 
         expect(getSteps).toBeCalledWith("myScript");
         assert(steps.length);
-        execute(steps, context, {x: 5});
+        execute(steps, {x: 5}, context);
         expect(mockStep).toBeCalledWith(context, { x: 3 });
-        execute(steps, context, {});
+        execute(steps, {}, context);
         expect(mockStep).toBeCalledWith(context, { x: 3 });
     });
 
@@ -49,9 +49,9 @@ describe('convertor', () => {
 
         expect(getSteps).toBeCalledWith("myScript");
         assert(steps.length);
-        execute(steps, context, {x: 5});
+        execute(steps, {x: 5}, context);
         expect(mockStep).toBeCalledWith(context, { x: 5 });
-        execute(steps, context, {});
+        execute(steps, {}, context);
         expect(mockStep).toBeCalledWith(context, { x: undefined });
     });
 
@@ -64,7 +64,7 @@ describe('convertor', () => {
         convertAction(action, steps, getSteps, { log });
 
         assert(steps.length);
-        execute(steps, context, {});
+        execute(steps, {}, context);
         expect(log).toBeCalledWith("hello", "world");
     });
 
@@ -76,7 +76,7 @@ describe('convertor', () => {
         const steps: ExecutionStep[] = [];
         convertAction(action, steps, getSteps, { log });
         assert(steps.length);
-        execute(steps, context, {});
+        execute(steps, {}, context);
         expect(log).toBeCalledWith("hello", 4);
     });
 
