@@ -3,13 +3,12 @@
 //  ExecuteScriptAction
 //  
 
+import { ActionsAction } from "./ActionsAction";
 import { LogAction } from "./LogAction";
-import { LogicAction } from "./LogicAction";
 import { ScriptAction } from "./ScriptAction";
 
 export type Action = {
-    action?: string;
     [key: string]: any;
 }
 
-export type DokAction = LogicAction | (ScriptAction | LogAction | Action);
+export type DokAction = Action & ScriptAction & LogAction & ActionsAction;

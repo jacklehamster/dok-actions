@@ -16,16 +16,16 @@ export function getByTags(scripts: Script[], tags: Tag[]): Script[] {
             if (typeof(tag) === "string") {
                 return script.tags?.some((t) => t === tag || (Array.isArray(t) && t[0] === tag))
             } else {
-                return script.tags?.some((t) => 
-                    Array.isArray(t) && t[0] === tag[0] && t[1] === tag[1]
-                );
+                return script.tags?.some((t) => Array.isArray(t) && t[0] === tag[0] && t[1] === tag[1]);
             }
         });
     });
 }
 
+export function getScriptNamesByTags(scripts: Script[], tags: Tag[]): string[] {
+    return getByTags(scripts, tags).map(({ name }) => name);
+}
+
 export function getByName(scripts: Script[], name: string | string[]): Script[] {
-    return scripts.filter(script => {
-        return name.includes(script.name);
-    });
+    return scripts.filter(script => name.includes(script.name));
 }

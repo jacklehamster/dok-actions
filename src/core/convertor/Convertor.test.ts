@@ -1,8 +1,9 @@
 import assert from "assert";
 import { ScriptAction } from "../actions/ScriptAction";
 import { Context } from "../context/Context";
-import { convertAction, convertScripts, executeScript } from "./Convertor";
+import { convertAction, convertScripts, execute, executeScript } from "./Convertor";
 import { LogAction } from "../actions/LogAction";
+import { ExecutionStep } from "../execution/ExecutionStep";
 
 describe('convertor', () => {
     const getSteps = jest.fn();
@@ -22,16 +23,18 @@ describe('convertor', () => {
             script: "myScript",
             parameters: {"x": "{1 + 2}"},
         };
-        const step = convertAction(action, getSteps);
+        const steps: ExecutionStep[] = [];
+        convertAction(action, steps, getSteps)
+
         expect(getSteps).toBeCalledWith("myScript");
-        assert(step);
-        step(context, {x: 5});
-        expect(mockStep).toBeCalledWith(context, { x: 3, index: 0 });
-        step(context, {});
-        expect(mockStep).toBeCalledWith(context, { x: 3, index: 0 });
+        assert(steps.length);
+        execute(steps, context, {x: 5});
+        expect(mockStep).toBeCalledWith(context, { x: 3 });
+        execute(steps, context, {});
+        expect(mockStep).toBeCalledWith(context, { x: 3 });
     });
 
-    it('converts script action2', () => {
+    it('converts script action without parameter override', () => {
         const mockStep = jest.fn();
         const innerStep = (context: Context, params: Record<string, any>) => mockStep(context, JSON.parse(JSON.stringify(params)));
 
@@ -41,40 +44,39 @@ describe('convertor', () => {
         const action: ScriptAction = {
             script: "myScript",
         };
-        const step = convertAction(action, getSteps);
+        const steps: ExecutionStep[] = [];
+        convertAction(action, steps, getSteps)
+
         expect(getSteps).toBeCalledWith("myScript");
-        assert(step);
-        step(context, {x: 5});
-        expect(mockStep).toBeCalledWith(context, { x: 5, index: 0 });
-        step(context, {});
-        expect(mockStep).toBeCalledWith(context, { x: undefined, index: 0 });
+        assert(steps.length);
+        execute(steps, context, {x: 5});
+        expect(mockStep).toBeCalledWith(context, { x: 5 });
+        execute(steps, context, {});
+        expect(mockStep).toBeCalledWith(context, { x: undefined });
     });
 
     it('convert log action', () => {
         const log = jest.fn();
         const action: LogAction = {
-            action: "log",
-            messages: ["hello", "world"],
+            log: ["hello", "world"],
         };
-        const step = convertAction(action, getSteps, {
-            log,
-        });
-        assert(step);
-        step(context, {});
+        const steps: ExecutionStep[] = [];
+        convertAction(action, steps, getSteps, { log });
+
+        assert(steps.length);
+        execute(steps, context, {});
         expect(log).toBeCalledWith("hello", "world");
     });
 
     it('convert log action with resolution', () => {
         const log = jest.fn();
         const action: LogAction = {
-            action: "log",
-            messages: ["hello", "{1 + 3}"],
+            log: ["hello", "{1 + 3}"],
         };
-        const step = convertAction(action, getSteps, {
-            log,
-        });
-        assert(step);
-        step(context, {});
+        const steps: ExecutionStep[] = [];
+        convertAction(action, steps, getSteps, { log });
+        assert(steps.length);
+        execute(steps, context, {});
         expect(log).toBeCalledWith("hello", 4);
     });
 
@@ -85,8 +87,7 @@ describe('convertor', () => {
                 name: "LogTest",
                 actions: [
                     {
-                        action: "log",
-                        messages: ["hello", "{name}"],    
+                        log: ["hello", "{name}"],    
                     }
                 ],
             },
@@ -103,7 +104,7 @@ describe('convertor', () => {
                     },
                 ]
             }
-        ], undefined,
+        ],
         {
             log,
         });
@@ -115,13 +116,12 @@ describe('convertor', () => {
 
     it('execute script with loop', () => {
         const log = jest.fn();
-        executeScript("main", [
+        executeScript("main", undefined, [
             {
                 name: "LogTest",
                 actions: [
                     {
-                        action: "log",
-                        messages: ["{index}", "hello", "{name}"],    
+                        log: ["{index}", "hello", "{name}"],    
                     },
                 ],
             },
@@ -135,7 +135,7 @@ describe('convertor', () => {
                     },
                 ],
             },
-        ], context, undefined, {log});
+        ], {log});
         expect(log).toBeCalledWith(0, "hello", "test");
         expect(log).toBeCalledWith(1, "hello", "test");
         expect(log).toBeCalledWith(2, "hello", "test");
@@ -146,13 +146,12 @@ describe('convertor', () => {
 
     it('execute script with condition', () => {
         const log = jest.fn();
-        executeScript("main", [
+        executeScript("main", undefined, [
             {
                 name: "LogTest",
                 actions: [
                     {
-                        action: "log",
-                        messages: ["{index}", "hello", "{name}"],    
+                        log: ["{index}", "hello", "{name}"],    
                     },
                 ],
             },
@@ -160,11 +159,13 @@ describe('convertor', () => {
                 name: "main",
                 actions: [
                     {
+                        loop: 1,
                         script: "LogTest",
                         parameters: {name : "test"},
                         condition: "{equalText(name, 'test')}",
                     },
                     {
+                        loop: 1,
                         script: "LogTest",
                         parameters: {name : "test2"},
                         condition: "{equalText(name, 'test')}",
@@ -177,7 +178,7 @@ describe('convertor', () => {
                     }
                 ],
             },
-        ], context, undefined, {log});
+        ], {log});
         expect(log).toBeCalledWith(0, "hello", "test");
         expect(log).not.toBeCalledWith(0, "hello", "test2");
         expect(log).not.toBeCalledWith(0, "hello", "loopingtest");
@@ -187,13 +188,12 @@ describe('convertor', () => {
 
     it('execute script nesting', () => {
         const log = jest.fn();
-        executeScript("main", [
+        executeScript("main", undefined, [
             {
                 name: "LogTest",
                 actions: [
                     {
-                        action: "log",
-                        messages: ["hello", "{name}", "{name2}"],    
+                        log: ["hello", "{name}", "{name2}"],    
                     },
                 ],
             },
@@ -215,7 +215,7 @@ describe('convertor', () => {
                     },
                 ],
             },
-        ], context, undefined, {log});
+        ], {log});
         expect(log).toBeCalledWith("hello", "test", "sub2");
     });    
 });
