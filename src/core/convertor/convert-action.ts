@@ -42,7 +42,8 @@ export const convertAction: Convertor = (
 
 export function convertScripts(
         scripts: Script[],
-        external: Record<string, any> = DEFAULT_EXTERNALS): Record<string, ExecutionStep[]> {
+        external: Record<string, any> = DEFAULT_EXTERNALS,
+        actionConversionMap = DEFAULT_CONVERSION_MAP): Record<string, ExecutionStep[]> {
     const scriptMap: Record<string, ExecutionStep[]> = {};
     const getSteps = (name?: string) => name ? scriptMap[name] : [];
     scripts.forEach(script => {
@@ -51,7 +52,7 @@ export function convertScripts(
         }
         const scriptSteps = scriptMap[script.name];
         script.actions.forEach(action => {
-            convertAction(action, scriptSteps, getSteps, external);
+            convertAction(action, scriptSteps, getSteps, external, actionConversionMap);
         });
     });
     return scriptMap;
@@ -61,12 +62,13 @@ export function executeScript(
         scriptName: string,
         parameters: Record<string, SupportedTypes | undefined> = {},
         scripts: Script[],
-        external: Record<string, any> = DEFAULT_EXTERNALS): () => void {
+        external: Record<string, any> = DEFAULT_EXTERNALS,
+        actionConversionMap = DEFAULT_CONVERSION_MAP): () => void {
     const context: Context = {
         parameters: [parameters],
         cleanupActions: []
     };
-    const scriptMap = convertScripts(scripts, external);
+    const scriptMap = convertScripts(scripts, external, actionConversionMap);
     execute(scriptMap[scriptName], {}, context);
     return () => {
         context.cleanupActions!.forEach(action => action());

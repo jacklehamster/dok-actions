@@ -1,11 +1,13 @@
 import { Context } from "../context/Context";
 import { TypedArray } from "../types/TypedArray";
 import { ValueOf } from "../types/ValueOf";
+import { ArrayResolution } from "./ArrayResolution";
 import { Resolution } from "./Resolution";
 import { calculateTypedArray } from "./TypedArrayResolution";
-import { calculateEvaluator, getFormulaEvaluator } from "./calculateEvaluator";
+import { calculateArray } from "./calculateArray";
+import { calculateEvaluator, getFormulaEvaluator, hasFormula } from "./calculateEvaluator";
 
-export function calculateResolution(value: Resolution): ValueOf<SupportedTypes | undefined> {
+export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> {
     if (value === undefined) {
         return {
             valueOf() {
@@ -22,10 +24,17 @@ export function calculateResolution(value: Resolution): ValueOf<SupportedTypes |
         return value;
     }
     if (Array.isArray(value)) {
-        return calculateTypedArray(value);
+        if (hasFormula(value)) {
+            return calculateArray(value);
+        }
+        const typeArrayResolution = value as Exclude<typeof value, ArrayResolution>;
+        return calculateTypedArray(typeArrayResolution);
     }
     if (typeof(value) === "string" && (value.charAt(0) !== "{" || value.charAt(value.length-1) !== "}")) {
         return value;
+    }
+    if (Array.isArray(value)) {
+        return calculateArray(value);
     }
     const evaluator = getFormulaEvaluator(value);
     return {
@@ -36,4 +45,4 @@ export function calculateResolution(value: Resolution): ValueOf<SupportedTypes |
 }
 
 
-export type SupportedTypes = string | number | TypedArray;
+export type SupportedTypes = undefined | string | number | TypedArray | boolean | SupportedTypes[];

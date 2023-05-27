@@ -54,6 +54,27 @@ function execute(steps, parameters, context) {
   }
 }
 
+function hasFormula(resolution) {
+  if (isFormula(resolution)) {
+    return true;
+  }
+  if (Array.isArray(resolution)) {
+    return resolution.some(function (item) {
+      return !hasFormula(item);
+    });
+  }
+  return false;
+}
+function isFormula(value) {
+  if (!value) {
+    return false;
+  }
+  if (typeof value !== "string" && typeof value !== "object") {
+    return false;
+  }
+  var formula = typeof value === "string" ? value : value.formula;
+  return (formula === null || formula === void 0 ? void 0 : formula.charAt(0)) === "{" && (formula === null || formula === void 0 ? void 0 : formula.charAt(formula.length - 1)) === "}";
+}
 function calculateEvaluator(evaluator, context, formula, defaultValue) {
   var _context$parameters;
   var scope = context === null || context === void 0 ? void 0 : (_context$parameters = context.parameters) === null || _context$parameters === void 0 ? void 0 : _context$parameters[context.parameters.length - 1];
@@ -66,10 +87,10 @@ function calculateEvaluator(evaluator, context, formula, defaultValue) {
   return defaultValue;
 }
 function getFormulaEvaluator(value) {
-  var formula = typeof value === "string" ? value : value.formula;
-  if (formula.charAt(0) !== "{" || formula.charAt(formula.length - 1) !== "}") {
+  if (!isFormula(value)) {
     throw new Error("Formula: " + value + " must start and end with brackets.");
   }
+  var formula = typeof value === "string" ? value : value.formula;
   var mathEvaluator = parse(formula.substring(1, formula.length - 1)).compile();
   return mathEvaluator;
 }
@@ -140,6 +161,26 @@ function calculateTypedArray(value, ArrayConstructor, defaultNumberValue) {
   };
 }
 
+function calculateArray(value) {
+  if (!hasFormula(value)) {
+    if (typeof value === "object") {
+      throw new Error("value can't be an object.");
+    }
+    return value;
+  }
+  var evaluator = value.map(function (resolution) {
+    return calculateResolution(resolution);
+  });
+  return {
+    valueOf: function valueOf(context) {
+      var value = evaluator.map(function (evalItem) {
+        return evalItem.valueOf(context);
+      });
+      return value;
+    }
+  };
+}
+
 function calculateResolution(value) {
   if (value === undefined) {
     return {
@@ -155,10 +196,17 @@ function calculateResolution(value) {
     return value;
   }
   if (Array.isArray(value)) {
-    return calculateTypedArray(value);
+    if (hasFormula(value)) {
+      return calculateArray(value);
+    }
+    var typeArrayResolution = value;
+    return calculateTypedArray(typeArrayResolution);
   }
   if (typeof value === "string" && (value.charAt(0) !== "{" || value.charAt(value.length - 1) !== "}")) {
     return value;
+  }
+  if (Array.isArray(value)) {
+    return calculateArray(value);
   }
   var evaluator = getFormulaEvaluator(value);
   return {
@@ -172,7 +220,7 @@ function calculateString(value, defaultValue) {
   if (defaultValue === void 0) {
     defaultValue = "";
   }
-  if (typeof value === "string" && (value.charAt(0) !== "{" || value.charAt(value.length - 1) !== "}")) {
+  if (typeof value === "string" && !isFormula(value)) {
     return value;
   }
   if (value === undefined) {

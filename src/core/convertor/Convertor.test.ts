@@ -3,7 +3,9 @@ import { ScriptAction } from "../actions/ScriptAction";
 import { Context } from "../context/Context";
 import { LogAction } from "../actions/LogAction";
 import { ExecutionStep, execute } from "../execution/ExecutionStep";
-import { convertAction, convertScripts, executeScript } from "./convert-action";
+import { DEFAULT_CONVERSION_MAP, convertAction, convertScripts, executeScript } from "./convert-action";
+import { Resolution } from "../resolutions/Resolution";
+import { calculateResolution } from "../resolutions/calculate";
 
 describe('convertor', () => {
     const getSteps = jest.fn();
@@ -217,5 +219,47 @@ describe('convertor', () => {
             },
         ], {log});
         expect(log).toBeCalledWith("hello", "test", "sub2");
-    });    
+    });
+    
+    it('convert action using a custom conversion map', () => {
+        const custom = jest.fn();
+        executeScript("main", undefined, [
+            {
+                name: "CustomTest",
+                actions: [
+                    {
+                        custom: ["hello", "{name}", "{name2}"],    
+                    },
+                ],
+            },
+            {
+                name: "sub",
+                actions: [
+                    {
+                        script: "CustomTest",
+                        parameters: {name2 : "sub2"},
+                    },
+                ]
+            },
+            {
+                name: "main",
+                actions: [
+                    {
+                        script: "sub",
+                        parameters: {name : "test", name2: "test2"},
+                    },
+                ],
+            },
+        ], undefined, [
+            ...DEFAULT_CONVERSION_MAP,
+            [({custom})=> custom !== undefined, (action, results) => {
+                const messages: Resolution[] = Array.isArray(action.custom) ? action.custom : [action.custom];
+                const resolutions = messages.map(m => calculateResolution(m));
+                results.push((context) => {
+                    custom(...resolutions.map(r => r.valueOf(context)));
+                });
+            }]
+        ]);
+        expect(custom).toBeCalledWith("hello", "test", "sub2");        
+    });
 });
