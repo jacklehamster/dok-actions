@@ -40,7 +40,13 @@ function _createForOfIteratorHelperLoose(o, allowArrayLike) {
   throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 }
 
-function execute(steps, context, parameters) {
+function execute(steps, parameters, context) {
+  if (parameters === void 0) {
+    parameters = {};
+  }
+  if (context === void 0) {
+    context = {};
+  }
   for (var _iterator = _createForOfIteratorHelperLoose(steps), _step; !(_step = _iterator()).done;) {
     var step = _step.value;
     step(context, parameters);
@@ -48,7 +54,8 @@ function execute(steps, context, parameters) {
 }
 
 function calculateEvaluator(evaluator, context, formula, defaultValue) {
-  var scope = context === null || context === void 0 ? void 0 : context.parameters[context.parameters.length - 1];
+  var _context$parameters;
+  var scope = context === null || context === void 0 ? void 0 : (_context$parameters = context.parameters) === null || _context$parameters === void 0 ? void 0 : _context$parameters[context.parameters.length - 1];
   try {
     var _evaluator$evaluate;
     return (_evaluator$evaluate = evaluator.evaluate(scope != null ? scope : {})) != null ? _evaluator$evaluate : defaultValue;
