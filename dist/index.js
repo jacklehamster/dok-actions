@@ -259,32 +259,29 @@ function calculateString(value, defaultValue) {
   };
 }
 
-function getByTags(scripts, tags) {
-  return scripts.filter(function (script) {
-    return tags.every(function (tag) {
+function filterScripts(scripts, filter) {
+  return scripts.filter(function (_ref) {
+    var _filter$tags;
+    var name = _ref.name,
+      tags = _ref.tags;
+    var namesToFilter = !filter.name ? undefined : Array.isArray(filter.name) ? filter.name : [filter.name];
+    if (namesToFilter !== null && namesToFilter !== void 0 && namesToFilter.length && namesToFilter.indexOf(name) < 0) {
+      return false;
+    }
+    if (filter.tags && !((_filter$tags = filter.tags) !== null && _filter$tags !== void 0 && _filter$tags.every(function (tag) {
       if (typeof tag === "string") {
-        var _script$tags;
-        return (_script$tags = script.tags) === null || _script$tags === void 0 ? void 0 : _script$tags.some(function (t) {
+        return tags === null || tags === void 0 ? void 0 : tags.some(function (t) {
           return t === tag || Array.isArray(t) && t[0] === tag;
         });
       } else {
-        var _script$tags2;
-        return (_script$tags2 = script.tags) === null || _script$tags2 === void 0 ? void 0 : _script$tags2.some(function (t) {
+        return tags === null || tags === void 0 ? void 0 : tags.some(function (t) {
           return Array.isArray(t) && t[0] === tag[0] && t[1] === tag[1];
         });
       }
-    });
-  });
-}
-function getScriptNamesByTags(scripts, tags) {
-  return getByTags(scripts, tags).map(function (_ref) {
-    var name = _ref.name;
-    return name;
-  });
-}
-function getByName(scripts, name) {
-  return scripts.filter(function (script) {
-    return name.includes(script.name);
+    }))) {
+      return false;
+    }
+    return true;
   });
 }
 
@@ -510,10 +507,23 @@ var ScriptProcessor = /*#__PURE__*/function () {
       cleanupActions.length = 0;
     } : function () {};
   };
+  _proto.getSteps = function getSteps(filter) {
+    var _this = this;
+    var scripts = filterScripts(this.scripts, filter);
+    var steps = [];
+    scripts.forEach(function (_ref) {
+      var name = _ref.name;
+      return _this.scriptMap[name].forEach(function (step) {
+        return steps.push(step);
+      });
+    });
+    return steps;
+  };
   _proto.runByName = function runByName(name) {
     var context = this.createContext();
-    var steps = this.scriptMap[name];
-    execute(steps, {}, context);
+    execute(this.getSteps({
+      name: name
+    }), undefined, context);
     return function () {
       var _context$cleanupActio;
       return (_context$cleanupActio = context.cleanupActions) === null || _context$cleanupActio === void 0 ? void 0 : _context$cleanupActio.forEach(function (action) {
@@ -522,15 +532,10 @@ var ScriptProcessor = /*#__PURE__*/function () {
     };
   };
   _proto.runByTags = function runByTags(tags) {
-    var _this = this;
     var context = this.createContext();
-    var names = getScriptNamesByTags(this.scripts, tags);
-    var stepsGroups = names.map(function (name) {
-      return _this.scriptMap[name];
-    });
-    stepsGroups.forEach(function (steps) {
-      return execute(steps, {}, context);
-    });
+    execute(this.getSteps({
+      tags: tags
+    }), undefined, context);
     return function () {
       var _context$cleanupActio2;
       return (_context$cleanupActio2 = context.cleanupActions) === null || _context$cleanupActio2 === void 0 ? void 0 : _context$cleanupActio2.forEach(function (action) {
@@ -538,7 +543,7 @@ var ScriptProcessor = /*#__PURE__*/function () {
       });
     };
   };
-  _proto.loopByName = function loopByName(name, behavior) {
+  _proto.loopWithFilter = function loopWithFilter(filter, behavior) {
     if (behavior === void 0) {
       behavior = {};
     }
@@ -546,7 +551,7 @@ var ScriptProcessor = /*#__PURE__*/function () {
     var parameters = {
       time: 0
     };
-    var steps = this.scriptMap[name];
+    var steps = this.getSteps(filter);
     var loopCleanup = this.createLoopCleanup(behavior, context);
     var loop = function loop(time) {
       parameters.time = time;
@@ -556,44 +561,25 @@ var ScriptProcessor = /*#__PURE__*/function () {
     };
     var animationFrameId = requestAnimationFrame(loop);
     return function () {
-      var _context$cleanupActio3;
-      (_context$cleanupActio3 = context.cleanupActions) === null || _context$cleanupActio3 === void 0 ? void 0 : _context$cleanupActio3.forEach(function (action) {
-        return action();
-      });
+      loopCleanup();
       cancelAnimationFrame(animationFrameId);
     };
   };
-  _proto.loopByTags = function loopByTags(tags, behavior) {
-    var _this2 = this;
+  _proto.loopByName = function loopByName(name, behavior) {
     if (behavior === void 0) {
       behavior = {};
     }
-    var context = this.createContext();
-    var parameters = {
-      time: performance.now() - performance.timeOrigin
-    };
-    var names = getScriptNamesByTags(this.scripts, tags);
-    var stepsGroups = names.map(function (name) {
-      return _this2.scriptMap[name];
-    });
-    var loopCleanup = this.createLoopCleanup(behavior, context);
-    var loop = function loop(time) {
-      parameters.time = time;
-      for (var _iterator2 = _createForOfIteratorHelperLoose(stepsGroups), _step2; !(_step2 = _iterator2()).done;) {
-        var steps = _step2.value;
-        execute(steps, parameters, context);
-      }
-      loopCleanup();
-      animationFrameId = requestAnimationFrame(loop);
-    };
-    var animationFrameId = requestAnimationFrame(loop);
-    return function () {
-      var _context$cleanupActio4;
-      (_context$cleanupActio4 = context.cleanupActions) === null || _context$cleanupActio4 === void 0 ? void 0 : _context$cleanupActio4.forEach(function (action) {
-        return action();
-      });
-      cancelAnimationFrame(animationFrameId);
-    };
+    return this.loopWithFilter({
+      name: name
+    }, behavior);
+  };
+  _proto.loopByTags = function loopByTags(tags, behavior) {
+    if (behavior === void 0) {
+      behavior = {};
+    }
+    return this.loopWithFilter({
+      tags: tags
+    }, behavior);
   };
   return ScriptProcessor;
 }();
@@ -604,7 +590,5 @@ exports.calculateResolution = calculateResolution;
 exports.calculateString = calculateString;
 exports.calculateTypedArray = calculateTypedArray;
 exports.execute = execute;
-exports.getByName = getByName;
-exports.getByTags = getByTags;
-exports.getScriptNamesByTags = getScriptNamesByTags;
+exports.filterScripts = filterScripts;
 //# sourceMappingURL=index.js.map

@@ -11,8 +11,10 @@ export declare class ScriptProcessor {
     constructor(scripts: Script[], external?: Record<string, any>, actionConversionMap?: ActionConversionMap);
     private createContext;
     private createLoopCleanup;
+    private getSteps;
     runByName(name: string): () => void;
     runByTags(tags: Tag[]): () => void;
+    private loopWithFilter;
     loopByName(name: string, behavior?: LoopBehavior): () => void;
     loopByTags(tags: string[], behavior?: LoopBehavior): () => void;
 }

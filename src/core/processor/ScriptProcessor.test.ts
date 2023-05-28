@@ -86,4 +86,31 @@ describe('ScriptProcesor', () => {
         executeAnimationFrame(456);
         expect(mock).toBeCalledWith(456);
     });
+
+    it('loop scripts by tags', () => {
+        const processor = new ScriptProcessor([{
+            name: "main",
+            actions: [
+                { mock: "{time}" },
+            ],
+            tags: ["tag2"],
+        }, {
+            name: "main2",
+            actions: [
+                { mock: "{1000 + time}" },
+            ],
+            tags: ["tag2"],
+        }], external, [
+            [(action) => action.mock, (action, results) => {
+                const resolution = calculateNumber(action.mock);
+                results.push((context) => mock(resolution.valueOf(context)));
+            }],
+        ]);
+        processor.loopByTags([]);
+        
+        executeAnimationFrame(123);
+        expect(mock).toBeCalledWith(1123);
+        executeAnimationFrame(456);
+        expect(mock).toBeCalledWith(1456);
+    });
 });

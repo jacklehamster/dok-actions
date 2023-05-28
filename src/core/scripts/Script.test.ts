@@ -1,4 +1,4 @@
-import { Script, getByName, getByTags, getScriptNamesByTags } from "./Script";
+import { Script, filterScripts, } from "./Script";
 
 describe('Script', () => {
     const scripts: Script[] = [
@@ -19,19 +19,13 @@ describe('Script', () => {
     ];
 
     it('find by name', () => {
-        expect(getByName(scripts, "script1")).toEqual([scripts[0]]);
-        expect(getByName(scripts, ["script1", "script3"])).toEqual([scripts[0], scripts[2]]);
+        expect(filterScripts(scripts, { name: "script1"})).toEqual([scripts[0]]);
+        expect(filterScripts(scripts, { name: ["script1", "script3"] })).toEqual([scripts[0], scripts[2]]);
     });
 
     it('find by tags', () => {
-        expect(getByTags(scripts, ["loop"])).toEqual([scripts[2]]);
-        expect(getByTags(scripts, [["level", 1]])).toEqual([scripts[1]]);
-        expect(getByTags(scripts, ["level"])).toEqual([scripts[1], scripts[2]]);
-    });
-
-    it('find names by tags', () => {
-        expect(getScriptNamesByTags(scripts, ["loop"])).toEqual(["script3"]);
-        expect(getScriptNamesByTags(scripts, [["level", 1]])).toEqual(["script2"]);
-        expect(getScriptNamesByTags(scripts, ["level"])).toEqual(["script2", "script3"]);
+        expect(filterScripts(scripts, { tags: ["loop"]})).toEqual([scripts[2]]);
+        expect(filterScripts(scripts, { tags: [["level", 1]]})).toEqual([scripts[1]]);
+        expect(filterScripts(scripts, { tags: ["level"]})).toEqual([scripts[1], scripts[2]]);
     });
 });

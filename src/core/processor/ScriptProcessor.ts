@@ -2,7 +2,7 @@ import { Context } from "../context/Context";
 import { DEFAULT_EXTERNALS } from "../convertor/Convertor";
 import { ActionConversionMap, DEFAULT_CONVERSION_MAP, convertScripts } from "../convertor/convert-action";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
-import { Script, Tag, getScriptNamesByTags } from "../scripts/Script";
+import { Script, ScriptFilter, Tag, filterScripts } from "../scripts/Script";
 
 export interface LoopBehavior {
     cleanupAfterLoop?: boolean;
@@ -37,25 +37,29 @@ export class ScriptProcessor {
         } : () => {};
     }
 
+    private getSteps(filter: ScriptFilter) {
+        const scripts = filterScripts(this.scripts, filter);
+        const steps: ExecutionStep[] = [];
+        scripts.forEach(({name}) => this.scriptMap[name].forEach(step => steps.push(step)));
+        return steps;
+    }
+
     runByName(name: string): () => void {
         const context: Context = this.createContext();
-        const steps = this.scriptMap[name];
-        execute(steps, {}, context);
+        execute(this.getSteps({ name }), undefined, context);
         return () => context.cleanupActions?.forEach(action => action());
     }
 
     runByTags(tags: Tag[]): () => void {
         const context: Context = this.createContext();
-        const names = getScriptNamesByTags(this.scripts, tags);
-        const stepsGroups = names.map(name => this.scriptMap[name]);
-        stepsGroups.forEach(steps => execute(steps, {}, context));
+        execute(this.getSteps({ tags }), undefined, context);
         return () => context.cleanupActions?.forEach(action => action());
     }
-    
-    loopByName(name: string, behavior: LoopBehavior = {}): () => void {
+
+    private loopWithFilter(filter: ScriptFilter, behavior: LoopBehavior = {}): () => void {
         const context: Context = this.createContext();
         const parameters: ExecutionParameters = { time: 0 };
-        const steps = this.scriptMap[name];
+        const steps = this.getSteps(filter);
         const loopCleanup = this.createLoopCleanup(behavior, context);
         const loop = (time: number) => {
             parameters.time = time;
@@ -65,29 +69,16 @@ export class ScriptProcessor {
         };
         let animationFrameId = requestAnimationFrame(loop);
         return () => {
-            context.cleanupActions?.forEach(action => action());
+            loopCleanup();
             cancelAnimationFrame(animationFrameId);
         }
     }
+    
+    loopByName(name: string, behavior: LoopBehavior = {}): () => void {
+        return this.loopWithFilter({ name }, behavior);
+    }
 
     loopByTags(tags: string[], behavior: LoopBehavior = {}) {
-        const context: Context = this.createContext();
-        const parameters: ExecutionParameters = { time: performance.now() - performance.timeOrigin };
-        const names = getScriptNamesByTags(this.scripts, tags);
-        const stepsGroups = names.map(name => this.scriptMap[name]);
-        const loopCleanup = this.createLoopCleanup(behavior, context);
-        const loop = (time: number) => {
-            parameters.time = time;
-            for (let steps of stepsGroups) {
-                execute(steps, parameters, context);
-            }
-            loopCleanup();
-            animationFrameId = requestAnimationFrame(loop);
-        };
-        let animationFrameId = requestAnimationFrame(loop);
-        return () => {
-            context.cleanupActions?.forEach(action => action());
-            cancelAnimationFrame(animationFrameId);
-        }
+        return this.loopWithFilter({ tags }, behavior);
     }
 }

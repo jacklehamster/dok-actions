@@ -7,6 +7,8 @@ export interface Script {
     actions: DokAction[];
     tags?: Tag[];
 }
-export declare function getByTags(scripts: Script[], tags: Tag[]): Script[];
-export declare function getScriptNamesByTags(scripts: Script[], tags: Tag[]): string[];
-export declare function getByName(scripts: Script[], name: string | string[]): Script[];
+export interface ScriptFilter {
+    name?: string | string[];
+    tags?: Tag[];
+}
+export declare function filterScripts(scripts: Script[], filter: ScriptFilter): Script[];

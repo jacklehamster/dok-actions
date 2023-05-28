@@ -10,22 +10,26 @@ export interface Script {
     tags?: Tag[];
 }
 
-export function getByTags(scripts: Script[], tags: Tag[]): Script[] {
-    return scripts.filter(script => {
-        return tags.every(tag => {
+export interface ScriptFilter {
+    name?: string | string[];
+    tags?: Tag[];
+}
+
+export function filterScripts(scripts: Script[], filter: ScriptFilter): Script[] {
+    return scripts.filter(({name, tags}) => {
+        const namesToFilter = !filter.name ? undefined : Array.isArray(filter.name) ? filter.name : [filter.name];
+        if (namesToFilter?.length && namesToFilter.indexOf(name) < 0) {
+            return false;
+        }
+        if (filter.tags && !filter.tags?.every(tag => {
             if (typeof(tag) === "string") {
-                return script.tags?.some((t) => t === tag || (Array.isArray(t) && t[0] === tag))
+                return tags?.some((t) => t === tag || (Array.isArray(t) && t[0] === tag))
             } else {
-                return script.tags?.some((t) => Array.isArray(t) && t[0] === tag[0] && t[1] === tag[1]);
+                return tags?.some((t) => Array.isArray(t) && t[0] === tag[0] && t[1] === tag[1]);
             }
-        });
+        })) {
+            return false;
+        }
+        return true;
     });
-}
-
-export function getScriptNamesByTags(scripts: Script[], tags: Tag[]): string[] {
-    return getByTags(scripts, tags).map(({ name }) => name);
-}
-
-export function getByName(scripts: Script[], name: string | string[]): Script[] {
-    return scripts.filter(script => name.includes(script.name));
 }
