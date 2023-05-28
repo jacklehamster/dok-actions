@@ -1,7 +1,6 @@
 import { DokAction } from "../actions/Action";
 import { Context } from "../context/Context";
-import { ExecutionStep, execute } from "../execution/ExecutionStep";
-import { SupportedTypes } from "../resolutions/calculate";
+import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
 import { Script } from "../scripts/Script";
 import { ConvertBehavior, Convertor, DEFAULT_EXTERNALS } from "./Convertor";
 import { convertActionsProperty } from "./actions-convertor";
@@ -60,7 +59,7 @@ export function convertScripts(
 
 export function executeScript(
         scriptName: string,
-        parameters: Record<string, SupportedTypes | undefined> = {},
+        parameters: ExecutionParameters = {},
         scripts: Script[],
         external: Record<string, any> = DEFAULT_EXTERNALS,
         actionConversionMap = DEFAULT_CONVERSION_MAP): () => void {

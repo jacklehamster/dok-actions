@@ -1,7 +1,7 @@
-import { SupportedTypes } from "../resolutions/calculate";
+import { ExecutionParameters } from "../execution/ExecutionStep";
 
 export interface Context {
-    parameters?: Record<string, SupportedTypes | undefined>[];
+    parameters?: ExecutionParameters[];
     cleanupActions?:(() => void)[];
-    objectPool?: Record<string, any>[];
+    objectPool?: ExecutionParameters[];
 }

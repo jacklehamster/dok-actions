@@ -2,7 +2,7 @@ import assert from "assert";
 import { ScriptAction } from "../actions/ScriptAction";
 import { Context } from "../context/Context";
 import { LogAction } from "../actions/LogAction";
-import { ExecutionStep, execute } from "../execution/ExecutionStep";
+import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
 import { DEFAULT_CONVERSION_MAP, convertAction, convertScripts, executeScript } from "./convert-action";
 import { Resolution } from "../resolutions/Resolution";
 import { calculateResolution } from "../resolutions/calculate";
@@ -16,7 +16,7 @@ describe('convertor', () => {
 
     it('converts script action', () => {
         const mockStep = jest.fn();
-        const innerStep = (context: Context, params: Record<string, any>) => mockStep(context, JSON.parse(JSON.stringify(params)));
+        const innerStep = (context: Context, params: ExecutionParameters) => mockStep(context, JSON.parse(JSON.stringify(params)));
 
         getSteps.mockReturnValue([
             innerStep,
@@ -38,7 +38,7 @@ describe('convertor', () => {
 
     it('converts script action without parameter override', () => {
         const mockStep = jest.fn();
-        const innerStep = (context: Context, params: Record<string, any>) => mockStep(context, JSON.parse(JSON.stringify(params)));
+        const innerStep = (context: Context, params: ExecutionParameters) => mockStep(context, JSON.parse(JSON.stringify(params)));
 
         getSteps.mockReturnValue([
             innerStep,

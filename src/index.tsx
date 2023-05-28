@@ -12,4 +12,4 @@ export * from "./core/resolutions/TypedArrayResolution"
 export * from "./core/scripts/Script"
 export * from "./core/types/TypedArray"
 export * from "./core/types/ValueOf"
-
+export * from "./core/processor/ScriptProcessor"

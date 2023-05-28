@@ -1,9 +1,10 @@
 import { ConvertBehavior, Convertor, DEFAULT_EXTERNALS } from "./Convertor";
 import { Resolution } from "../resolutions/Resolution";
-import { SupportedTypes, calculateResolution } from "../resolutions/calculate";
+import { calculateResolution } from "../resolutions/calculate";
 import { ValueOf } from "../types/ValueOf";
-import { ExecutionStep, execute } from "../execution/ExecutionStep";
+import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
 import { convertAction } from "./convert-action";
+import { SupportedTypes } from "../resolutions/supportedTypes";
 
 export const convertParametersProperty: Convertor = (
         action,
@@ -13,14 +14,14 @@ export const convertParametersProperty: Convertor = (
     const { parameters, ...subAction } = action;
 
     const paramResolutions: Record<string, Resolution> = (parameters ?? {});
-    const paramEntries: [string, ValueOf<SupportedTypes | undefined>][] = Object.entries(paramResolutions)
+    const paramEntries: [string, ValueOf<SupportedTypes>][] = Object.entries(paramResolutions)
         .map(([key, resolution]) => [key, calculateResolution(resolution)]);
 
     const subStepResults: ExecutionStep[] = [];
     convertAction(subAction, subStepResults, getSteps, external);
 
     results.push((context, parameters) => {
-        const paramValues: Record<string, SupportedTypes | undefined> = context.objectPool?.pop() ?? {};
+        const paramValues: ExecutionParameters = context.objectPool?.pop() ?? {};
         for (let k in parameters) {
             paramValues[k] = parameters[k];
         }
@@ -29,12 +30,7 @@ export const convertParametersProperty: Convertor = (
             paramValues[key] = entry[1].valueOf(context);
         }
 
-        if (!context.parameters) {
-            context.parameters = [];
-        }
-        context.parameters.push(paramValues);
         execute(subStepResults, paramValues, context);
-        context.parameters.pop();
 
         for (let k in paramValues) {
             delete paramValues[k];

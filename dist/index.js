@@ -8,6 +8,18 @@ var DEFAULT_EXTERNALS = {
   log: console.log
 };
 
+function _objectWithoutPropertiesLoose(source, excluded) {
+  if (source == null) return {};
+  var target = {};
+  var sourceKeys = Object.keys(source);
+  var key, i;
+  for (i = 0; i < sourceKeys.length; i++) {
+    key = sourceKeys[i];
+    if (excluded.indexOf(key) >= 0) continue;
+    target[key] = source[key];
+  }
+  return target;
+}
 function _unsupportedIterableToArray(o, minLen) {
   if (!o) return;
   if (typeof o === "string") return _arrayLikeToArray(o, minLen);
@@ -47,9 +59,19 @@ function execute(steps, parameters, context) {
   if (context === void 0) {
     context = {};
   }
+  if (!context.parameters) {
+    context.parameters = [];
+  }
+  var changedParameters = context.parameters[context.parameters.length - 1] !== parameters;
+  if (changedParameters) {
+    context.parameters.push(parameters);
+  }
   for (var _iterator = _createForOfIteratorHelperLoose(steps), _step; !(_step = _iterator()).done;) {
     var step = _step.value;
     step(context, parameters);
+  }
+  if (changedParameters) {
+    context.parameters.pop();
   }
 }
 
@@ -266,7 +288,318 @@ function getByName(scripts, name) {
   });
 }
 
+var convertActionsProperty = function convertActionsProperty(action, results, getSteps, external) {
+  var _action$actions;
+  (_action$actions = action.actions) === null || _action$actions === void 0 ? void 0 : _action$actions.forEach(function (action) {
+    return convertAction(action, results, getSteps, external);
+  });
+};
+
+function calculateBoolean(value, defaultValue) {
+  if (defaultValue === void 0) {
+    defaultValue = false;
+  }
+  if (typeof value === "boolean" || typeof value === "number") {
+    return !!value;
+  }
+  if (value === undefined) {
+    return {
+      valueOf: function valueOf() {
+        return defaultValue;
+      }
+    };
+  }
+  var evaluator = getFormulaEvaluator(value);
+  return {
+    valueOf: function valueOf(context) {
+      return !!calculateEvaluator(evaluator, context, value, defaultValue);
+    }
+  };
+}
+
+var _excluded = ["condition"];
+var convertConditionProperty = function convertConditionProperty(action, results, getSteps, external) {
+  if (external === void 0) {
+    external = DEFAULT_EXTERNALS;
+  }
+  if (!action.condition) {
+    return exports.ConvertBehavior.SKIP_REMAINING;
+  }
+  var condition = action.condition,
+    subAction = _objectWithoutPropertiesLoose(action, _excluded);
+  var conditionResolution = calculateBoolean(condition);
+  var subStepResults = [];
+  convertAction(subAction, subStepResults, getSteps, external);
+  results.push(function (context, parameters) {
+    if (conditionResolution.valueOf(context)) {
+      execute(subStepResults, parameters, context);
+    }
+  });
+  return exports.ConvertBehavior.SKIP_REMAINING;
+};
+
+var convertLogProperty = function convertLogProperty(action, results, _, external) {
+  if (external === void 0) {
+    external = DEFAULT_EXTERNALS;
+  }
+  var messages = Array.isArray(action.log) ? action.log : [action.log];
+  var resolutions = messages.map(function (m) {
+    return calculateResolution(m);
+  });
+  results.push(function (context) {
+    var _external;
+    return (_external = external).log.apply(_external, resolutions.map(function (r) {
+      return r.valueOf(context);
+    }));
+  });
+};
+
+var _excluded$1 = ["loop"];
+var convertLoopProperty = function convertLoopProperty(action, stepResults, getSteps, external) {
+  if (external === void 0) {
+    external = DEFAULT_EXTERNALS;
+  }
+  if (!action.loop) {
+    return exports.ConvertBehavior.SKIP_REMAINING;
+  }
+  var loop = action.loop,
+    subAction = _objectWithoutPropertiesLoose(action, _excluded$1);
+  var loopResolution = calculateNumber(loop, 0);
+  var subStepResults = [];
+  convertAction(subAction, subStepResults, getSteps, external);
+  stepResults.push(function (context, parameters) {
+    var numLoops = loopResolution.valueOf(context);
+    for (var i = 0; i < numLoops; i++) {
+      parameters.index = i;
+      execute(subStepResults, parameters, context);
+    }
+  });
+  return exports.ConvertBehavior.SKIP_REMAINING;
+};
+
+var _excluded$2 = ["parameters"];
+var convertParametersProperty = function convertParametersProperty(action, results, getSteps, external) {
+  if (external === void 0) {
+    external = DEFAULT_EXTERNALS;
+  }
+  var parameters = action.parameters,
+    subAction = _objectWithoutPropertiesLoose(action, _excluded$2);
+  var paramResolutions = parameters != null ? parameters : {};
+  var paramEntries = Object.entries(paramResolutions).map(function (_ref) {
+    var key = _ref[0],
+      resolution = _ref[1];
+    return [key, calculateResolution(resolution)];
+  });
+  var subStepResults = [];
+  convertAction(subAction, subStepResults, getSteps, external);
+  results.push(function (context, parameters) {
+    var _context$objectPool$p, _context$objectPool, _context$objectPool2;
+    var paramValues = (_context$objectPool$p = (_context$objectPool = context.objectPool) === null || _context$objectPool === void 0 ? void 0 : _context$objectPool.pop()) != null ? _context$objectPool$p : {};
+    for (var k in parameters) {
+      paramValues[k] = parameters[k];
+    }
+    for (var _iterator = _createForOfIteratorHelperLoose(paramEntries), _step; !(_step = _iterator()).done;) {
+      var entry = _step.value;
+      var key = entry[0];
+      paramValues[key] = entry[1].valueOf(context);
+    }
+    execute(subStepResults, paramValues, context);
+    for (var _k in paramValues) {
+      delete paramValues[_k];
+    }
+    (_context$objectPool2 = context.objectPool) === null || _context$objectPool2 === void 0 ? void 0 : _context$objectPool2.push(paramValues);
+  });
+  return exports.ConvertBehavior.SKIP_REMAINING;
+};
+
+var convertScriptProperty = function convertScriptProperty(action, results, getSteps) {
+  var steps = getSteps(action.script);
+  results.push(function (context, parameters) {
+    return execute(steps, parameters, context);
+  });
+};
+
+var DEFAULT_CONVERSION_MAP = [[function (_ref) {
+  var parameters = _ref.parameters;
+  return parameters !== undefined;
+}, convertParametersProperty], [function (_ref2) {
+  var loop = _ref2.loop;
+  return loop !== undefined;
+}, convertLoopProperty], [function (_ref3) {
+  var condition = _ref3.condition;
+  return condition !== undefined;
+}, convertConditionProperty], [function (_ref4) {
+  var log = _ref4.log;
+  return log !== undefined;
+}, convertLogProperty], [function (_ref5) {
+  var script = _ref5.script;
+  return script !== undefined;
+}, convertScriptProperty], [function (_ref6) {
+  var actions = _ref6.actions;
+  return actions !== undefined;
+}, convertActionsProperty]];
+var convertAction = function convertAction(action, stepResults, getSteps, external, actionConversionMap) {
+  if (external === void 0) {
+    external = DEFAULT_EXTERNALS;
+  }
+  if (actionConversionMap === void 0) {
+    actionConversionMap = DEFAULT_CONVERSION_MAP;
+  }
+  for (var _iterator = _createForOfIteratorHelperLoose(actionConversionMap), _step; !(_step = _iterator()).done;) {
+    var _step$value = _step.value,
+      predicate = _step$value[0],
+      convertor = _step$value[1];
+    if (predicate(action)) {
+      if (convertor(action, stepResults, getSteps, external, actionConversionMap) === exports.ConvertBehavior.SKIP_REMAINING) {
+        return;
+      }
+    }
+  }
+  return;
+};
+function convertScripts(scripts, external, actionConversionMap) {
+  if (external === void 0) {
+    external = DEFAULT_EXTERNALS;
+  }
+  if (actionConversionMap === void 0) {
+    actionConversionMap = DEFAULT_CONVERSION_MAP;
+  }
+  var scriptMap = {};
+  var getSteps = function getSteps(name) {
+    return name ? scriptMap[name] : [];
+  };
+  scripts.forEach(function (script) {
+    if (!scriptMap[script.name]) {
+      scriptMap[script.name] = [];
+    }
+    var scriptSteps = scriptMap[script.name];
+    script.actions.forEach(function (action) {
+      convertAction(action, scriptSteps, getSteps, external, actionConversionMap);
+    });
+  });
+  return scriptMap;
+}
+
+var ScriptProcessor = /*#__PURE__*/function () {
+  function ScriptProcessor(scripts, external, actionConversionMap) {
+    if (external === void 0) {
+      external = DEFAULT_EXTERNALS;
+    }
+    if (actionConversionMap === void 0) {
+      actionConversionMap = DEFAULT_CONVERSION_MAP;
+    }
+    this.scripts = scripts;
+    this.scriptMap = convertScripts(this.scripts, external, actionConversionMap);
+    this.external = external;
+  }
+  var _proto = ScriptProcessor.prototype;
+  _proto.createContext = function createContext() {
+    return {
+      parameters: [],
+      cleanupActions: [],
+      objectPool: []
+    };
+  };
+  _proto.createLoopCleanup = function createLoopCleanup(behavior, context) {
+    var cleanupActions = context.cleanupActions;
+    return behavior.cleanupAfterLoop && cleanupActions ? function () {
+      for (var _iterator = _createForOfIteratorHelperLoose(cleanupActions), _step; !(_step = _iterator()).done;) {
+        var action = _step.value;
+        action();
+      }
+      cleanupActions.length = 0;
+    } : function () {};
+  };
+  _proto.runByName = function runByName(name) {
+    var context = this.createContext();
+    var steps = this.scriptMap[name];
+    execute(steps, {}, context);
+    return function () {
+      var _context$cleanupActio;
+      return (_context$cleanupActio = context.cleanupActions) === null || _context$cleanupActio === void 0 ? void 0 : _context$cleanupActio.forEach(function (action) {
+        return action();
+      });
+    };
+  };
+  _proto.runByTags = function runByTags(tags) {
+    var _this = this;
+    var context = this.createContext();
+    var names = getScriptNamesByTags(this.scripts, tags);
+    var stepsGroups = names.map(function (name) {
+      return _this.scriptMap[name];
+    });
+    stepsGroups.forEach(function (steps) {
+      return execute(steps, {}, context);
+    });
+    return function () {
+      var _context$cleanupActio2;
+      return (_context$cleanupActio2 = context.cleanupActions) === null || _context$cleanupActio2 === void 0 ? void 0 : _context$cleanupActio2.forEach(function (action) {
+        return action();
+      });
+    };
+  };
+  _proto.loopByName = function loopByName(name, behavior) {
+    if (behavior === void 0) {
+      behavior = {};
+    }
+    var context = this.createContext();
+    var parameters = {
+      time: 0
+    };
+    var steps = this.scriptMap[name];
+    var loopCleanup = this.createLoopCleanup(behavior, context);
+    var loop = function loop(time) {
+      parameters.time = time;
+      execute(steps, parameters, context);
+      loopCleanup();
+      animationFrameId = requestAnimationFrame(loop);
+    };
+    var animationFrameId = requestAnimationFrame(loop);
+    return function () {
+      var _context$cleanupActio3;
+      (_context$cleanupActio3 = context.cleanupActions) === null || _context$cleanupActio3 === void 0 ? void 0 : _context$cleanupActio3.forEach(function (action) {
+        return action();
+      });
+      cancelAnimationFrame(animationFrameId);
+    };
+  };
+  _proto.loopByTags = function loopByTags(tags, behavior) {
+    var _this2 = this;
+    if (behavior === void 0) {
+      behavior = {};
+    }
+    var context = this.createContext();
+    var parameters = {
+      time: performance.now() - performance.timeOrigin
+    };
+    var names = getScriptNamesByTags(this.scripts, tags);
+    var stepsGroups = names.map(function (name) {
+      return _this2.scriptMap[name];
+    });
+    var loopCleanup = this.createLoopCleanup(behavior, context);
+    var loop = function loop(time) {
+      parameters.time = time;
+      for (var _iterator2 = _createForOfIteratorHelperLoose(stepsGroups), _step2; !(_step2 = _iterator2()).done;) {
+        var steps = _step2.value;
+        execute(steps, parameters, context);
+      }
+      loopCleanup();
+      animationFrameId = requestAnimationFrame(loop);
+    };
+    var animationFrameId = requestAnimationFrame(loop);
+    return function () {
+      var _context$cleanupActio4;
+      (_context$cleanupActio4 = context.cleanupActions) === null || _context$cleanupActio4 === void 0 ? void 0 : _context$cleanupActio4.forEach(function (action) {
+        return action();
+      });
+      cancelAnimationFrame(animationFrameId);
+    };
+  };
+  return ScriptProcessor;
+}();
+
 exports.DEFAULT_EXTERNALS = DEFAULT_EXTERNALS;
+exports.ScriptProcessor = ScriptProcessor;
 exports.calculateResolution = calculateResolution;
 exports.calculateString = calculateString;
 exports.calculateTypedArray = calculateTypedArray;

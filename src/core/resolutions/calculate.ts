@@ -1,11 +1,11 @@
 import { Context } from "../context/Context";
-import { TypedArray } from "../types/TypedArray";
 import { ValueOf } from "../types/ValueOf";
 import { ArrayResolution } from "./ArrayResolution";
 import { Resolution } from "./Resolution";
 import { calculateTypedArray } from "./TypedArrayResolution";
 import { calculateArray } from "./calculateArray";
 import { calculateEvaluator, getFormulaEvaluator, hasFormula } from "./calculateEvaluator";
+import { SupportedTypes } from "./supportedTypes";
 
 export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> {
     if (value === undefined) {
@@ -43,6 +43,3 @@ export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> 
         }
     };
 }
-
-
-export type SupportedTypes = undefined | string | number | TypedArray | boolean | SupportedTypes[];

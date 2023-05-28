@@ -1,6 +1,5 @@
 import { DokAction } from "../actions/Action";
 import { ExecutionStep } from "../execution/ExecutionStep";
-import { SupportedTypes } from "../resolutions/calculate";
 import { Script } from "../scripts/Script";
 import { Convertor } from "./Convertor";
 export declare type ActionPredicate = (action: DokAction) => boolean;
@@ -8,4 +7,4 @@ export declare type ActionConversionMap = [ActionPredicate, Convertor][];
 export declare const DEFAULT_CONVERSION_MAP: ActionConversionMap;
 export declare const convertAction: Convertor;
 export declare function convertScripts(scripts: Script[], external?: Record<string, any>, actionConversionMap?: ActionConversionMap): Record<string, ExecutionStep[]>;
-export declare function executeScript(scriptName: string, parameters: Record<string, SupportedTypes> | undefined, scripts: Script[], external?: Record<string, any>, actionConversionMap?: ActionConversionMap): () => void;
+export declare function executeScript(scriptName: string, parameters: Record<string, import("../resolutions/supportedTypes").SupportedTypes> | undefined, scripts: Script[], external?: Record<string, any>, actionConversionMap?: ActionConversionMap): () => void;
