@@ -1,8 +1,9 @@
+import { LogAction } from "../actions/LogAction";
 import { Resolution } from "../resolutions/Resolution";
 import { calculateResolution } from "../resolutions/calculate";
 import { Convertor, DEFAULT_EXTERNALS } from "./Convertor";
 
-export const convertLogProperty: Convertor = (
+export const convertLogProperty: Convertor<LogAction> = (
     action,
     results,
     _,

@@ -5,10 +5,7 @@
 
 import { ActionsAction } from "./ActionsAction";
 import { LogAction } from "./LogAction";
+import { LogicAction } from "./LogicAction";
 import { ScriptAction } from "./ScriptAction";
 
-export type Action = {
-    [key: string]: any;
-}
-
-export type DokAction = Action & ScriptAction & LogAction & ActionsAction;
+export type DokAction = ScriptAction & LogAction & ActionsAction & LogicAction;

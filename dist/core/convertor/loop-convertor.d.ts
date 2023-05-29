@@ -1,2 +1,3 @@
 import { Convertor } from "./Convertor";
-export declare const convertLoopProperty: Convertor;
+import { LogicAction } from "../actions/LogicAction";
+export declare const convertLoopProperty: Convertor<LogicAction>;

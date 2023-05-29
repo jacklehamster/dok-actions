@@ -1,2 +1,3 @@
 import { Convertor } from "./Convertor";
-export declare const convertParametersProperty: Convertor;
+import { ScriptAction } from "../actions/ScriptAction";
+export declare const convertParametersProperty: Convertor<ScriptAction>;

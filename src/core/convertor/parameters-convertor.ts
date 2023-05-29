@@ -5,8 +5,9 @@ import { ValueOf } from "../types/ValueOf";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
 import { convertAction } from "./convert-action";
 import { SupportedTypes } from "../resolutions/supportedTypes";
+import { ScriptAction } from "../actions/ScriptAction";
 
-export const convertParametersProperty: Convertor = (
+export const convertParametersProperty: Convertor<ScriptAction> = (
         action,
         results,
         getSteps,

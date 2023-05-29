@@ -1,2 +1,3 @@
 import { Convertor } from "./Convertor";
-export declare const convertConditionProperty: Convertor;
+import { DokAction } from "../actions/Action";
+export declare const convertConditionProperty: Convertor<DokAction>;

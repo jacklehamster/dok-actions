@@ -1,4 +1,3 @@
-import { DokAction } from "../actions/Action";
 import { ExecutionStep } from "../execution/ExecutionStep";
 import { ActionConversionMap } from "./convert-action";
 
@@ -7,7 +6,7 @@ export enum ConvertBehavior {
     SKIP_REMAINING,
 }
 
-export type Convertor = (action: DokAction, results: ExecutionStep[], getSteps: (name?: string) => ExecutionStep[], external?: Record<string, any>, actionConversionMap?: ActionConversionMap) => ConvertBehavior | void;
+export type Convertor<T> = (action: T, results: ExecutionStep[], getSteps: (name?: string) => ExecutionStep[], external?: Record<string, any>, actionConversionMap?: ActionConversionMap) => ConvertBehavior | void;
 
 export const DEFAULT_EXTERNALS = {
     log: console.log,

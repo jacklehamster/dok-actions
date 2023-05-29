@@ -10,8 +10,9 @@ import { convertLoopProperty } from "./loop-convertor";
 import { convertParametersProperty } from "./parameters-convertor";
 import { convertScriptProperty } from "./script-convertor";
 
-export type ActionPredicate = (action: DokAction) => boolean;
-export type ActionConversionMap = [ActionPredicate, Convertor][];
+export type ActionPredicate<T> = (action: T) => boolean;
+export type ActionConvertionPair<T> = [ActionPredicate<T>, Convertor<T>];
+export type ActionConversionMap = ActionConvertionPair<any>[];
 
 export const DEFAULT_CONVERSION_MAP: ActionConversionMap = [
     [({parameters}) => parameters !== undefined, convertParametersProperty],
@@ -22,7 +23,7 @@ export const DEFAULT_CONVERSION_MAP: ActionConversionMap = [
     [({actions}) => actions !== undefined, convertActionsProperty],
 ];
 
-export const convertAction: Convertor = (
+export const convertAction: Convertor<DokAction> = (
         action,
         stepResults: ExecutionStep[],
         getSteps,

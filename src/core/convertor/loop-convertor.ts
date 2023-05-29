@@ -2,8 +2,9 @@ import { ExecutionStep, execute } from "../execution/ExecutionStep";
 import { ConvertBehavior, Convertor, DEFAULT_EXTERNALS } from "./Convertor";
 import { calculateNumber } from "../resolutions/calculateNumber";
 import { convertAction } from "./convert-action";
+import { LogicAction } from "../actions/LogicAction";
 
-export const convertLoopProperty: Convertor = (
+export const convertLoopProperty: Convertor<LogicAction> = (
         action,
         stepResults: ExecutionStep[],
         getSteps,
