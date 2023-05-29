@@ -3,7 +3,7 @@ import { ScriptAction } from "../actions/ScriptAction";
 import { Context } from "../context/Context";
 import { LogAction } from "../actions/LogAction";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
-import { DEFAULT_CONVERSION_MAP, convertAction, convertScripts, executeScript } from "./convert-action";
+import { DEFAULT_CONVERTORS, convertAction, convertScripts, executeScript } from "./convert-action";
 import { Resolution } from "../resolutions/Resolution";
 import { calculateResolution } from "../resolutions/calculate";
 
@@ -251,12 +251,15 @@ describe('convertor', () => {
                 ],
             },
         ], undefined, [
-            ...DEFAULT_CONVERSION_MAP,
-            [({custom})=> custom !== undefined, (action, results) => {
+            ...DEFAULT_CONVERTORS,
+            (action, results) => {
+                if (!action.custom) {
+                    return;
+                }
                 const messages: Resolution[] = Array.isArray(action.custom) ? action.custom : [action.custom];
                 const resolutions = messages.map(m => calculateResolution(m));
                 results.push((context) => custom(...resolutions.map(r => r.valueOf(context))));
-            }]
+            },
         ]);
         expect(custom).toBeCalledWith("hello", "test", "sub2");        
     });

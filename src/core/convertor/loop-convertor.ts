@@ -9,6 +9,9 @@ export const convertLoopProperty: Convertor<LogicAction> = (
         stepResults: ExecutionStep[],
         getSteps,
         external = DEFAULT_EXTERNALS) => {
+    if (action.loop === undefined) {
+        return;
+    }
     if (!action.loop) {
         return ConvertBehavior.SKIP_REMAINING;
     }

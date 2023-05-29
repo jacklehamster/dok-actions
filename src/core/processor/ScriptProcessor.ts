@@ -1,6 +1,6 @@
 import { Context } from "../context/Context";
 import { DEFAULT_EXTERNALS } from "../convertor/Convertor";
-import { ActionConversionMap, DEFAULT_CONVERSION_MAP, convertScripts } from "../convertor/convert-action";
+import { ActionConvertorList, DEFAULT_CONVERTORS, convertScripts } from "../convertor/convert-action";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
 import { Script, ScriptFilter, Tag, filterScripts } from "../scripts/Script";
 
@@ -13,7 +13,7 @@ export class ScriptProcessor {
     scriptMap: Record<string, ExecutionStep[]>;
     external: Record<string, any>;
 
-    constructor(scripts: Script[], external: Record<string, any> = DEFAULT_EXTERNALS, actionConversionMap: ActionConversionMap = DEFAULT_CONVERSION_MAP) {
+    constructor(scripts: Script[], external: Record<string, any> = DEFAULT_EXTERNALS, actionConversionMap: ActionConvertorList = DEFAULT_CONVERTORS) {
         this.scripts = scripts;
         this.scriptMap = convertScripts(this.scripts, external, actionConversionMap);
         this.external = external;

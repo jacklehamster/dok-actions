@@ -12,6 +12,9 @@ export const convertParametersProperty: Convertor<ScriptAction> = (
         results,
         getSteps,
         external = DEFAULT_EXTERNALS) => {
+    if (!action.parameters) {
+        return;
+    }
     const { parameters, ...subAction } = action;
 
     const paramResolutions: Record<string, Resolution> = (parameters ?? {});

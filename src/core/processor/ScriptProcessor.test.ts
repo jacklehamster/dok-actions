@@ -33,7 +33,7 @@ describe('ScriptProcesor', () => {
                 { mock: 123 },
             ],
         }], external, [
-            [(action) => action.mock, (action, results) => results.push((_) => mock(action.mock))],
+            (action, results) => results.push((_) => mock(action.mock)),
         ]);
         processor.runByName("main");
         expect(mock).toBeCalledWith(123);
@@ -59,7 +59,7 @@ describe('ScriptProcesor', () => {
             ],
             tags: ["tagB", "tagA"],
         }], external, [
-            [(action) => action.mock, (action, results) => results.push((_) => mock(action.mock))],
+            (action, results) => results.push((_) => mock(action.mock)),
         ]);
         processor.runByTags(["tagB"]);
         expect(mock).not.toBeCalledWith(123);
@@ -74,10 +74,10 @@ describe('ScriptProcesor', () => {
                 { mock: "{time}" },
             ],
         }], external, [
-            [(action) => action.mock, (action, results) => {
+            (action, results) => {
                 const resolution = calculateNumber(action.mock);
                 results.push((context) => mock(resolution.valueOf(context)));
-            }],
+            },
         ]);
         processor.loopByName("main");
         
@@ -101,10 +101,10 @@ describe('ScriptProcesor', () => {
             ],
             tags: ["tag2"],
         }], external, [
-            [(action) => action.mock, (action, results) => {
+            (action, results) => {
                 const resolution = calculateNumber(action.mock);
                 results.push((context) => mock(resolution.valueOf(context)));
-            }],
+            },
         ]);
         processor.loopByTags([]);
         

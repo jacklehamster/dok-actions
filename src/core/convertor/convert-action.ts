@@ -10,17 +10,15 @@ import { convertLoopProperty } from "./loop-convertor";
 import { convertParametersProperty } from "./parameters-convertor";
 import { convertScriptProperty } from "./script-convertor";
 
-export type ActionPredicate<T> = (action: T) => boolean;
-export type ActionConvertionPair<T> = [ActionPredicate<T>, Convertor<T>];
-export type ActionConversionMap = ActionConvertionPair<any>[];
+export type ActionConvertorList = Convertor<Record<string, any>>[];
 
-export const DEFAULT_CONVERSION_MAP: ActionConversionMap = [
-    [({parameters}) => parameters !== undefined, convertParametersProperty],
-    [({loop}) => loop !== undefined, convertLoopProperty],
-    [({condition}) => condition !== undefined, convertConditionProperty],
-    [({log}) => log !== undefined, convertLogProperty],
-    [({script}) => script !== undefined, convertScriptProperty],
-    [({actions}) => actions !== undefined, convertActionsProperty],
+export const DEFAULT_CONVERTORS: ActionConvertorList = [
+    convertParametersProperty,
+    convertLoopProperty,
+    convertConditionProperty,
+    convertLogProperty,
+    convertScriptProperty,
+    convertActionsProperty,
 ];
 
 export const convertAction: Convertor<DokAction> = (
@@ -28,13 +26,11 @@ export const convertAction: Convertor<DokAction> = (
         stepResults: ExecutionStep[],
         getSteps,
         external = DEFAULT_EXTERNALS,
-        actionConversionMap = DEFAULT_CONVERSION_MAP): ConvertBehavior | undefined => {
+        actionConversionMap = DEFAULT_CONVERTORS): ConvertBehavior | undefined => {
 
-    for (let [predicate, convertor] of actionConversionMap) {
-        if (predicate(action)) {
-            if (convertor(action, stepResults, getSteps, external, actionConversionMap) === ConvertBehavior.SKIP_REMAINING) {
-                return;
-            }
+    for (let convertor of actionConversionMap) {
+        if (convertor(action, stepResults, getSteps, external, actionConversionMap) === ConvertBehavior.SKIP_REMAINING) {
+            return;
         }
     }
     return;
@@ -43,7 +39,7 @@ export const convertAction: Convertor<DokAction> = (
 export function convertScripts(
         scripts: Script[],
         external: Record<string, any> = DEFAULT_EXTERNALS,
-        actionConversionMap = DEFAULT_CONVERSION_MAP): Record<string, ExecutionStep[]> {
+        actionConversionMap = DEFAULT_CONVERTORS): Record<string, ExecutionStep[]> {
     const scriptMap: Record<string, ExecutionStep[]> = {};
     const getSteps = (name?: string) => name ? scriptMap[name] : [];
     scripts.forEach(script => {
@@ -63,7 +59,7 @@ export function executeScript(
         parameters: ExecutionParameters = {},
         scripts: Script[],
         external: Record<string, any> = DEFAULT_EXTERNALS,
-        actionConversionMap = DEFAULT_CONVERSION_MAP): () => void {
+        actionConversionMap = DEFAULT_CONVERTORS): () => void {
     const context: Context = {
         parameters: [parameters],
         cleanupActions: []

@@ -9,6 +9,9 @@ export const convertConditionProperty: Convertor<DokAction> = (
         results,
         getSteps,
         external = DEFAULT_EXTERNALS) => {
+    if (action.condition === undefined) {
+        return;
+    }
     if (!action.condition) {
         return ConvertBehavior.SKIP_REMAINING;
     }
