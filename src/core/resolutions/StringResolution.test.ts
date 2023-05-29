@@ -1,5 +1,5 @@
 import { Context } from "../context/Context";
-import { calculateString } from "./StringResolution";
+import { calculateString } from "./calculateString";
 
 describe('calculateString', () => {
     const context: Context = {

@@ -579,9 +579,15 @@ var ScriptProcessor = /*#__PURE__*/function () {
 
 exports.DEFAULT_EXTERNALS = DEFAULT_EXTERNALS;
 exports.ScriptProcessor = ScriptProcessor;
+exports.calculateArray = calculateArray;
+exports.calculateEvaluator = calculateEvaluator;
+exports.calculateNumber = calculateNumber;
 exports.calculateResolution = calculateResolution;
 exports.calculateString = calculateString;
 exports.calculateTypedArray = calculateTypedArray;
 exports.execute = execute;
 exports.filterScripts = filterScripts;
+exports.getFormulaEvaluator = getFormulaEvaluator;
+exports.hasFormula = hasFormula;
+exports.isFormula = isFormula;
 //# sourceMappingURL=index.js.map

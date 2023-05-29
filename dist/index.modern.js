@@ -578,5 +578,5 @@ var ScriptProcessor = /*#__PURE__*/function () {
   return ScriptProcessor;
 }();
 
-export { ConvertBehavior, DEFAULT_EXTERNALS, ScriptProcessor, calculateResolution, calculateString, calculateTypedArray, execute, filterScripts };
+export { ConvertBehavior, DEFAULT_EXTERNALS, ScriptProcessor, calculateArray, calculateEvaluator, calculateNumber, calculateResolution, calculateString, calculateTypedArray, execute, filterScripts, getFormulaEvaluator, hasFormula, isFormula };
 //# sourceMappingURL=index.modern.js.map
