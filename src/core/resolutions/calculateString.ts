@@ -1,9 +1,9 @@
 import { Context } from "../context/Context";
 import { ValueOf } from "../types/ValueOf";
-import { StringEnumResolution, StringResolution } from "./StringResolution";
+import { StringResolution } from "./StringResolution";
 import { calculateEvaluator, getFormulaEvaluator, isFormula } from "./calculateEvaluator";
 
-export function calculateString(value: StringResolution | StringEnumResolution<any>, defaultValue = ""): ValueOf<string> {
+export function calculateString<T extends string = string>(value: StringResolution<T>, defaultValue = ""): ValueOf<T | string> {
     if (typeof(value) === "string" && !isFormula(value)) {
         return value;
     }
@@ -16,8 +16,8 @@ export function calculateString(value: StringResolution | StringEnumResolution<a
     }
     const evaluator = getFormulaEvaluator(value);
     return {
-        valueOf(context?: Context): string {
-            return calculateEvaluator<string>(evaluator, context, value, defaultValue);
+        valueOf(context?: Context): T|string {
+            return calculateEvaluator<T|string>(evaluator, context, value, defaultValue);
         }
     };
 

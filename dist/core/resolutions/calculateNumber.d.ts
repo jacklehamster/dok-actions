@@ -1,3 +1,3 @@
 import { ValueOf } from "../types/ValueOf";
-import { NumberEnumResolution, NumberResolution } from "./NumberResolution";
-export declare function calculateNumber(value: NumberResolution | NumberEnumResolution<any>, defaultValue?: number): ValueOf<number>;
+import { NumberResolution } from "./NumberResolution";
+export declare function calculateNumber<T extends number = number>(value: NumberResolution<T>, defaultValue?: number): ValueOf<T | number>;

@@ -1,10 +1,10 @@
 import { ValueOf } from "../types/ValueOf";
 import { Context } from "../context/Context";
 import { calculateEvaluator, getFormulaEvaluator } from "./calculateEvaluator";
-import { NumberEnumResolution, NumberResolution } from "./NumberResolution";
+import { NumberResolution } from "./NumberResolution";
 
 
-export function calculateNumber(value: NumberResolution | NumberEnumResolution<any>, defaultValue = 0): ValueOf<number> {
+export function calculateNumber<T extends number = number>(value: NumberResolution<T>, defaultValue = 0): ValueOf<T|number> {
     if (typeof (value) === "number") {
         return value;
     }
@@ -17,8 +17,8 @@ export function calculateNumber(value: NumberResolution | NumberEnumResolution<a
     }
     const evaluator = getFormulaEvaluator(value);
     return {
-        valueOf(context?: Context): number {
-            return calculateEvaluator<number>(evaluator, context, value, defaultValue);
+        valueOf(context?: Context): T|number {
+            return calculateEvaluator<T|number>(evaluator, context, value, defaultValue);
         }
     };
 }
