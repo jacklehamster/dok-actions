@@ -320,6 +320,9 @@ var convertConditionProperty = function convertConditionProperty(action, results
   if (external === void 0) {
     external = DEFAULT_EXTERNALS;
   }
+  if (action.condition === undefined) {
+    return;
+  }
   if (!action.condition) {
     return ConvertBehavior.SKIP_REMAINING;
   }
@@ -340,6 +343,9 @@ var convertLogProperty = function convertLogProperty(action, results, _, externa
   if (external === void 0) {
     external = DEFAULT_EXTERNALS;
   }
+  if (action.log === undefined) {
+    return;
+  }
   var messages = Array.isArray(action.log) ? action.log : [action.log];
   var resolutions = messages.map(function (m) {
     return calculateResolution(m);
@@ -356,6 +362,9 @@ var _excluded$1 = ["loop"];
 var convertLoopProperty = function convertLoopProperty(action, stepResults, getSteps, external) {
   if (external === void 0) {
     external = DEFAULT_EXTERNALS;
+  }
+  if (action.loop === undefined) {
+    return;
   }
   if (!action.loop) {
     return ConvertBehavior.SKIP_REMAINING;
@@ -379,6 +388,9 @@ var _excluded$2 = ["parameters"];
 var convertParametersProperty = function convertParametersProperty(action, results, getSteps, external) {
   if (external === void 0) {
     external = DEFAULT_EXTERNALS;
+  }
+  if (!action.parameters) {
+    return;
   }
   var parameters = action.parameters,
     subAction = _objectWithoutPropertiesLoose(action, _excluded$2);
@@ -411,46 +423,27 @@ var convertParametersProperty = function convertParametersProperty(action, resul
 };
 
 var convertScriptProperty = function convertScriptProperty(action, results, getSteps) {
+  if (action.script === undefined) {
+    return;
+  }
   var steps = getSteps(action.script);
   results.push(function (context, parameters) {
     return execute(steps, parameters, context);
   });
 };
 
-var DEFAULT_CONVERSION_MAP = [[function (_ref) {
-  var parameters = _ref.parameters;
-  return parameters !== undefined;
-}, convertParametersProperty], [function (_ref2) {
-  var loop = _ref2.loop;
-  return loop !== undefined;
-}, convertLoopProperty], [function (_ref3) {
-  var condition = _ref3.condition;
-  return condition !== undefined;
-}, convertConditionProperty], [function (_ref4) {
-  var log = _ref4.log;
-  return log !== undefined;
-}, convertLogProperty], [function (_ref5) {
-  var script = _ref5.script;
-  return script !== undefined;
-}, convertScriptProperty], [function (_ref6) {
-  var actions = _ref6.actions;
-  return actions !== undefined;
-}, convertActionsProperty]];
+var DEFAULT_CONVERTORS = [convertParametersProperty, convertLoopProperty, convertConditionProperty, convertLogProperty, convertScriptProperty, convertActionsProperty];
 var convertAction = function convertAction(action, stepResults, getSteps, external, actionConversionMap) {
   if (external === void 0) {
     external = DEFAULT_EXTERNALS;
   }
   if (actionConversionMap === void 0) {
-    actionConversionMap = DEFAULT_CONVERSION_MAP;
+    actionConversionMap = DEFAULT_CONVERTORS;
   }
   for (var _iterator = _createForOfIteratorHelperLoose(actionConversionMap), _step; !(_step = _iterator()).done;) {
-    var _step$value = _step.value,
-      predicate = _step$value[0],
-      convertor = _step$value[1];
-    if (predicate(action)) {
-      if (convertor(action, stepResults, getSteps, external, actionConversionMap) === ConvertBehavior.SKIP_REMAINING) {
-        return;
-      }
+    var convertor = _step.value;
+    if (convertor(action, stepResults, getSteps, external, actionConversionMap) === ConvertBehavior.SKIP_REMAINING) {
+      return;
     }
   }
   return;
@@ -460,7 +453,7 @@ function convertScripts(scripts, external, actionConversionMap) {
     external = DEFAULT_EXTERNALS;
   }
   if (actionConversionMap === void 0) {
-    actionConversionMap = DEFAULT_CONVERSION_MAP;
+    actionConversionMap = DEFAULT_CONVERTORS;
   }
   var scriptMap = {};
   var getSteps = function getSteps(name) {
@@ -484,7 +477,7 @@ var ScriptProcessor = /*#__PURE__*/function () {
       external = DEFAULT_EXTERNALS;
     }
     if (actionConversionMap === void 0) {
-      actionConversionMap = DEFAULT_CONVERSION_MAP;
+      actionConversionMap = DEFAULT_CONVERTORS;
     }
     this.scripts = scripts;
     this.scriptMap = convertScripts(this.scripts, external, actionConversionMap);
