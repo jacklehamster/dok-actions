@@ -3,7 +3,7 @@ import { ValueOf } from "../types/ValueOf";
 import { StringResolution } from "./StringResolution";
 import { calculateEvaluator, getFormulaEvaluator, isFormula } from "./calculateEvaluator";
 
-export function calculateString<T extends string = string>(value: StringResolution<T>, defaultValue = ""): ValueOf<T | string> {
+export function calculateString<T extends string = string>(value: StringResolution<T>, defaultValue: T|"" = ""): ValueOf<T|"">|string {
     if (typeof(value) === "string" && !isFormula(value)) {
         return value;
     }
@@ -16,8 +16,8 @@ export function calculateString<T extends string = string>(value: StringResoluti
     }
     const evaluator = getFormulaEvaluator(value);
     return {
-        valueOf(context?: Context): T|string {
-            return calculateEvaluator<T|string>(evaluator, context, value, defaultValue);
+        valueOf(context?: Context): T|"" {
+            return calculateEvaluator<T|"">(evaluator, context, value, defaultValue);
         }
     };
 

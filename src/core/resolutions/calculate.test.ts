@@ -5,7 +5,7 @@ describe('calculate', () => {
     describe('calculateResolution', () => {
         it('should calculate Number resolution', () => {
             const value = calculateResolution("{5 + 1}");
-            expect(value.valueOf()).toEqual(6);
+            expect(value!.valueOf()).toEqual(6);
         });
 
         it('should calculate Number resolution with context', () => {
@@ -13,7 +13,7 @@ describe('calculate', () => {
                 parameters: [{x: 30}],
             };
             const value = calculateResolution("{5 + x}");
-            expect(value.valueOf(context)).toEqual(35);
+            expect(value!.valueOf(context)).toEqual(35);
         });
 
         it('should calculate String resolution', () => {
@@ -21,7 +21,7 @@ describe('calculate', () => {
                 parameters: [{x: "testing"}],
             };
             const value = calculateResolution("{x}");
-            expect(value.valueOf(context)).toEqual("testing");            
+            expect(value!.valueOf(context)).toEqual("testing");            
         });
 
         it('should calculate TypedArray resolution', () => {
@@ -29,7 +29,7 @@ describe('calculate', () => {
                 parameters: [{x: new Float32Array([1, 2, 3])}],
             };
             const value = calculateResolution("{x}");
-            expect(value.valueOf(context)).toEqual(new Float32Array([1, 2, 3]));            
+            expect(value!.valueOf(context)).toEqual(new Float32Array([1, 2, 3]));            
 
         });
     });

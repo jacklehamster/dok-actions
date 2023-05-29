@@ -1,4 +1,4 @@
 import { Context } from "../context/Context";
-export interface ValueOf<T> {
+export declare type ValueOf<T> = {
     valueOf(context?: Context): T;
-}
+};
