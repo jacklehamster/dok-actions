@@ -1,10 +1,10 @@
 import { ValueOf } from "../types/ValueOf";
 import { Context } from "../context/Context";
 import { calculateEvaluator, getFormulaEvaluator } from "./calculateEvaluator";
-import { NumberResolution } from "./NumberResolution";
+import { NumberEnumResolution, NumberResolution } from "./NumberResolution";
 
 
-export function calculateNumber(value: NumberResolution, defaultValue = 0): ValueOf<number> {
+export function calculateNumber(value: NumberResolution | NumberEnumResolution<any>, defaultValue = 0): ValueOf<number> {
     if (typeof (value) === "number") {
         return value;
     }
