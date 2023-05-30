@@ -1,5 +1,5 @@
 import { Context } from "../context/Context";
-import { calculateBoolean } from "./BooleanResolution";
+import { calculateBoolean } from "./calculateBoolean";
 
 describe('calculateBoolean', () => {
     const context: Context = {

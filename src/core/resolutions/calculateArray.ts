@@ -3,7 +3,7 @@ import { ValueOf } from "../types/ValueOf";
 import { ArrayResolution } from "./ArrayResolution";
 import { calculateResolution } from "./calculate";
 import { hasFormula } from "./calculateEvaluator";
-import { SupportedTypes } from "./supportedTypes";
+import { SupportedTypes } from "./SupportedTypes";
 
 export function calculateArray(value: ArrayResolution): ValueOf<SupportedTypes> {
     //  check if we have any resolution to perform

@@ -1,8 +1,8 @@
 import { ConvertBehavior, Convertor, DEFAULT_EXTERNALS } from "./Convertor";
-import { calculateBoolean } from "../resolutions/BooleanResolution";
 import { ExecutionStep, execute } from "../execution/ExecutionStep";
 import { convertAction } from "./convert-action";
 import { DokAction } from "../actions/Action";
+import { calculateBoolean } from "../resolutions/calculateBoolean";
 
 export const convertConditionProperty: Convertor<DokAction> = (
         action,

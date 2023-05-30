@@ -117,6 +117,26 @@ function getFormulaEvaluator(value) {
   return mathEvaluator;
 }
 
+function calculateArray(value) {
+  if (!hasFormula(value)) {
+    if (typeof value === "object") {
+      throw new Error("value can't be an object.");
+    }
+    return value;
+  }
+  var evaluator = value.map(function (resolution) {
+    return calculateResolution(resolution);
+  });
+  return {
+    valueOf: function valueOf(context) {
+      var value = evaluator.map(function (evalItem) {
+        return evalItem.valueOf(context);
+      });
+      return value;
+    }
+  };
+}
+
 function calculateNumber(value, defaultValue) {
   if (defaultValue === void 0) {
     defaultValue = 0;
@@ -183,26 +203,6 @@ function calculateTypedArray(value, ArrayConstructor, defaultNumberValue) {
   };
 }
 
-function calculateArray(value) {
-  if (!hasFormula(value)) {
-    if (typeof value === "object") {
-      throw new Error("value can't be an object.");
-    }
-    return value;
-  }
-  var evaluator = value.map(function (resolution) {
-    return calculateResolution(resolution);
-  });
-  return {
-    valueOf: function valueOf(context) {
-      var value = evaluator.map(function (evalItem) {
-        return evalItem.valueOf(context);
-      });
-      return value;
-    }
-  };
-}
-
 function calculateResolution(value) {
   if (value === undefined) {
     return {
@@ -260,6 +260,28 @@ function calculateString(value, defaultValue) {
   };
 }
 
+function calculateBoolean(value, defaultValue) {
+  if (defaultValue === void 0) {
+    defaultValue = false;
+  }
+  if (typeof value === "boolean" || typeof value === "number") {
+    return !!value;
+  }
+  if (value === undefined) {
+    return {
+      valueOf: function valueOf() {
+        return defaultValue;
+      }
+    };
+  }
+  var evaluator = getFormulaEvaluator(value);
+  return {
+    valueOf: function valueOf(context) {
+      return !!calculateEvaluator(evaluator, context, value, defaultValue);
+    }
+  };
+}
+
 function filterScripts(scripts, filter) {
   return scripts.filter(function (_ref) {
     var _filter$tags;
@@ -292,28 +314,6 @@ var convertActionsProperty = function convertActionsProperty(action, results, ge
     return convertAction(action, results, getSteps, external);
   });
 };
-
-function calculateBoolean(value, defaultValue) {
-  if (defaultValue === void 0) {
-    defaultValue = false;
-  }
-  if (typeof value === "boolean" || typeof value === "number") {
-    return !!value;
-  }
-  if (value === undefined) {
-    return {
-      valueOf: function valueOf() {
-        return defaultValue;
-      }
-    };
-  }
-  var evaluator = getFormulaEvaluator(value);
-  return {
-    valueOf: function valueOf(context) {
-      return !!calculateEvaluator(evaluator, context, value, defaultValue);
-    }
-  };
-}
 
 var _excluded = ["condition"];
 var convertConditionProperty = function convertConditionProperty(action, results, getSteps, external) {
@@ -578,5 +578,5 @@ var ScriptProcessor = /*#__PURE__*/function () {
   return ScriptProcessor;
 }();
 
-export { ConvertBehavior, DEFAULT_EXTERNALS, ScriptProcessor, calculateArray, calculateEvaluator, calculateNumber, calculateResolution, calculateString, calculateTypedArray, execute, filterScripts, getFormulaEvaluator, hasFormula, isFormula };
+export { ConvertBehavior, DEFAULT_EXTERNALS, ScriptProcessor, calculateArray, calculateBoolean, calculateEvaluator, calculateNumber, calculateResolution, calculateString, calculateTypedArray, execute, filterScripts, getFormulaEvaluator, hasFormula, isFormula };
 //# sourceMappingURL=index.modern.js.map

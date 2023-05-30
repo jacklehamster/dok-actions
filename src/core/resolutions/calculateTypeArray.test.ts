@@ -1,5 +1,5 @@
 import { Context } from "../context/Context";
-import { calculateTypedArray } from "./TypedArrayResolution";
+import { calculateTypedArray } from "./calculateTypeArray";
 
 describe('calculateTypedArray', () => {
     const context: Context = {

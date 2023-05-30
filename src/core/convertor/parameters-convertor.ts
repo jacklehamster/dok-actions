@@ -4,7 +4,7 @@ import { calculateResolution } from "../resolutions/calculate";
 import { ValueOf } from "../types/ValueOf";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
 import { convertAction } from "./convert-action";
-import { SupportedTypes } from "../resolutions/supportedTypes";
+import { SupportedTypes } from "../resolutions/SupportedTypes";
 import { ScriptAction } from "../actions/ScriptAction";
 
 export const convertParametersProperty: Convertor<ScriptAction> = (

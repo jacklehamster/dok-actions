@@ -1,5 +1,5 @@
 import { Context } from "../context/Context";
-import { SupportedTypes } from "../resolutions/supportedTypes";
+import { SupportedTypes } from "../resolutions/SupportedTypes";
 
 export type ExecutionParameters = Record<string, SupportedTypes>;
 export type ExecutionStep = (context: Context, parameters: ExecutionParameters) => void;
