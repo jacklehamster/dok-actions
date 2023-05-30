@@ -6,7 +6,7 @@ export interface LoopBehavior {
 }
 export declare class ScriptProcessor {
     scripts: Script[];
-    scriptMap: Record<string, ExecutionStep[]>;
+    scriptMap: Map<Script, ExecutionStep[]>;
     external: Record<string, any>;
     constructor(scripts: Script[], external?: Record<string, any>, actionConversionMap?: ActionConvertorList);
     private createContext;

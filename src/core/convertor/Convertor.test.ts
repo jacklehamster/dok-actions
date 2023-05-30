@@ -84,7 +84,7 @@ describe('convertor', () => {
 
     it('convert script', () => {
         const log = jest.fn();
-        const scriptMap = convertScripts([
+        const scripts = [
             {
                 name: "LogTest",
                 actions: [
@@ -106,12 +106,13 @@ describe('convertor', () => {
                     },
                 ]
             }
-        ],
+        ];
+        const scriptMap = convertScripts(scripts,
         {
             log,
         });
 
-        scriptMap["ScriptTest"].forEach(step => step(context, {}));
+        scriptMap.get(scripts.find(({name}) => name === "ScriptTest")!)!.forEach(step => step(context, {}));
         expect(log).toBeCalledWith("hello", "test");
         expect(log).toBeCalledWith("hello", "world");
     });

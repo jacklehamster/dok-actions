@@ -10,7 +10,7 @@ export interface LoopBehavior {
 
 export class ScriptProcessor {
     scripts: Script[];
-    scriptMap: Record<string, ExecutionStep[]>;
+    scriptMap: Map<Script, ExecutionStep[]>;
     external: Record<string, any>;
 
     constructor(scripts: Script[], external: Record<string, any> = DEFAULT_EXTERNALS, actionConversionMap: ActionConvertorList = DEFAULT_CONVERTORS) {
@@ -40,7 +40,7 @@ export class ScriptProcessor {
     private getSteps(filter: ScriptFilter) {
         const scripts = filterScripts(this.scripts, filter);
         const steps: ExecutionStep[] = [];
-        scripts.forEach(({name}) => this.scriptMap[name].forEach(step => steps.push(step)));
+        scripts.forEach(script => this.scriptMap.get(script)?.forEach(step => steps.push(step)));
         return steps;
     }
 

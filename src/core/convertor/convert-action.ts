@@ -39,14 +39,17 @@ export const convertAction: Convertor<DokAction> = (
 export function convertScripts(
         scripts: Script[],
         external: Record<string, any> = DEFAULT_EXTERNALS,
-        actionConversionMap = DEFAULT_CONVERTORS): Record<string, ExecutionStep[]> {
-    const scriptMap: Record<string, ExecutionStep[]> = {};
-    const getSteps = (name?: string) => name ? scriptMap[name] : [];
+        actionConversionMap = DEFAULT_CONVERTORS): Map<Script, ExecutionStep[]> {
+    const scriptMap: Map<Script, ExecutionStep[]> = new Map();
+    const getSteps = (name?: string) => {
+        const script = scripts.find(script => script.name === name);
+        return script ? scriptMap.get(script) ?? [] : [];
+    };
     scripts.forEach(script => {
-        if (!scriptMap[script.name]) {
-            scriptMap[script.name] = [];
+        if (!scriptMap.has(script)) {
+            scriptMap.set(script, []);
         }
-        const scriptSteps = scriptMap[script.name];
+        const scriptSteps = scriptMap.get(script) ?? [];
         script.actions.forEach(action => {
             convertAction(action, scriptSteps, getSteps, external, actionConversionMap);
         });
@@ -65,7 +68,11 @@ export function executeScript(
         cleanupActions: []
     };
     const scriptMap = convertScripts(scripts, external, actionConversionMap);
-    execute(scriptMap[scriptName], {}, context);
+    const script = scripts.find(({name}) => name === scriptName);
+    const steps = script ? scriptMap.get(script) : [];
+    if (steps?.length) {
+        execute(steps, {}, context);
+    }
     return () => {
         context.cleanupActions!.forEach(action => action());
         context.cleanupActions!.length = 0;

@@ -407,15 +407,20 @@ function convertScripts(scripts, external, actionConversionMap) {
   if (actionConversionMap === void 0) {
     actionConversionMap = DEFAULT_CONVERTORS;
   }
-  var scriptMap = {};
+  var scriptMap = new Map();
   var getSteps = function getSteps(name) {
-    return name ? scriptMap[name] : [];
+    var _scriptMap$get;
+    var script = scripts.find(function (script) {
+      return script.name === name;
+    });
+    return script ? (_scriptMap$get = scriptMap.get(script)) != null ? _scriptMap$get : [] : [];
   };
   scripts.forEach(function (script) {
-    if (!scriptMap[script.name]) {
-      scriptMap[script.name] = [];
+    var _scriptMap$get2;
+    if (!scriptMap.has(script)) {
+      scriptMap.set(script, []);
     }
-    var scriptSteps = scriptMap[script.name];
+    var scriptSteps = (_scriptMap$get2 = scriptMap.get(script)) != null ? _scriptMap$get2 : [];
     script.actions.forEach(function (action) {
       convertAction(action, scriptSteps, getSteps, external, actionConversionMap);
     });
@@ -437,7 +442,14 @@ function executeScript(scriptName, parameters, scripts, external, actionConversi
     cleanupActions: []
   };
   var scriptMap = convertScripts(scripts, external, actionConversionMap);
-  execute(scriptMap[scriptName], {}, context);
+  var script = scripts.find(function (_ref) {
+    var name = _ref.name;
+    return name === scriptName;
+  });
+  var steps = script ? scriptMap.get(script) : [];
+  if (steps !== null && steps !== void 0 && steps.length) {
+    execute(steps, {}, context);
+  }
   return function () {
     context.cleanupActions.forEach(function (action) {
       return action();
@@ -473,9 +485,11 @@ function filterScripts(scripts, filter) {
     var _filter$tags;
     var name = _ref.name,
       tags = _ref.tags;
-    var namesToFilter = !filter.name ? undefined : Array.isArray(filter.name) ? filter.name : [filter.name];
-    if (namesToFilter !== null && namesToFilter !== void 0 && namesToFilter.length && namesToFilter.indexOf(name) < 0) {
-      return false;
+    if (name) {
+      var namesToFilter = !filter.name ? undefined : Array.isArray(filter.name) ? filter.name : [filter.name];
+      if (namesToFilter !== null && namesToFilter !== void 0 && namesToFilter.length && namesToFilter.indexOf(name) < 0) {
+        return false;
+      }
     }
     if (filter.tags && !((_filter$tags = filter.tags) !== null && _filter$tags !== void 0 && _filter$tags.every(function (tag) {
       if (typeof tag === "string") {
@@ -528,9 +542,9 @@ var ScriptProcessor = /*#__PURE__*/function () {
     var _this = this;
     var scripts = filterScripts(this.scripts, filter);
     var steps = [];
-    scripts.forEach(function (_ref) {
-      var name = _ref.name;
-      return _this.scriptMap[name].forEach(function (step) {
+    scripts.forEach(function (script) {
+      var _this$scriptMap$get;
+      return (_this$scriptMap$get = _this.scriptMap.get(script)) === null || _this$scriptMap$get === void 0 ? void 0 : _this$scriptMap$get.forEach(function (step) {
         return steps.push(step);
       });
     });

@@ -4,7 +4,7 @@ import { Resolution } from "../resolutions/Resolution";
 export type Tag = string|[string, string|number|boolean];
 
 export interface Script {
-    name: string;
+    name?: string;
     parameters?: (string|[string, Resolution])[];
     actions: (DokAction|Record<string, any>)[];
     tags?: Tag[];
@@ -17,9 +17,11 @@ export interface ScriptFilter {
 
 export function filterScripts(scripts: Script[], filter: ScriptFilter): Script[] {
     return scripts.filter(({name, tags}) => {
-        const namesToFilter = !filter.name ? undefined : Array.isArray(filter.name) ? filter.name : [filter.name];
-        if (namesToFilter?.length && namesToFilter.indexOf(name) < 0) {
-            return false;
+        if (name) {
+            const namesToFilter = !filter.name ? undefined : Array.isArray(filter.name) ? filter.name : [filter.name];
+            if (namesToFilter?.length && namesToFilter.indexOf(name) < 0) {
+                return false;
+            }    
         }
         if (filter.tags && !filter.tags?.every(tag => {
             if (typeof(tag) === "string") {
