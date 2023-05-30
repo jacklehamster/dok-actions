@@ -75,6 +75,13 @@ function execute(steps, parameters, context) {
   }
 }
 
+var convertActionsProperty = function convertActionsProperty(action, results, getSteps, external) {
+  var _action$actions;
+  (_action$actions = action.actions) === null || _action$actions === void 0 ? void 0 : _action$actions.forEach(function (action) {
+    return convertAction(action, results, getSteps, external);
+  });
+};
+
 function hasFormula(resolution) {
   if (isFormula(resolution)) {
     return true;
@@ -115,6 +122,52 @@ function getFormulaEvaluator(value) {
   var mathEvaluator = math.parse(formula.substring(1, formula.length - 1)).compile();
   return mathEvaluator;
 }
+
+function calculateBoolean(value, defaultValue) {
+  if (defaultValue === void 0) {
+    defaultValue = false;
+  }
+  if (typeof value === "boolean" || typeof value === "number") {
+    return !!value;
+  }
+  if (value === undefined) {
+    return {
+      valueOf: function valueOf() {
+        return defaultValue;
+      }
+    };
+  }
+  var evaluator = getFormulaEvaluator(value);
+  return {
+    valueOf: function valueOf(context) {
+      return !!calculateEvaluator(evaluator, context, value, defaultValue);
+    }
+  };
+}
+
+var _excluded = ["condition"];
+var convertConditionProperty = function convertConditionProperty(action, results, getSteps, external) {
+  if (external === void 0) {
+    external = DEFAULT_EXTERNALS;
+  }
+  if (action.condition === undefined) {
+    return;
+  }
+  if (!action.condition) {
+    return exports.ConvertBehavior.SKIP_REMAINING;
+  }
+  var condition = action.condition,
+    subAction = _objectWithoutPropertiesLoose(action, _excluded);
+  var conditionResolution = calculateBoolean(condition);
+  var subStepResults = [];
+  convertAction(subAction, subStepResults, getSteps, external);
+  results.push(function (context, parameters) {
+    if (conditionResolution.valueOf(context)) {
+      execute(subStepResults, parameters, context);
+    }
+  });
+  return exports.ConvertBehavior.SKIP_REMAINING;
+};
 
 function calculateArray(value) {
   if (!hasFormula(value)) {
@@ -236,107 +289,6 @@ function calculateResolution(value) {
     }
   };
 }
-
-function calculateString(value, defaultValue) {
-  if (defaultValue === void 0) {
-    defaultValue = "";
-  }
-  if (typeof value === "string" && !isFormula(value)) {
-    return value;
-  }
-  if (value === undefined) {
-    return {
-      valueOf: function valueOf() {
-        return defaultValue;
-      }
-    };
-  }
-  var evaluator = getFormulaEvaluator(value);
-  return {
-    valueOf: function valueOf(context) {
-      return calculateEvaluator(evaluator, context, value, defaultValue);
-    }
-  };
-}
-
-function calculateBoolean(value, defaultValue) {
-  if (defaultValue === void 0) {
-    defaultValue = false;
-  }
-  if (typeof value === "boolean" || typeof value === "number") {
-    return !!value;
-  }
-  if (value === undefined) {
-    return {
-      valueOf: function valueOf() {
-        return defaultValue;
-      }
-    };
-  }
-  var evaluator = getFormulaEvaluator(value);
-  return {
-    valueOf: function valueOf(context) {
-      return !!calculateEvaluator(evaluator, context, value, defaultValue);
-    }
-  };
-}
-
-function filterScripts(scripts, filter) {
-  return scripts.filter(function (_ref) {
-    var _filter$tags;
-    var name = _ref.name,
-      tags = _ref.tags;
-    var namesToFilter = !filter.name ? undefined : Array.isArray(filter.name) ? filter.name : [filter.name];
-    if (namesToFilter !== null && namesToFilter !== void 0 && namesToFilter.length && namesToFilter.indexOf(name) < 0) {
-      return false;
-    }
-    if (filter.tags && !((_filter$tags = filter.tags) !== null && _filter$tags !== void 0 && _filter$tags.every(function (tag) {
-      if (typeof tag === "string") {
-        return tags === null || tags === void 0 ? void 0 : tags.some(function (t) {
-          return t === tag || Array.isArray(t) && t[0] === tag;
-        });
-      } else {
-        return tags === null || tags === void 0 ? void 0 : tags.some(function (t) {
-          return Array.isArray(t) && t[0] === tag[0] && t[1] === tag[1];
-        });
-      }
-    }))) {
-      return false;
-    }
-    return true;
-  });
-}
-
-var convertActionsProperty = function convertActionsProperty(action, results, getSteps, external) {
-  var _action$actions;
-  (_action$actions = action.actions) === null || _action$actions === void 0 ? void 0 : _action$actions.forEach(function (action) {
-    return convertAction(action, results, getSteps, external);
-  });
-};
-
-var _excluded = ["condition"];
-var convertConditionProperty = function convertConditionProperty(action, results, getSteps, external) {
-  if (external === void 0) {
-    external = DEFAULT_EXTERNALS;
-  }
-  if (action.condition === undefined) {
-    return;
-  }
-  if (!action.condition) {
-    return exports.ConvertBehavior.SKIP_REMAINING;
-  }
-  var condition = action.condition,
-    subAction = _objectWithoutPropertiesLoose(action, _excluded);
-  var conditionResolution = calculateBoolean(condition);
-  var subStepResults = [];
-  convertAction(subAction, subStepResults, getSteps, external);
-  results.push(function (context, parameters) {
-    if (conditionResolution.valueOf(context)) {
-      execute(subStepResults, parameters, context);
-    }
-  });
-  return exports.ConvertBehavior.SKIP_REMAINING;
-};
 
 var convertLogProperty = function convertLogProperty(action, results, _, external) {
   if (external === void 0) {
@@ -469,6 +421,77 @@ function convertScripts(scripts, external, actionConversionMap) {
   });
   return scriptMap;
 }
+function executeScript(scriptName, parameters, scripts, external, actionConversionMap) {
+  if (parameters === void 0) {
+    parameters = {};
+  }
+  if (external === void 0) {
+    external = DEFAULT_EXTERNALS;
+  }
+  if (actionConversionMap === void 0) {
+    actionConversionMap = DEFAULT_CONVERTORS;
+  }
+  var context = {
+    parameters: [parameters],
+    cleanupActions: []
+  };
+  var scriptMap = convertScripts(scripts, external, actionConversionMap);
+  execute(scriptMap[scriptName], {}, context);
+  return function () {
+    context.cleanupActions.forEach(function (action) {
+      return action();
+    });
+    context.cleanupActions.length = 0;
+  };
+}
+
+function calculateString(value, defaultValue) {
+  if (defaultValue === void 0) {
+    defaultValue = "";
+  }
+  if (typeof value === "string" && !isFormula(value)) {
+    return value;
+  }
+  if (value === undefined) {
+    return {
+      valueOf: function valueOf() {
+        return defaultValue;
+      }
+    };
+  }
+  var evaluator = getFormulaEvaluator(value);
+  return {
+    valueOf: function valueOf(context) {
+      return calculateEvaluator(evaluator, context, value, defaultValue);
+    }
+  };
+}
+
+function filterScripts(scripts, filter) {
+  return scripts.filter(function (_ref) {
+    var _filter$tags;
+    var name = _ref.name,
+      tags = _ref.tags;
+    var namesToFilter = !filter.name ? undefined : Array.isArray(filter.name) ? filter.name : [filter.name];
+    if (namesToFilter !== null && namesToFilter !== void 0 && namesToFilter.length && namesToFilter.indexOf(name) < 0) {
+      return false;
+    }
+    if (filter.tags && !((_filter$tags = filter.tags) !== null && _filter$tags !== void 0 && _filter$tags.every(function (tag) {
+      if (typeof tag === "string") {
+        return tags === null || tags === void 0 ? void 0 : tags.some(function (t) {
+          return t === tag || Array.isArray(t) && t[0] === tag;
+        });
+      } else {
+        return tags === null || tags === void 0 ? void 0 : tags.some(function (t) {
+          return Array.isArray(t) && t[0] === tag[0] && t[1] === tag[1];
+        });
+      }
+    }))) {
+      return false;
+    }
+    return true;
+  });
+}
 
 var ScriptProcessor = /*#__PURE__*/function () {
   function ScriptProcessor(scripts, external, actionConversionMap) {
@@ -577,6 +600,7 @@ var ScriptProcessor = /*#__PURE__*/function () {
   return ScriptProcessor;
 }();
 
+exports.DEFAULT_CONVERTORS = DEFAULT_CONVERTORS;
 exports.DEFAULT_EXTERNALS = DEFAULT_EXTERNALS;
 exports.ScriptProcessor = ScriptProcessor;
 exports.calculateArray = calculateArray;
@@ -586,7 +610,10 @@ exports.calculateNumber = calculateNumber;
 exports.calculateResolution = calculateResolution;
 exports.calculateString = calculateString;
 exports.calculateTypedArray = calculateTypedArray;
+exports.convertAction = convertAction;
+exports.convertScripts = convertScripts;
 exports.execute = execute;
+exports.executeScript = executeScript;
 exports.filterScripts = filterScripts;
 exports.getFormulaEvaluator = getFormulaEvaluator;
 exports.hasFormula = hasFormula;

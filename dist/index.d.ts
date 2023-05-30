@@ -2,6 +2,7 @@ export * from "./core/actions/Action";
 export * from "./core/actions/ScriptAction";
 export * from "./core/context/Context";
 export * from "./core/convertor/Convertor";
+export * from "./core/convertor/convert-action";
 export * from "./core/execution/ExecutionStep";
 export * from "./core/resolutions/calculate";
 export * from "./core/resolutions/calculateNumber";
