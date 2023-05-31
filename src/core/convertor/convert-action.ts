@@ -1,6 +1,6 @@
 import { Context } from "../context/Context";
-import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
-import { Script } from "../scripts/Script";
+import { ExecutionParameters, ExecutionStep, GetSteps, execute } from "../execution/ExecutionStep";
+import { Script, ScriptFilter, filterScripts } from "../scripts/Script";
 import { ConvertBehavior, Convertor, DEFAULT_EXTERNALS } from "./Convertor";
 import { convertActionsProperty } from "./actions-convertor";
 import { convertConditionProperty } from "./condition-convertor";
@@ -23,7 +23,7 @@ export const DEFAULT_CONVERTORS: ActionConvertorList = [
 export function convertAction<T>(
         action: T,
         stepResults: ExecutionStep[],
-        getSteps: (name?: string) => ExecutionStep[],
+        getSteps: GetSteps,
         external: Record<string, any> = DEFAULT_EXTERNALS,
         actionConversionMap: ActionConvertorList): ConvertBehavior | undefined {
     for (let convertor of actionConversionMap) {
@@ -39,9 +39,11 @@ export function convertScripts<T>(
         external: Record<string, any> = DEFAULT_EXTERNALS,
         actionConversionMap = DEFAULT_CONVERTORS): Map<Script<T>, ExecutionStep[]> {
     const scriptMap: Map<Script<T>, ExecutionStep[]> = new Map();
-    const getSteps = (name?: string) => {
-        const script = scripts.find(script => script.name === name);
-        return script ? scriptMap.get(script) ?? [] : [];
+    const getSteps = (filter: ScriptFilter) => {
+        const filteredScripts = filterScripts(scripts, filter);
+        const steps: ExecutionStep[] = [];
+        filteredScripts.forEach(script => steps.push(...(scriptMap.get(script)??[])));
+        return steps;
     };
     scripts.forEach(script => {
         if (!scriptMap.has(script)) {

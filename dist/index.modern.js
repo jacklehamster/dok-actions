@@ -76,6 +76,34 @@ function execute(steps, parameters, context) {
   }
 }
 
+function filterScripts(scripts, filter) {
+  return scripts.filter(function (_ref) {
+    var _filter$tags;
+    var name = _ref.name,
+      tags = _ref.tags;
+    if (name) {
+      var namesToFilter = !filter.name ? undefined : Array.isArray(filter.name) ? filter.name : [filter.name];
+      if (namesToFilter !== null && namesToFilter !== void 0 && namesToFilter.length && namesToFilter.indexOf(name) < 0) {
+        return false;
+      }
+    }
+    if (filter.tags && !((_filter$tags = filter.tags) !== null && _filter$tags !== void 0 && _filter$tags.every(function (tag) {
+      if (typeof tag === "string") {
+        return tags === null || tags === void 0 ? void 0 : tags.some(function (t) {
+          return t === tag || Array.isArray(t) && t[0] === tag;
+        });
+      } else {
+        return tags === null || tags === void 0 ? void 0 : tags.some(function (t) {
+          return Array.isArray(t) && t[0] === tag[0] && t[1] === tag[1];
+        });
+      }
+    }))) {
+      return false;
+    }
+    return true;
+  });
+}
+
 var convertActionsProperty = function convertActionsProperty(action, results, getSteps, external, actionConvertorMap) {
   var _action$actions;
   (_action$actions = action.actions) === null || _action$actions === void 0 ? void 0 : _action$actions.forEach(function (action) {
@@ -382,10 +410,14 @@ var convertParametersProperty = function convertParametersProperty(action, resul
 };
 
 var convertScriptProperty = function convertScriptProperty(action, results, getSteps) {
-  if (action.script === undefined) {
+  var _action$scriptTags;
+  if (!action.script || (_action$scriptTags = action.scriptTags) !== null && _action$scriptTags !== void 0 && _action$scriptTags.length) {
     return;
   }
-  var steps = getSteps(action.script);
+  var steps = getSteps({
+    name: action.script,
+    tags: action.scriptTags
+  });
   results.push(function (context, parameters) {
     return execute(steps, parameters, context);
   });
@@ -412,12 +444,14 @@ function convertScripts(scripts, external, actionConversionMap) {
     actionConversionMap = DEFAULT_CONVERTORS;
   }
   var scriptMap = new Map();
-  var getSteps = function getSteps(name) {
-    var _scriptMap$get;
-    var script = scripts.find(function (script) {
-      return script.name === name;
+  var getSteps = function getSteps(filter) {
+    var filteredScripts = filterScripts(scripts, filter);
+    var steps = [];
+    filteredScripts.forEach(function (script) {
+      var _scriptMap$get;
+      return steps.push.apply(steps, (_scriptMap$get = scriptMap.get(script)) != null ? _scriptMap$get : []);
     });
-    return script ? (_scriptMap$get = scriptMap.get(script)) != null ? _scriptMap$get : [] : [];
+    return steps;
   };
   scripts.forEach(function (script) {
     var _scriptMap$get2;
@@ -482,34 +516,6 @@ function calculateString(value, defaultValue) {
       return calculateEvaluator(evaluator, context, value, defaultValue);
     }
   };
-}
-
-function filterScripts(scripts, filter) {
-  return scripts.filter(function (_ref) {
-    var _filter$tags;
-    var name = _ref.name,
-      tags = _ref.tags;
-    if (name) {
-      var namesToFilter = !filter.name ? undefined : Array.isArray(filter.name) ? filter.name : [filter.name];
-      if (namesToFilter !== null && namesToFilter !== void 0 && namesToFilter.length && namesToFilter.indexOf(name) < 0) {
-        return false;
-      }
-    }
-    if (filter.tags && !((_filter$tags = filter.tags) !== null && _filter$tags !== void 0 && _filter$tags.every(function (tag) {
-      if (typeof tag === "string") {
-        return tags === null || tags === void 0 ? void 0 : tags.some(function (t) {
-          return t === tag || Array.isArray(t) && t[0] === tag;
-        });
-      } else {
-        return tags === null || tags === void 0 ? void 0 : tags.some(function (t) {
-          return Array.isArray(t) && t[0] === tag[0] && t[1] === tag[1];
-        });
-      }
-    }))) {
-      return false;
-    }
-    return true;
-  });
 }
 
 var ScriptProcessor = /*#__PURE__*/function () {

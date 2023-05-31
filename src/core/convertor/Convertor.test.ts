@@ -30,7 +30,7 @@ describe('convertor', () => {
         const steps: ExecutionStep[] = [];
         convertAction(action, steps, getSteps, DEFAULT_EXTERNALS, DEFAULT_CONVERTORS);
 
-        expect(getSteps).toBeCalledWith("myScript");
+        expect(getSteps).toBeCalledWith({name: "myScript"});
         assert(steps.length);
         execute(steps, {x: 5}, context);
         expect(mockStep).toBeCalledWith(context, { x: 3 });
@@ -51,7 +51,7 @@ describe('convertor', () => {
         const steps: ExecutionStep[] = [];
         convertAction(action, steps, getSteps, DEFAULT_EXTERNALS, DEFAULT_CONVERTORS)
 
-        expect(getSteps).toBeCalledWith("myScript");
+        expect(getSteps).toBeCalledWith({name: "myScript"});
         assert(steps.length);
         execute(steps, {x: 5}, context);
         expect(mockStep).toBeCalledWith(context, { x: 5 });
