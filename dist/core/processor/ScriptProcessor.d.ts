@@ -4,11 +4,11 @@ import { Script, Tag } from "../scripts/Script";
 export interface LoopBehavior {
     cleanupAfterLoop?: boolean;
 }
-export declare class ScriptProcessor {
-    scripts: Script[];
-    scriptMap: Map<Script, ExecutionStep[]>;
+export declare class ScriptProcessor<T> {
+    scripts: Script<T>[];
+    scriptMap: Map<Script<T>, ExecutionStep[]>;
     external: Record<string, any>;
-    constructor(scripts: Script[], external?: Record<string, any>, actionConversionMap?: ActionConvertorList);
+    constructor(scripts: Script<T>[], external?: Record<string, any>, actionConversionMap?: ActionConvertorList);
     private createContext;
     private createLoopCleanup;
     private getSteps;

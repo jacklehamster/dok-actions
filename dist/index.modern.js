@@ -76,10 +76,10 @@ function execute(steps, parameters, context) {
   }
 }
 
-var convertActionsProperty = function convertActionsProperty(action, results, getSteps, external) {
+var convertActionsProperty = function convertActionsProperty(action, results, getSteps, external, actionConvertorMap) {
   var _action$actions;
   (_action$actions = action.actions) === null || _action$actions === void 0 ? void 0 : _action$actions.forEach(function (action) {
-    return convertAction(action, results, getSteps, external);
+    return convertAction(action, results, getSteps, external, actionConvertorMap);
   });
 };
 
@@ -147,7 +147,7 @@ function calculateBoolean(value, defaultValue) {
 }
 
 var _excluded = ["condition"];
-var convertConditionProperty = function convertConditionProperty(action, results, getSteps, external) {
+var convertConditionProperty = function convertConditionProperty(action, results, getSteps, external, actionConversionMap) {
   if (external === void 0) {
     external = DEFAULT_EXTERNALS;
   }
@@ -161,7 +161,7 @@ var convertConditionProperty = function convertConditionProperty(action, results
     subAction = _objectWithoutPropertiesLoose(action, _excluded);
   var conditionResolution = calculateBoolean(condition);
   var subStepResults = [];
-  convertAction(subAction, subStepResults, getSteps, external);
+  convertAction(subAction, subStepResults, getSteps, external, actionConversionMap);
   results.push(function (context, parameters) {
     if (conditionResolution.valueOf(context)) {
       execute(subStepResults, parameters, context);
@@ -274,7 +274,7 @@ function calculateResolution(value) {
   if (value instanceof Float32Array || value instanceof Int8Array || value instanceof Uint8Array || value instanceof Int16Array || value instanceof Uint16Array || value instanceof Int32Array || value instanceof Uint32Array) {
     return value;
   }
-  if (typeof value === "number") {
+  if (typeof value === "number" || typeof value === "boolean") {
     return value;
   }
   if (Array.isArray(value)) {
@@ -286,9 +286,6 @@ function calculateResolution(value) {
   }
   if (typeof value === "string" && (value.charAt(0) !== "{" || value.charAt(value.length - 1) !== "}")) {
     return value;
-  }
-  if (Array.isArray(value)) {
-    return calculateArray(value);
   }
   var evaluator = getFormulaEvaluator(value);
   return {
@@ -318,9 +315,12 @@ var convertLogProperty = function convertLogProperty(action, results, _, externa
 };
 
 var _excluded$1 = ["loop"];
-var convertLoopProperty = function convertLoopProperty(action, stepResults, getSteps, external) {
+var convertLoopProperty = function convertLoopProperty(action, stepResults, getSteps, external, actionConversionMap) {
   if (external === void 0) {
     external = DEFAULT_EXTERNALS;
+  }
+  if (actionConversionMap === void 0) {
+    actionConversionMap = DEFAULT_CONVERTORS;
   }
   if (action.loop === undefined) {
     return;
@@ -332,7 +332,7 @@ var convertLoopProperty = function convertLoopProperty(action, stepResults, getS
     subAction = _objectWithoutPropertiesLoose(action, _excluded$1);
   var loopResolution = calculateNumber(loop, 0);
   var subStepResults = [];
-  convertAction(subAction, subStepResults, getSteps, external);
+  convertAction(subAction, subStepResults, getSteps, external, actionConversionMap);
   stepResults.push(function (context, parameters) {
     var numLoops = loopResolution.valueOf(context);
     for (var i = 0; i < numLoops; i++) {
@@ -344,7 +344,7 @@ var convertLoopProperty = function convertLoopProperty(action, stepResults, getS
 };
 
 var _excluded$2 = ["parameters"];
-var convertParametersProperty = function convertParametersProperty(action, results, getSteps, external) {
+var convertParametersProperty = function convertParametersProperty(action, results, getSteps, external, actionConversionMap) {
   if (external === void 0) {
     external = DEFAULT_EXTERNALS;
   }
@@ -360,7 +360,7 @@ var convertParametersProperty = function convertParametersProperty(action, resul
     return [key, calculateResolution(resolution)];
   });
   var subStepResults = [];
-  convertAction(subAction, subStepResults, getSteps, external);
+  convertAction(subAction, subStepResults, getSteps, external, actionConversionMap);
   results.push(function (context, parameters) {
     var _context$objectPool$p, _context$objectPool, _context$objectPool2;
     var paramValues = (_context$objectPool$p = (_context$objectPool = context.objectPool) === null || _context$objectPool === void 0 ? void 0 : _context$objectPool.pop()) != null ? _context$objectPool$p : {};
@@ -392,12 +392,9 @@ var convertScriptProperty = function convertScriptProperty(action, results, getS
 };
 
 var DEFAULT_CONVERTORS = [convertParametersProperty, convertLoopProperty, convertConditionProperty, convertLogProperty, convertScriptProperty, convertActionsProperty];
-var convertAction = function convertAction(action, stepResults, getSteps, external, actionConversionMap) {
+function convertAction(action, stepResults, getSteps, external, actionConversionMap) {
   if (external === void 0) {
     external = DEFAULT_EXTERNALS;
-  }
-  if (actionConversionMap === void 0) {
-    actionConversionMap = DEFAULT_CONVERTORS;
   }
   for (var _iterator = _createForOfIteratorHelperLoose(actionConversionMap), _step; !(_step = _iterator()).done;) {
     var convertor = _step.value;
@@ -406,7 +403,7 @@ var convertAction = function convertAction(action, stepResults, getSteps, extern
     }
   }
   return;
-};
+}
 function convertScripts(scripts, external, actionConversionMap) {
   if (external === void 0) {
     external = DEFAULT_EXTERNALS;

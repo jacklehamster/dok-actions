@@ -7,6 +7,7 @@ import { DEFAULT_CONVERTORS, convertAction, convertScripts, executeScript } from
 import { Resolution } from "../resolutions/Resolution";
 import { calculateResolution } from "../resolutions/calculate";
 import { DEFAULT_EXTERNALS } from "./Convertor";
+import { DokAction } from "../actions/Action";
 
 describe('convertor', () => {
     const getSteps = jest.fn();
@@ -108,7 +109,7 @@ describe('convertor', () => {
                 ]
             }
         ];
-        const scriptMap = convertScripts(scripts,
+        const scriptMap = convertScripts<DokAction>(scripts,
         {
             log,
         });

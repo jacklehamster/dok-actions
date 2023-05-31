@@ -1,4 +1,3 @@
-import { DokAction } from "../actions/Action";
 import { Context } from "../context/Context";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
 import { Script } from "../scripts/Script";
@@ -10,7 +9,7 @@ import { convertLoopProperty } from "./loop-convertor";
 import { convertParametersProperty } from "./parameters-convertor";
 import { convertScriptProperty } from "./script-convertor";
 
-export type ActionConvertorList = Convertor<Record<string, any>>[];
+export type ActionConvertorList = Convertor<any>[];
 
 export const DEFAULT_CONVERTORS: ActionConvertorList = [
     convertParametersProperty,
@@ -21,26 +20,25 @@ export const DEFAULT_CONVERTORS: ActionConvertorList = [
     convertActionsProperty,
 ];
 
-export const convertAction: Convertor<DokAction> = (
-        action,
+export function convertAction<T>(
+        action: T,
         stepResults: ExecutionStep[],
-        getSteps,
-        external = DEFAULT_EXTERNALS,
-        actionConversionMap: ActionConvertorList): ConvertBehavior | undefined => {
-
+        getSteps: (name?: string) => ExecutionStep[],
+        external: Record<string, any> = DEFAULT_EXTERNALS,
+        actionConversionMap: ActionConvertorList): ConvertBehavior | undefined {
     for (let convertor of actionConversionMap) {
         if (convertor(action, stepResults, getSteps, external, actionConversionMap) === ConvertBehavior.SKIP_REMAINING) {
             return;
         }
     }
-    return;
+    return;    
 }
 
-export function convertScripts(
-        scripts: Script[],
+export function convertScripts<T>(
+        scripts: Script<T>[],
         external: Record<string, any> = DEFAULT_EXTERNALS,
-        actionConversionMap = DEFAULT_CONVERTORS): Map<Script, ExecutionStep[]> {
-    const scriptMap: Map<Script, ExecutionStep[]> = new Map();
+        actionConversionMap = DEFAULT_CONVERTORS): Map<Script<T>, ExecutionStep[]> {
+    const scriptMap: Map<Script<T>, ExecutionStep[]> = new Map();
     const getSteps = (name?: string) => {
         const script = scripts.find(script => script.name === name);
         return script ? scriptMap.get(script) ?? [] : [];
@@ -57,10 +55,10 @@ export function convertScripts(
     return scriptMap;
 }
 
-export function executeScript(
+export function executeScript<T>(
         scriptName: string,
         parameters: ExecutionParameters = {},
-        scripts: Script[],
+        scripts: Script<T>[],
         external: Record<string, any> = DEFAULT_EXTERNALS,
         actionConversionMap = DEFAULT_CONVERTORS): () => void {
     const context: Context = {

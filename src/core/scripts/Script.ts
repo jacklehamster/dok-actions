@@ -1,12 +1,11 @@
-import { DokAction } from "../actions/Action";
 import { Resolution } from "../resolutions/Resolution";
 
 export type Tag = string|[string, string|number|boolean];
 
-export interface Script {
+export interface Script<T> {
     name?: string;
     parameters?: (string|[string, Resolution])[];
-    actions: (DokAction|Record<string, any>)[];
+    actions: T[];
     tags?: Tag[];
 }
 
@@ -15,7 +14,7 @@ export interface ScriptFilter {
     tags?: Tag[];
 }
 
-export function filterScripts(scripts: Script[], filter: ScriptFilter): Script[] {
+export function filterScripts<T>(scripts: Script<T>[], filter: ScriptFilter): Script<T>[] {
     return scripts.filter(({name, tags}) => {
         if (name) {
             const namesToFilter = !filter.name ? undefined : Array.isArray(filter.name) ? filter.name : [filter.name];

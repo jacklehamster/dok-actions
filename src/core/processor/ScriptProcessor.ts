@@ -8,12 +8,12 @@ export interface LoopBehavior {
     cleanupAfterLoop?: boolean;
 }
 
-export class ScriptProcessor {
-    scripts: Script[];
-    scriptMap: Map<Script, ExecutionStep[]>;
+export class ScriptProcessor<T> {
+    scripts: Script<T>[];
+    scriptMap: Map<Script<T>, ExecutionStep[]>;
     external: Record<string, any>;
 
-    constructor(scripts: Script[], external: Record<string, any> = DEFAULT_EXTERNALS, actionConversionMap: ActionConvertorList = DEFAULT_CONVERTORS) {
+    constructor(scripts: Script<T>[], external: Record<string, any> = DEFAULT_EXTERNALS, actionConversionMap: ActionConvertorList = DEFAULT_CONVERTORS) {
         this.scripts = scripts;
         this.scriptMap = convertScripts(this.scripts, external, actionConversionMap);
         this.external = external;

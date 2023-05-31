@@ -1,7 +1,8 @@
+import { DokAction } from "../actions/Action";
 import { Script, filterScripts, } from "./Script";
 
 describe('Script', () => {
-    const scripts: Script[] = [
+    const scripts: Script<DokAction>[] = [
         {
             name: "script1",
             actions: [],
