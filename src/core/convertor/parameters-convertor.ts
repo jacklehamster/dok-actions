@@ -11,7 +11,8 @@ export const convertParametersProperty: Convertor<ScriptAction> = (
         action,
         results,
         getSteps,
-        external = DEFAULT_EXTERNALS) => {
+        external = DEFAULT_EXTERNALS,
+        actionConversionMap) => {
     if (!action.parameters) {
         return;
     }
@@ -22,9 +23,10 @@ export const convertParametersProperty: Convertor<ScriptAction> = (
         .map(([key, resolution]) => [key, calculateResolution(resolution)]);
 
     const subStepResults: ExecutionStep[] = [];
-    convertAction(subAction, subStepResults, getSteps, external);
+    convertAction(subAction, subStepResults, getSteps, external, actionConversionMap);
 
     results.push((context, parameters) => {
+
         const paramValues: ExecutionParameters = context.objectPool?.pop() ?? {};
         for (let k in parameters) {
             paramValues[k] = parameters[k];

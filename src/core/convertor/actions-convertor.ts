@@ -6,7 +6,8 @@ export const convertActionsProperty: Convertor<ActionsAction> = (
         action,
         results,
         getSteps,
-        external) => {
-    action.actions?.forEach(action => convertAction(action, results, getSteps, external));
+        external,
+        actionConvertorMap) => {
+    action.actions?.forEach(action => convertAction(action, results, getSteps, external, actionConvertorMap));
 }
 

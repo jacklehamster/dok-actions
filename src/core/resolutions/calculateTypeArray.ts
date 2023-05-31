@@ -33,12 +33,20 @@ export function calculateTypedArray(value: TypedArrayResolution, ArrayConstructo
     let bufferArray: TypedArray;
     return {
         valueOf(context?: Context): TypedArray {
-            const value = calculateEvaluator<TypedArray | undefined>(evaluator, context, formula, undefined);
+            const value = calculateEvaluator<TypedArray | number[] | undefined>(evaluator, context, formula, undefined);
             if (value instanceof Float32Array || value instanceof Int8Array || value instanceof Uint8Array
                 || value instanceof Int16Array || value instanceof Uint16Array
                 || value instanceof Int32Array || value instanceof Uint32Array) {
                 return value;
             }
+            if (Array.isArray(value)) {
+                if (!bufferArray) {
+                    bufferArray = new ArrayConstructor(value.length);
+                }
+                bufferArray.set(value);
+                return bufferArray;
+            }
+        
             if (typeof(value) === "number") {
                 if (!bufferArray) {
                     bufferArray = new ArrayConstructor(value / ArrayConstructor.BYTES_PER_ELEMENT);

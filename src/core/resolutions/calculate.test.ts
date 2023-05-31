@@ -30,7 +30,14 @@ describe('calculate', () => {
             };
             const value = calculateResolution("{x}");
             expect(value!.valueOf(context)).toEqual(new Float32Array([1, 2, 3]));            
+        });
 
+        it('should calculate TypedArray resolution from array', () => {
+            const context: Context = {
+                parameters: [{x: [1, 2, 3]}],
+            };
+            const value = calculateResolution("{x}");
+            expect(value!.valueOf(context)).toEqual([1, 2, 3]);
         });
     });
 })

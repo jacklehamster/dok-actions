@@ -6,7 +6,7 @@ export enum ConvertBehavior {
     SKIP_REMAINING,
 }
 
-export type Convertor<T> = (action: T, results: ExecutionStep[], getSteps: (name?: string) => ExecutionStep[], external?: Record<string, any>, actionConversionMap?: ActionConvertorList) => ConvertBehavior | void;
+export type Convertor<T> = (action: T, results: ExecutionStep[], getSteps: (name?: string) => ExecutionStep[], external: Record<string, any>, actionConversionMap: ActionConvertorList) => ConvertBehavior | void;
 
 export const DEFAULT_EXTERNALS = {
     log: console.log,

@@ -8,7 +8,8 @@ export const convertConditionProperty: Convertor<DokAction> = (
         action,
         results,
         getSteps,
-        external = DEFAULT_EXTERNALS) => {
+        external = DEFAULT_EXTERNALS,
+        actionConversionMap) => {
     if (action.condition === undefined) {
         return;
     }
@@ -18,7 +19,7 @@ export const convertConditionProperty: Convertor<DokAction> = (
     const { condition, ...subAction } = action;
     const conditionResolution = calculateBoolean(condition);
     const subStepResults: ExecutionStep[] = [];
-    convertAction(subAction, subStepResults, getSteps, external);
+    convertAction(subAction, subStepResults, getSteps, external, actionConversionMap);
     results.push((context, parameters) => {
         if (conditionResolution.valueOf(context)) {
             execute(subStepResults, parameters, context);

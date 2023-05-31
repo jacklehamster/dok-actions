@@ -20,7 +20,7 @@ export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> 
         || value instanceof Int32Array || value instanceof Uint32Array) {
         return value;
     }
-    if (typeof(value) === "number") {
+    if (typeof(value) === "number" || typeof(value) === "boolean") {
         return value;
     }
     if (Array.isArray(value)) {
@@ -32,9 +32,6 @@ export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> 
     }
     if (typeof(value) === "string" && (value.charAt(0) !== "{" || value.charAt(value.length-1) !== "}")) {
         return value;
-    }
-    if (Array.isArray(value)) {
-        return calculateArray(value);
     }
     const evaluator = getFormulaEvaluator(value);
     return {

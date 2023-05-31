@@ -26,7 +26,7 @@ export const convertAction: Convertor<DokAction> = (
         stepResults: ExecutionStep[],
         getSteps,
         external = DEFAULT_EXTERNALS,
-        actionConversionMap = DEFAULT_CONVERTORS): ConvertBehavior | undefined => {
+        actionConversionMap: ActionConvertorList): ConvertBehavior | undefined => {
 
     for (let convertor of actionConversionMap) {
         if (convertor(action, stepResults, getSteps, external, actionConversionMap) === ConvertBehavior.SKIP_REMAINING) {
