@@ -120,6 +120,9 @@ function hasFormula(resolution) {
       return !hasFormula(item);
     });
   }
+  if (typeof resolution === "object") {
+    return hasFormula(Object.values(resolution));
+  }
   return false;
 }
 function isFormula(value) {
@@ -291,6 +294,39 @@ function calculateTypedArray(value, ArrayConstructor, defaultNumberValue) {
   };
 }
 
+function calculateMap(value) {
+  if (!hasFormula(value)) {
+    return {
+      valueOf: function valueOf() {
+        return value;
+      }
+    };
+  }
+  if (isFormula(value)) {
+    var formula = value;
+    var evaluator = getFormulaEvaluator(formula);
+    return {
+      valueOf: function valueOf(context) {
+        return calculateEvaluator(evaluator, context, formula, undefined);
+      }
+    };
+  }
+  var evaluatorEntries = Object.entries(value).map(function (_ref) {
+    var key = _ref[0],
+      resolution = _ref[1];
+    return [key, calculateResolution(resolution)];
+  });
+  return {
+    valueOf: function valueOf(context) {
+      return Object.fromEntries(evaluatorEntries.map(function (_ref2) {
+        var key = _ref2[0],
+          evalItem = _ref2[1];
+        return [key, evalItem.valueOf(context)];
+      }));
+    }
+  };
+}
+
 function calculateResolution(value) {
   if (value === undefined) {
     return {
@@ -314,6 +350,9 @@ function calculateResolution(value) {
   }
   if (typeof value === "string" && (value.charAt(0) !== "{" || value.charAt(value.length - 1) !== "}")) {
     return value;
+  }
+  if (typeof value === "object") {
+    return calculateMap(value);
   }
   var evaluator = getFormulaEvaluator(value);
   return {

@@ -32,12 +32,21 @@ describe('calculate', () => {
             expect(value!.valueOf(context)).toEqual(new Float32Array([1, 2, 3]));            
         });
 
-        it('should calculate TypedArray resolution from array', () => {
+        it('should calculate array resolution', () => {
             const context: Context = {
                 parameters: [{x: [1, 2, 3]}],
             };
             const value = calculateResolution("{x}");
             expect(value!.valueOf(context)).toEqual([1, 2, 3]);
+        });
+        
+
+        it('should calculate object resolution', () => {
+            const context: Context = {
+                parameters: [{x: {a: 123}}],
+            };
+            const value = calculateResolution("{x}");
+            expect(value!.valueOf(context)).toEqual({a: 123});
         });
     });
 })

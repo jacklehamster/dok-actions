@@ -6,6 +6,7 @@ import { calculateArray } from "./calculateArray";
 import { calculateEvaluator, getFormulaEvaluator, hasFormula } from "./calculateEvaluator";
 import { SupportedTypes } from "./SupportedTypes";
 import { calculateTypedArray } from "./calculateTypeArray";
+import { calculateMap } from "./calculateMap";
 
 export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> {
     if (value === undefined) {
@@ -32,6 +33,9 @@ export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> 
     }
     if (typeof(value) === "string" && (value.charAt(0) !== "{" || value.charAt(value.length-1) !== "}")) {
         return value;
+    }
+    if (typeof(value) === "object") {
+        return calculateMap(value);
     }
     const evaluator = getFormulaEvaluator(value);
     return {

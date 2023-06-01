@@ -1,3 +1,3 @@
 import { TypedArray } from "../types/TypedArray";
 
-export type SupportedTypes = undefined | string | number | TypedArray | boolean | SupportedTypes[];
+export type SupportedTypes = undefined | string | number | TypedArray | boolean | SupportedTypes[] | { [key:string]:SupportedTypes };
