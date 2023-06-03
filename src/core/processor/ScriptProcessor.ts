@@ -37,7 +37,7 @@ export class ScriptProcessor<T> {
         } : () => {};
     }
 
-    private getSteps(filter: ScriptFilter) {
+    getSteps(filter: ScriptFilter) {
         const scripts = filterScripts(this.scripts, filter);
         const steps: ExecutionStep[] = [];
         scripts.forEach(script => this.scriptMap.get(script)?.forEach(step => steps.push(step)));

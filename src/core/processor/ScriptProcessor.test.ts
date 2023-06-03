@@ -1,3 +1,4 @@
+import { execute } from "../execution/ExecutionStep";
 import { calculateNumber } from "../resolutions/calculateNumber";
 import { ScriptProcessor } from "./ScriptProcessor";
 
@@ -112,5 +113,32 @@ describe('ScriptProcesor', () => {
         expect(mock).toBeCalledWith(1123);
         executeAnimationFrame(456);
         expect(mock).toBeCalledWith(1456);
+    });
+
+    it('should get steps', () => {
+        const processor = new ScriptProcessor([{
+            name: "main",
+            actions: [
+                { mock: 1},
+            ],
+            tags: ["tag2"],
+        }, {
+            name: "main2",
+            actions: [
+                { mock: 2},
+            ],
+            tags: ["tag2"],
+        }, {
+            actions: [
+                { mock: 3},
+            ],
+        }], external, [
+            (action, results) => {
+                const resolution = calculateNumber(action.mock);
+                results.push((context) => mock(resolution.valueOf(context)));
+            },
+        ]);
+        execute(processor.getSteps({ name: "redraw" }));
+        expect(mock).not.toBeCalled();
     });
 });

@@ -77,15 +77,13 @@ function execute(steps, parameters, context) {
 }
 
 function filterScripts(scripts, filter) {
+  var namesToFilter = !filter.name ? undefined : Array.isArray(filter.name) ? filter.name : [filter.name];
   return scripts.filter(function (_ref) {
     var _filter$tags;
     var name = _ref.name,
       tags = _ref.tags;
-    if (name) {
-      var namesToFilter = !filter.name ? undefined : Array.isArray(filter.name) ? filter.name : [filter.name];
-      if (namesToFilter !== null && namesToFilter !== void 0 && namesToFilter.length && namesToFilter.indexOf(name) < 0) {
-        return false;
-      }
+    if (namesToFilter !== null && namesToFilter !== void 0 && namesToFilter.length && namesToFilter.indexOf(name != null ? name : "") < 0) {
+      return false;
     }
     if (filter.tags && !((_filter$tags = filter.tags) !== null && _filter$tags !== void 0 && _filter$tags.every(function (tag) {
       if (typeof tag === "string") {

@@ -1,6 +1,6 @@
 import { ActionConvertorList } from "../convertor/convert-action";
 import { ExecutionStep } from "../execution/ExecutionStep";
-import { Script, Tag } from "../scripts/Script";
+import { Script, ScriptFilter, Tag } from "../scripts/Script";
 export interface LoopBehavior {
     cleanupAfterLoop?: boolean;
 }
@@ -11,7 +11,7 @@ export declare class ScriptProcessor<T> {
     constructor(scripts: Script<T>[], external?: Record<string, any>, actionConversionMap?: ActionConvertorList);
     private createContext;
     private createLoopCleanup;
-    private getSteps;
+    getSteps(filter: ScriptFilter): ExecutionStep[];
     runByName(name: string): () => void;
     runByTags(tags: Tag[]): () => void;
     private loopWithFilter;

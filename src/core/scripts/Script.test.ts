@@ -17,6 +17,10 @@ describe('Script', () => {
             actions: [],
             tags: ["game", "loop", ["level", 2]]
         },
+        {
+            actions: [],
+            tags: ["loop"],
+        }
     ];
 
     it('find by name', () => {
@@ -25,8 +29,16 @@ describe('Script', () => {
     });
 
     it('find by tags', () => {
-        expect(filterScripts(scripts, { tags: ["loop"]})).toEqual([scripts[2]]);
+        expect(filterScripts(scripts, { tags: ["loop"]})).toEqual([scripts[2], scripts[3]]);
         expect(filterScripts(scripts, { tags: [["level", 1]]})).toEqual([scripts[1]]);
         expect(filterScripts(scripts, { tags: ["level"]})).toEqual([scripts[1], scripts[2]]);
+    });
+
+    it('check empty filter', () => {
+        expect(filterScripts(scripts, { name: "test" })).toEqual([]);
+    });
+
+    it('check empty filter', () => {
+        expect(filterScripts(scripts, { name: "test" })).toEqual([]);
     });
 });
