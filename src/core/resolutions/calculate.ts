@@ -1,14 +1,12 @@
 import { Context } from "../context/Context";
 import { ValueOf } from "../types/ValueOf";
-import { ArrayResolution } from "./ArrayResolution";
 import { Resolution } from "./Resolution";
 import { calculateArray } from "./calculateArray";
-import { calculateEvaluator, getFormulaEvaluator, hasFormula } from "./calculateEvaluator";
+import { calculateEvaluator, getFormulaEvaluator } from "./calculateEvaluator";
 import { SupportedTypes } from "./SupportedTypes";
-import { calculateTypedArray } from "./calculateTypeArray";
 import { calculateMap } from "./calculateMap";
 
-export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> {
+export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> | undefined {
     if (value === undefined) {
         return {
             valueOf() {
@@ -24,15 +22,11 @@ export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> 
     if (typeof(value) === "number" || typeof(value) === "boolean") {
         return value;
     }
-    if (Array.isArray(value)) {
-        if (hasFormula(value)) {
-            return calculateArray(value);
-        }
-        const typeArrayResolution = value as Exclude<typeof value, ArrayResolution>;
-        return calculateTypedArray(typeArrayResolution);
-    }
     if (typeof(value) === "string" && (value.charAt(0) !== "{" || value.charAt(value.length-1) !== "}")) {
         return value;
+    }
+    if (Array.isArray(value)) {
+        return calculateArray(value);
     }
     if (typeof(value) === "object") {
         return calculateMap(value);

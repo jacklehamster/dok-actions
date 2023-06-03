@@ -19,7 +19,7 @@ export const convertParametersProperty: Convertor<ScriptAction> = (
     const { parameters, ...subAction } = action;
 
     const paramResolutions: Record<string, Resolution> = (parameters ?? {});
-    const paramEntries: [string, ValueOf<SupportedTypes>][] = Object.entries(paramResolutions)
+    const paramEntries: [string, ValueOf<SupportedTypes> | undefined][] = Object.entries(paramResolutions)
         .map(([key, resolution]) => [key, calculateResolution(resolution)]);
 
     const subStepResults: ExecutionStep[] = [];
@@ -33,7 +33,7 @@ export const convertParametersProperty: Convertor<ScriptAction> = (
         }
         for (let entry of paramEntries) {
             const key: string = entry[0];
-            paramValues[key] = entry[1].valueOf(context);
+            paramValues[key] = entry[1]?.valueOf(context);
         }
 
         execute(subStepResults, paramValues, context);

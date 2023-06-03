@@ -5,12 +5,12 @@ import { calculateNumber } from "./calculateNumber";
 import { calculateEvaluator, getFormulaEvaluator } from "./calculateEvaluator";
 import { TypedArrayResolution } from "./TypedArrayResolution";
 
-interface TypedArrayConstructor {
+export interface TypedArrayConstructor {
     new (size: number): TypedArray;
     BYTES_PER_ELEMENT: number;
 }
 
-export function calculateTypedArray(value: TypedArrayResolution, ArrayConstructor: TypedArrayConstructor = Float32Array, defaultNumberValue = 0): ValueOf<TypedArray> {
+export function calculateTypedArray(value: TypedArrayResolution, ArrayConstructor: TypedArrayConstructor = Float32Array): ValueOf<TypedArray | undefined> {
     if (value instanceof Float32Array || value instanceof Int8Array || value instanceof Uint8Array
         || value instanceof Int16Array || value instanceof Uint16Array
         || value instanceof Int32Array || value instanceof Uint32Array) {
@@ -18,7 +18,7 @@ export function calculateTypedArray(value: TypedArrayResolution, ArrayConstructo
     }
     if (Array.isArray(value)) {
         const array = new ArrayConstructor(value.length);
-        const compiledArray = value.map(value => calculateNumber(value, defaultNumberValue));
+        const compiledArray = value.map(value => calculateNumber(value, 0));
         return {
             valueOf(context?: Context): TypedArray {
                 for (let i = 0; i < compiledArray.length; i++) {
@@ -32,8 +32,11 @@ export function calculateTypedArray(value: TypedArrayResolution, ArrayConstructo
     const evaluator = getFormulaEvaluator(formula);
     let bufferArray: TypedArray;
     return {
-        valueOf(context?: Context): TypedArray {
+        valueOf(context?: Context): TypedArray | undefined {
             const value = calculateEvaluator<TypedArray | number[] | undefined>(evaluator, context, formula, undefined);
+            if (!value) {
+                return undefined;
+            }
             if (value instanceof Float32Array || value instanceof Int8Array || value instanceof Uint8Array
                 || value instanceof Int16Array || value instanceof Uint16Array
                 || value instanceof Int32Array || value instanceof Uint32Array) {
@@ -53,6 +56,7 @@ export function calculateTypedArray(value: TypedArrayResolution, ArrayConstructo
                 }
                 return bufferArray;
             }
+
             throw new Error(`Formula ${formula} doesnt't evaluate to a TypedArray.`);
         }
     };

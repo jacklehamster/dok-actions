@@ -11,6 +11,6 @@ describe('calculateArray', () => {
     });
 
     it('should calculate nested array resolution', () => {
-        expect(calculateArray([5,["{5 + 1}","{5 + x}"]])!.valueOf(context)).toEqual([5,new Float32Array([6,15])]);
+        expect(calculateArray([5,["{5 + 1}","{5 + x}"]])!.valueOf(context)).toEqual([5,[6,15]]);
     });
 });

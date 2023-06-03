@@ -261,7 +261,7 @@ describe('convertor', () => {
                 }
                 const messages: Resolution[] = Array.isArray(action.custom) ? action.custom : [action.custom];
                 const resolutions = messages.map(m => calculateResolution(m));
-                results.push((context) => custom(...resolutions.map(r => r.valueOf(context))));
+                results.push((context) => custom(...resolutions.map(r => r?.valueOf(context))));
             },
         ]);
         expect(custom).toBeCalledWith("hello", "test", "sub2");        

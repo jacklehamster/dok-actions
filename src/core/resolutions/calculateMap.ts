@@ -4,27 +4,30 @@ import { calculateResolution } from "./calculate";
 import { calculateEvaluator, getFormulaEvaluator, hasFormula, isFormula } from "./calculateEvaluator";
 import { Expression, Formula } from "./Formula";
 import { MapResolution } from "./MapResolution";
+import { Resolution } from "./Resolution";
 import { SupportedTypes } from "./SupportedTypes";
 
-export function calculateMap(value: MapResolution): ValueOf<SupportedTypes> {
+export function calculateMap(value: MapResolution): ValueOf<{ [key:string]:SupportedTypes } | undefined> {
     //  check if we have any resolution to perform
     if (!hasFormula(value)) {
-        return { valueOf: () => value };
+        const map = value as {[key: string]:SupportedTypes}
+        return { valueOf: () => map };
     }
     if (isFormula(value)) {
         const formula = value as (Formula|Expression);
         const evaluator = getFormulaEvaluator(formula);
         return {
-            valueOf(context?: Context): string | number | undefined {
-                return calculateEvaluator<string | number | undefined>(evaluator, context, formula, undefined);
+            valueOf(context?: Context): { [key:string]:SupportedTypes } | undefined {
+                return calculateEvaluator<{ [key:string]:SupportedTypes } | undefined>(evaluator, context, formula, undefined);
             }
         };
     }
-    const evaluatorEntries = Object.entries(value).map(([key, resolution]) => [key, calculateResolution(resolution)]);
+    const map = value as {[key: string]:Resolution}
+    const evaluatorEntries = Object.entries(map).map(([key, resolution]) => [key, calculateResolution(resolution)]);
 
     return {
-        valueOf(context?: Context): SupportedTypes {
-            return Object.fromEntries(evaluatorEntries.map(([key, evalItem]) => [key, evalItem.valueOf(context)]));
+        valueOf(context?: Context): { [key:string]:SupportedTypes } | undefined {
+            return Object.fromEntries(evaluatorEntries.map(([key, evalItem]) => [key, evalItem?.valueOf(context)]));
         }
     };
 }

@@ -35,4 +35,23 @@ describe('parameters convertor', () => {
             param5: 4,
         });
     });
+
+    it('convert parameters2', () => {
+        const results: ExecutionStep[] = [];
+        convertParametersProperty({
+                script: "script",
+                parameters: {
+                    "param4": [1, 2, 3, 4],
+                },
+            },
+            results,
+            getSteps,
+            DEFAULT_EXTERNALS,
+            DEFAULT_CONVERTORS,
+        );
+        execute(results);
+        expect(mock).toBeCalledWith({
+            param4: [1,2,3,4],
+        });
+    });
 });

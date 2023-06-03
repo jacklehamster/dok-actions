@@ -117,7 +117,7 @@ function hasFormula(resolution) {
   }
   if (Array.isArray(resolution)) {
     return resolution.some(function (item) {
-      return !hasFormula(item);
+      return hasFormula(item);
     });
   }
   if (typeof resolution === "object") {
@@ -203,102 +203,48 @@ var convertConditionProperty = function convertConditionProperty(action, results
 
 function calculateArray(value) {
   if (!hasFormula(value)) {
-    if (typeof value === "object") {
-      throw new Error("value can't be an object.");
+    if (!Array.isArray(value)) {
+      throw new Error("value is not an array");
     }
-    return value;
+    var _array = value;
+    return {
+      valueOf: function valueOf() {
+        return _array;
+      }
+    };
   }
-  var evaluator = value.map(function (resolution) {
+  if (!value) {
+    return undefined;
+  }
+  if (isFormula(value)) {
+    var formula = value;
+    var _evaluator = getFormulaEvaluator(formula);
+    return {
+      valueOf: function valueOf(context) {
+        return calculateEvaluator(_evaluator, context, formula, undefined);
+      }
+    };
+  }
+  var array = value;
+  var evaluator = array.map(function (resolution) {
     return calculateResolution(resolution);
   });
   return {
     valueOf: function valueOf(context) {
       var value = evaluator.map(function (evalItem) {
-        return evalItem.valueOf(context);
+        return evalItem === null || evalItem === void 0 ? void 0 : evalItem.valueOf(context);
       });
       return value;
     }
   };
 }
 
-function calculateNumber(value, defaultValue) {
-  if (defaultValue === void 0) {
-    defaultValue = 0;
-  }
-  if (typeof value === "number") {
-    return value;
-  }
-  if (value === undefined) {
-    return {
-      valueOf: function valueOf() {
-        return defaultValue;
-      }
-    };
-  }
-  var evaluator = getFormulaEvaluator(value);
-  return {
-    valueOf: function valueOf(context) {
-      return calculateEvaluator(evaluator, context, value, defaultValue);
-    }
-  };
-}
-
-function calculateTypedArray(value, ArrayConstructor, defaultNumberValue) {
-  if (ArrayConstructor === void 0) {
-    ArrayConstructor = Float32Array;
-  }
-  if (defaultNumberValue === void 0) {
-    defaultNumberValue = 0;
-  }
-  if (value instanceof Float32Array || value instanceof Int8Array || value instanceof Uint8Array || value instanceof Int16Array || value instanceof Uint16Array || value instanceof Int32Array || value instanceof Uint32Array) {
-    return value;
-  }
-  if (Array.isArray(value)) {
-    var array = new ArrayConstructor(value.length);
-    var compiledArray = value.map(function (value) {
-      return calculateNumber(value, defaultNumberValue);
-    });
-    return {
-      valueOf: function valueOf(context) {
-        for (var i = 0; i < compiledArray.length; i++) {
-          array[i] = compiledArray[i].valueOf(context);
-        }
-        return array;
-      }
-    };
-  }
-  var formula = value;
-  var evaluator = getFormulaEvaluator(formula);
-  var bufferArray;
-  return {
-    valueOf: function valueOf(context) {
-      var value = calculateEvaluator(evaluator, context, formula, undefined);
-      if (value instanceof Float32Array || value instanceof Int8Array || value instanceof Uint8Array || value instanceof Int16Array || value instanceof Uint16Array || value instanceof Int32Array || value instanceof Uint32Array) {
-        return value;
-      }
-      if (Array.isArray(value)) {
-        if (!bufferArray) {
-          bufferArray = new ArrayConstructor(value.length);
-        }
-        bufferArray.set(value);
-        return bufferArray;
-      }
-      if (typeof value === "number") {
-        if (!bufferArray) {
-          bufferArray = new ArrayConstructor(value / ArrayConstructor.BYTES_PER_ELEMENT);
-        }
-        return bufferArray;
-      }
-      throw new Error("Formula " + formula + " doesnt't evaluate to a TypedArray.");
-    }
-  };
-}
-
 function calculateMap(value) {
   if (!hasFormula(value)) {
+    var _map = value;
     return {
       valueOf: function valueOf() {
-        return value;
+        return _map;
       }
     };
   }
@@ -311,7 +257,8 @@ function calculateMap(value) {
       }
     };
   }
-  var evaluatorEntries = Object.entries(value).map(function (_ref) {
+  var map = value;
+  var evaluatorEntries = Object.entries(map).map(function (_ref) {
     var key = _ref[0],
       resolution = _ref[1];
     return [key, calculateResolution(resolution)];
@@ -321,7 +268,7 @@ function calculateMap(value) {
       return Object.fromEntries(evaluatorEntries.map(function (_ref2) {
         var key = _ref2[0],
           evalItem = _ref2[1];
-        return [key, evalItem.valueOf(context)];
+        return [key, evalItem === null || evalItem === void 0 ? void 0 : evalItem.valueOf(context)];
       }));
     }
   };
@@ -341,15 +288,11 @@ function calculateResolution(value) {
   if (typeof value === "number" || typeof value === "boolean") {
     return value;
   }
-  if (Array.isArray(value)) {
-    if (hasFormula(value)) {
-      return calculateArray(value);
-    }
-    var typeArrayResolution = value;
-    return calculateTypedArray(typeArrayResolution);
-  }
   if (typeof value === "string" && (value.charAt(0) !== "{" || value.charAt(value.length - 1) !== "}")) {
     return value;
+  }
+  if (Array.isArray(value)) {
+    return calculateArray(value);
   }
   if (typeof value === "object") {
     return calculateMap(value);
@@ -376,10 +319,32 @@ var convertLogProperty = function convertLogProperty(action, results, _, externa
   results.push(function (context) {
     var _external;
     return (_external = external).log.apply(_external, resolutions.map(function (r) {
-      return r.valueOf(context);
+      return r === null || r === void 0 ? void 0 : r.valueOf(context);
     }));
   });
 };
+
+function calculateNumber(value, defaultValue) {
+  if (defaultValue === void 0) {
+    defaultValue = 0;
+  }
+  if (typeof value === "number") {
+    return value;
+  }
+  if (value === undefined) {
+    return {
+      valueOf: function valueOf() {
+        return defaultValue;
+      }
+    };
+  }
+  var evaluator = getFormulaEvaluator(value);
+  return {
+    valueOf: function valueOf(context) {
+      return calculateEvaluator(evaluator, context, value, defaultValue);
+    }
+  };
+}
 
 var _excluded$1 = ["loop"];
 var convertLoopProperty = function convertLoopProperty(action, stepResults, getSteps, external, actionConversionMap) {
@@ -435,9 +400,10 @@ var convertParametersProperty = function convertParametersProperty(action, resul
       paramValues[k] = parameters[k];
     }
     for (var _iterator = _createForOfIteratorHelperLoose(paramEntries), _step; !(_step = _iterator()).done;) {
+      var _entry$;
       var entry = _step.value;
       var key = entry[0];
-      paramValues[key] = entry[1].valueOf(context);
+      paramValues[key] = (_entry$ = entry[1]) === null || _entry$ === void 0 ? void 0 : _entry$.valueOf(context);
     }
     execute(subStepResults, paramValues, context);
     for (var _k in paramValues) {
@@ -553,6 +519,57 @@ function calculateString(value, defaultValue) {
   return {
     valueOf: function valueOf(context) {
       return calculateEvaluator(evaluator, context, value, defaultValue);
+    }
+  };
+}
+
+function calculateTypedArray(value, ArrayConstructor) {
+  if (ArrayConstructor === void 0) {
+    ArrayConstructor = Float32Array;
+  }
+  if (value instanceof Float32Array || value instanceof Int8Array || value instanceof Uint8Array || value instanceof Int16Array || value instanceof Uint16Array || value instanceof Int32Array || value instanceof Uint32Array) {
+    return value;
+  }
+  if (Array.isArray(value)) {
+    var array = new ArrayConstructor(value.length);
+    var compiledArray = value.map(function (value) {
+      return calculateNumber(value, 0);
+    });
+    return {
+      valueOf: function valueOf(context) {
+        for (var i = 0; i < compiledArray.length; i++) {
+          array[i] = compiledArray[i].valueOf(context);
+        }
+        return array;
+      }
+    };
+  }
+  var formula = value;
+  var evaluator = getFormulaEvaluator(formula);
+  var bufferArray;
+  return {
+    valueOf: function valueOf(context) {
+      var value = calculateEvaluator(evaluator, context, formula, undefined);
+      if (!value) {
+        return undefined;
+      }
+      if (value instanceof Float32Array || value instanceof Int8Array || value instanceof Uint8Array || value instanceof Int16Array || value instanceof Uint16Array || value instanceof Int32Array || value instanceof Uint32Array) {
+        return value;
+      }
+      if (Array.isArray(value)) {
+        if (!bufferArray) {
+          bufferArray = new ArrayConstructor(value.length);
+        }
+        bufferArray.set(value);
+        return bufferArray;
+      }
+      if (typeof value === "number") {
+        if (!bufferArray) {
+          bufferArray = new ArrayConstructor(value / ArrayConstructor.BYTES_PER_ELEMENT);
+        }
+        return bufferArray;
+      }
+      throw new Error("Formula " + formula + " doesnt't evaluate to a TypedArray.");
     }
   };
 }
