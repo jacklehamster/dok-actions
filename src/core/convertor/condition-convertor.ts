@@ -14,7 +14,7 @@ export const convertConditionProperty: Convertor<DokAction> = (
         return;
     }
     if (!action.condition) {
-        return ConvertBehavior.SKIP_REMAINING;
+        return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
     }
     const { condition, ...subAction } = action;
     const conditionResolution = calculateBoolean(condition);
@@ -25,5 +25,5 @@ export const convertConditionProperty: Convertor<DokAction> = (
             execute(subStepResults, parameters, context);
         }
     });
-    return ConvertBehavior.SKIP_REMAINING;
+    return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
 }

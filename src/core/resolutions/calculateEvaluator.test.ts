@@ -1,3 +1,4 @@
+import { createContext } from "../context/Context";
 import { calculateEvaluator, getFormulaEvaluator } from "./calculateEvaluator";
 
 describe('calculateEvaluator', () => {
@@ -10,9 +11,9 @@ describe('calculateEvaluator', () => {
     it('should calculate evaluator with scope', () => {
         const formula = "{3 + x}";
         const evaluator = getFormulaEvaluator(formula);
-        expect(calculateEvaluator(evaluator, {
+        expect(calculateEvaluator(evaluator, createContext({
             parameters: [{x: 6}],
-        }, formula, 0)).toEqual(9);
+        }), formula, 0)).toEqual(9);
     });
 });
 

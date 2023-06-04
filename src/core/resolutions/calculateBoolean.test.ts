@@ -1,10 +1,10 @@
-import { Context } from "../context/Context";
+import { Context, createContext } from "../context/Context";
 import { calculateBoolean } from "./calculateBoolean";
 
 describe('calculateBoolean', () => {
-    const context: Context = {
+    const context: Context = createContext({
         parameters: [{x: 10}],
-    };
+    });
 
     it('should calculate boolean resolution', () => {
         expect(calculateBoolean(true).valueOf(context)).toEqual(true);

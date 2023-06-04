@@ -1,34 +1,23 @@
-import { Context } from "../context/Context";
-import { ExecutionParameters, ExecutionStep, GetSteps, execute } from "../execution/ExecutionStep";
+import { Context, createContext } from "../context/Context";
+import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
 import { Script, ScriptFilter, filterScripts } from "../scripts/Script";
-import { ConvertBehavior, Convertor, DEFAULT_EXTERNALS } from "./Convertor";
-import { convertActionsProperty } from "./actions-convertor";
-import { convertConditionProperty } from "./condition-convertor";
-import { convertLogProperty } from "./log-convertor";
-import { convertLoopProperty } from "./loop-convertor";
-import { convertParametersProperty } from "./parameters-convertor";
-import { convertScriptProperty } from "./script-convertor";
+import { ConvertBehavior, Convertor, DEFAULT_EXTERNALS, Utils } from "./Convertor";
+import { DEFAULT_CONVERTORS } from "./default-convertors";
 
 export type ActionConvertorList = Convertor<any>[];
-
-export const DEFAULT_CONVERTORS: ActionConvertorList = [
-    convertParametersProperty,
-    convertLoopProperty,
-    convertConditionProperty,
-    convertLogProperty,
-    convertScriptProperty,
-    convertActionsProperty,
-];
 
 export function convertAction<T>(
         action: T,
         stepResults: ExecutionStep[],
-        getSteps: GetSteps,
+        utils: Utils<T>,
         external: Record<string, any> = DEFAULT_EXTERNALS,
         actionConversionMap: ActionConvertorList): ConvertBehavior | undefined {
     for (let convertor of actionConversionMap) {
-        if (convertor(action, stepResults, getSteps, external, actionConversionMap) === ConvertBehavior.SKIP_REMAINING) {
+        const convertBehavior = convertor(action, stepResults, utils, external, actionConversionMap);
+        if (convertBehavior === ConvertBehavior.SKIP_REMAINING_CONVERTORS) {
             return;
+        } else if (convertBehavior === ConvertBehavior.SKIP_REMAINING_ACTIONS) {
+            return convertBehavior;
         }
     }
     return;    
@@ -50,8 +39,9 @@ export function convertScripts<T>(
             scriptMap.set(script, []);
         }
         const scriptSteps = scriptMap.get(script) ?? [];
-        script.actions.forEach(action => {
-            convertAction(action, scriptSteps, getSteps, external, actionConversionMap);
+        script.actions.forEach((action, index, array) => {
+            const getRemainingActions = () => array.slice(index);
+            convertAction(action, scriptSteps, {getSteps, getRemainingActions}, external, actionConversionMap);
         });
     });
     return scriptMap;
@@ -62,19 +52,26 @@ export function executeScript<T>(
         parameters: ExecutionParameters = {},
         scripts: Script<T>[],
         external: Record<string, any> = DEFAULT_EXTERNALS,
-        actionConversionMap = DEFAULT_CONVERTORS): () => void {
-    const context: Context = {
-        parameters: [parameters],
-        cleanupActions: []
-    };
+        actionConversionMap: ActionConvertorList = DEFAULT_CONVERTORS): () => void {
+    const context: Context = createContext();
     const scriptMap = convertScripts(scripts, external, actionConversionMap);
     const script = scripts.find(({name}) => name === scriptName);
     const steps = script ? scriptMap.get(script) : [];
-    if (steps?.length) {
-        execute(steps, {}, context);
-    }
+    execute(steps, parameters, context);
     return () => {
         context.cleanupActions!.forEach(action => action());
         context.cleanupActions!.length = 0;
     };
+}
+
+export function executeAction<T>(
+        action: T,
+        parameters: ExecutionParameters,
+        context: Context,
+        utils: Utils<T>,
+        external: Record<string, any> = DEFAULT_EXTERNALS,
+        actionConversionMap: ActionConvertorList): void {
+    const results: ExecutionStep[] = [];
+    convertAction(action, results, utils, external, actionConversionMap);
+    execute(results, parameters, context);
 }

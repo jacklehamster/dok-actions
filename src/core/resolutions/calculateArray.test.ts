@@ -1,10 +1,10 @@
-import { Context } from "../context/Context";
+import { Context, createContext } from "../context/Context";
 import { calculateArray } from "./calculateArray";
 
 describe('calculateArray', () => {
-    const context: Context = {
+    const context: Context = createContext({
         parameters: [{x: 10, y: "test"}],
-    };
+    });
 
     it('should calculate array resolution', () => {
         expect(calculateArray([5,"{5 + 1}","{5 + x}","test","{y}"])!.valueOf(context)).toEqual([5,6,15,"test","test"]);

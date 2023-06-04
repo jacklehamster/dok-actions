@@ -1,6 +1,7 @@
-import { Context } from "../context/Context";
+import { Context, createContext } from "../context/Context";
 import { DEFAULT_EXTERNALS } from "../convertor/Convertor";
-import { ActionConvertorList, DEFAULT_CONVERTORS, convertScripts } from "../convertor/convert-action";
+import { ActionConvertorList, convertScripts } from "../convertor/convert-action";
+import { DEFAULT_CONVERTORS } from "../convertor/default-convertors";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
 import { Script, ScriptFilter, Tag, filterScripts } from "../scripts/Script";
 
@@ -8,23 +9,15 @@ export interface LoopBehavior {
     cleanupAfterLoop?: boolean;
 }
 
-export class ScriptProcessor<T> {
+export class ScriptProcessor<T, E = {}> {
     scripts: Script<T>[];
     scriptMap: Map<Script<T>, ExecutionStep[]>;
-    external: Record<string, any>;
+    external: (E|{}) & typeof DEFAULT_EXTERNALS;
 
-    constructor(scripts: Script<T>[], external: Record<string, any> = DEFAULT_EXTERNALS, actionConversionMap: ActionConvertorList = DEFAULT_CONVERTORS) {
+    constructor(scripts: Script<T>[], external = {}, actionConversionMap: ActionConvertorList = DEFAULT_CONVERTORS) {
         this.scripts = scripts;
         this.scriptMap = convertScripts(this.scripts, external, actionConversionMap);
-        this.external = external;
-    }
-
-    private createContext(): Context {
-        return {
-            parameters: [],
-            cleanupActions: [],
-            objectPool: [],
-        };
+        this.external = {...DEFAULT_EXTERNALS, ...external};
     }
 
     private createLoopCleanup(behavior: LoopBehavior, context: Context) {
@@ -45,19 +38,19 @@ export class ScriptProcessor<T> {
     }
 
     runByName(name: string): () => void {
-        const context: Context = this.createContext();
+        const context: Context = createContext();
         execute(this.getSteps({ name }), undefined, context);
         return () => context.cleanupActions?.forEach(action => action());
     }
 
     runByTags(tags: Tag[]): () => void {
-        const context: Context = this.createContext();
+        const context: Context = createContext();
         execute(this.getSteps({ tags }), undefined, context);
         return () => context.cleanupActions?.forEach(action => action());
     }
 
     private loopWithFilter(filter: ScriptFilter, behavior: LoopBehavior = {}): () => void {
-        const context: Context = this.createContext();
+        const context: Context = createContext();
         const parameters: ExecutionParameters = { time: 0 };
         const steps = this.getSteps(filter);
         const loopCleanup = this.createLoopCleanup(behavior, context);

@@ -1,8 +1,9 @@
 import { ExecutionStep, execute } from "../execution/ExecutionStep";
 import { ConvertBehavior, Convertor, DEFAULT_EXTERNALS } from "./Convertor";
 import { calculateNumber } from "../resolutions/calculateNumber";
-import { DEFAULT_CONVERTORS, convertAction } from "./convert-action";
+import { convertAction } from "./convert-action";
 import { LogicAction } from "../actions/LogicAction";
+import { DEFAULT_CONVERTORS } from "./default-convertors";
 
 export const convertLoopProperty: Convertor<LogicAction> = (
         action,
@@ -14,7 +15,7 @@ export const convertLoopProperty: Convertor<LogicAction> = (
         return;
     }
     if (!action.loop) {
-        return ConvertBehavior.SKIP_REMAINING;
+        return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
     }
     const { loop, ...subAction } = action;
     const loopResolution = calculateNumber(loop, 0);
@@ -27,5 +28,5 @@ export const convertLoopProperty: Convertor<LogicAction> = (
             execute(subStepResults, parameters, context);
         }
     });
-    return ConvertBehavior.SKIP_REMAINING;
+    return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
 }

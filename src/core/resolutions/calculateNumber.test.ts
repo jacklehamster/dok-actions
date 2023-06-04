@@ -1,10 +1,10 @@
-import { Context } from "../context/Context";
+import { Context, createContext } from "../context/Context";
 import { calculateNumber } from "./calculateNumber";
 
 describe('calculateNumber', () => {
-    const context: Context = {
+    const context: Context = createContext({
         parameters: [{x: 10}],
-    };
+    });
 
     it('should calculate number resolution', () => {
         expect(calculateNumber(5).valueOf(context)).toEqual(5);

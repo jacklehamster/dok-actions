@@ -1,10 +1,8 @@
-import { Context } from "../context/Context";
+import { Context, createContext } from "../context/Context";
 import { ExecutionStep, execute } from "./ExecutionStep";
 
 describe('ExecutionStep', () => {
-    const context: Context = {
-        parameters: [],
-    };
+    const context: Context = createContext();
     it('execute all steps', () => {
         const steps:ExecutionStep[] = [
             jest.fn(),

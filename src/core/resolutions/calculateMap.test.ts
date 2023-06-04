@@ -1,10 +1,10 @@
-import { Context } from "../context/Context";
+import { Context, createContext } from "../context/Context";
 import { calculateMap } from "./calculateMap";
 
 describe('calculateMap', () => {
-    const context: Context = {
+    const context: Context = createContext({
         parameters: [{x: {a: 123, b: "test"}}],
-    };
+    });
 
     it('should calculate map resolution', () => {
         expect(calculateMap({a: 123}).valueOf(context)).toEqual({a: 123});

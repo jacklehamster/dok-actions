@@ -1,20 +1,19 @@
 import assert from "assert";
 import { ScriptAction } from "../actions/ScriptAction";
-import { Context } from "../context/Context";
+import { Context, createContext } from "../context/Context";
 import { LogAction } from "../actions/LogAction";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
-import { DEFAULT_CONVERTORS, convertAction, convertScripts, executeScript } from "./convert-action";
+import { convertAction, convertScripts, executeScript } from "./convert-action";
 import { Resolution } from "../resolutions/Resolution";
 import { calculateResolution } from "../resolutions/calculate";
 import { DEFAULT_EXTERNALS } from "./Convertor";
 import { DokAction } from "../actions/Action";
+import { DEFAULT_CONVERTORS } from "./default-convertors";
 
 describe('convertor', () => {
     const getSteps = jest.fn();
-    const context: Context = {
-        parameters: [],
-        cleanupActions: [],
-    };
+    const getRemainingActions = jest.fn();
+    const context: Context = createContext();
 
     it('converts script action', () => {
         const mockStep = jest.fn();
@@ -28,7 +27,7 @@ describe('convertor', () => {
             parameters: {"x": "{1 + 2}"},
         };
         const steps: ExecutionStep[] = [];
-        convertAction(action, steps, getSteps, DEFAULT_EXTERNALS, DEFAULT_CONVERTORS);
+        convertAction(action, steps, {getSteps, getRemainingActions}, DEFAULT_EXTERNALS, DEFAULT_CONVERTORS);
 
         expect(getSteps).toBeCalledWith({name: "myScript"});
         assert(steps.length);
@@ -49,7 +48,7 @@ describe('convertor', () => {
             script: "myScript",
         };
         const steps: ExecutionStep[] = [];
-        convertAction(action, steps, getSteps, DEFAULT_EXTERNALS, DEFAULT_CONVERTORS)
+        convertAction(action, steps, {getSteps, getRemainingActions}, DEFAULT_EXTERNALS, DEFAULT_CONVERTORS)
 
         expect(getSteps).toBeCalledWith({name: "myScript"});
         assert(steps.length);
@@ -65,7 +64,7 @@ describe('convertor', () => {
             log: ["hello", "world"],
         };
         const steps: ExecutionStep[] = [];
-        convertAction(action, steps, getSteps, { log }, DEFAULT_CONVERTORS);
+        convertAction(action, steps, {getSteps, getRemainingActions}, { log }, DEFAULT_CONVERTORS);
 
         assert(steps.length);
         execute(steps, {}, context);
@@ -78,7 +77,7 @@ describe('convertor', () => {
             log: ["hello", "{1 + 3}"],
         };
         const steps: ExecutionStep[] = [];
-        convertAction(action, steps, getSteps, { log }, DEFAULT_CONVERTORS);
+        convertAction(action, steps, {getSteps, getRemainingActions}, { log }, DEFAULT_CONVERTORS);
         assert(steps.length);
         execute(steps, {}, context);
         expect(log).toBeCalledWith("hello", 4);

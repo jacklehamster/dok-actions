@@ -5,7 +5,7 @@ import { Convertor } from "./Convertor";
 export const convertScriptProperty: Convertor<ScriptAction> = (
         action,
         results,
-        getSteps) => {
+        {getSteps}) => {
     if (!action.script || action.scriptTags?.length) {
         return;
     }
