@@ -40,7 +40,7 @@ export function convertScripts<T>(
         }
         const scriptSteps = scriptMap.get(script) ?? [];
         script.actions.forEach((action, index, array) => {
-            const getRemainingActions = () => array.slice(index);
+            const getRemainingActions = () => array.slice(index + 1);
             convertAction(action, scriptSteps, {getSteps, getRemainingActions}, external, actionConversionMap);
         });
     });

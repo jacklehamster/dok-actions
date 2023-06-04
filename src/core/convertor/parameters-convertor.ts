@@ -25,7 +25,7 @@ export function recycleParams(context: Context, params: ExecutionParameters): vo
 export const convertParametersProperty: Convertor<ScriptAction> = (
         action,
         results,
-        getSteps,
+        utils,
         external = DEFAULT_EXTERNALS,
         actionConversionMap) => {
     if (!action.parameters) {
@@ -38,7 +38,7 @@ export const convertParametersProperty: Convertor<ScriptAction> = (
         .map(([key, resolution]) => [key, calculateResolution(resolution)]);
 
     const subStepResults: ExecutionStep[] = [];
-    convertAction(subAction, subStepResults, getSteps, external, actionConversionMap);
+    convertAction(subAction, subStepResults, utils, external, actionConversionMap);
 
     results.push((context, parameters) => {
         const paramValues: ExecutionParameters = newParams(context);
@@ -60,7 +60,7 @@ export const convertParametersProperty: Convertor<ScriptAction> = (
 export const convertHooksProperty: Convertor<DokAction> = (
         action,
         results,
-        getSteps,
+        utils,
         external = DEFAULT_EXTERNALS,
         actionConversionMap) => {
     if (!action.hooks) {
@@ -72,7 +72,7 @@ export const convertHooksProperty: Convertor<DokAction> = (
     const hooksValueOf: ValueOf<string>[] = hooksResolution.map(hook => calculateString(hook));
 
     const subStepResults: ExecutionStep[] = [];
-    convertAction(subAction, subStepResults, getSteps, external, actionConversionMap);
+    convertAction(subAction, subStepResults, utils, external, actionConversionMap);
 
     results.push((context, parameters) => {
         const paramValues: ExecutionParameters = newParams(context);

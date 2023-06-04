@@ -557,7 +557,7 @@ function recycleParams(context, params) {
   }
   (_context$objectPool2 = context.objectPool) === null || _context$objectPool2 === void 0 ? void 0 : _context$objectPool2.push(params);
 }
-var convertParametersProperty = function convertParametersProperty(action, results, getSteps, external, actionConversionMap) {
+var convertParametersProperty = function convertParametersProperty(action, results, utils, external, actionConversionMap) {
   if (external === void 0) {
     external = DEFAULT_EXTERNALS;
   }
@@ -573,7 +573,7 @@ var convertParametersProperty = function convertParametersProperty(action, resul
     return [key, calculateResolution(resolution)];
   });
   var subStepResults = [];
-  convertAction(subAction, subStepResults, getSteps, external, actionConversionMap);
+  convertAction(subAction, subStepResults, utils, external, actionConversionMap);
   results.push(function (context, parameters) {
     var paramValues = newParams(context);
     for (var k in parameters) {
@@ -590,7 +590,7 @@ var convertParametersProperty = function convertParametersProperty(action, resul
   });
   return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
 };
-var convertHooksProperty = function convertHooksProperty(action, results, getSteps, external, actionConversionMap) {
+var convertHooksProperty = function convertHooksProperty(action, results, utils, external, actionConversionMap) {
   if (external === void 0) {
     external = DEFAULT_EXTERNALS;
   }
@@ -604,7 +604,7 @@ var convertHooksProperty = function convertHooksProperty(action, results, getSte
     return calculateString(hook);
   });
   var subStepResults = [];
-  convertAction(subAction, subStepResults, getSteps, external, actionConversionMap);
+  convertAction(subAction, subStepResults, utils, external, actionConversionMap);
   results.push(function (context, parameters) {
     var paramValues = newParams(context);
     for (var k in parameters) {
@@ -684,7 +684,7 @@ function convertScripts(scripts, external, actionConversionMap) {
     var scriptSteps = (_scriptMap$get2 = scriptMap.get(script)) != null ? _scriptMap$get2 : [];
     script.actions.forEach(function (action, index, array) {
       var getRemainingActions = function getRemainingActions() {
-        return array.slice(index);
+        return array.slice(index + 1);
       };
       convertAction(action, scriptSteps, {
         getSteps: getSteps,
