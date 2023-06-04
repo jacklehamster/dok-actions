@@ -879,6 +879,7 @@ var ScriptProcessor = /*#__PURE__*/function () {
   return ScriptProcessor;
 }();
 
+exports.DEFAULT_CONVERTORS = DEFAULT_CONVERTORS;
 exports.DEFAULT_EXTERNALS = DEFAULT_EXTERNALS;
 exports.ScriptProcessor = ScriptProcessor;
 exports.calculateArray = calculateArray;
@@ -895,6 +896,7 @@ exports.execute = execute;
 exports.executeAction = executeAction;
 exports.executeScript = executeScript;
 exports.filterScripts = filterScripts;
+exports.getDefaultConvertors = getDefaultConvertors;
 exports.getFormulaEvaluator = getFormulaEvaluator;
 exports.hasFormula = hasFormula;
 exports.isFormula = isFormula;
