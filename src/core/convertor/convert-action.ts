@@ -39,10 +39,14 @@ export function convertScripts<T>(
             scriptMap.set(script, []);
         }
         const scriptSteps = scriptMap.get(script) ?? [];
-        script.actions.forEach((action, index, array) => {
-            const getRemainingActions = () => array.slice(index + 1);
-            convertAction(action, scriptSteps, {getSteps, getRemainingActions}, external, actionConversionMap);
-        });
+        const { actions } = script;
+        for (let i = 0; i < actions.length; i++) {
+            const getRemainingActions = () => actions.slice(i + 1);
+            const convertBehavior = convertAction(actions[i], scriptSteps, {getSteps, getRemainingActions}, external, actionConversionMap);
+            if (convertBehavior === ConvertBehavior.SKIP_REMAINING_ACTIONS) {
+                break;
+            }
+        }
     });
     return scriptMap;
 }

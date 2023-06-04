@@ -682,15 +682,23 @@ function convertScripts(scripts, external, actionConversionMap) {
       scriptMap.set(script, []);
     }
     var scriptSteps = (_scriptMap$get2 = scriptMap.get(script)) != null ? _scriptMap$get2 : [];
-    script.actions.forEach(function (action, index, array) {
+    var actions = script.actions;
+    var _loop = function _loop(i) {
       var getRemainingActions = function getRemainingActions() {
-        return array.slice(index + 1);
+        return actions.slice(i + 1);
       };
-      convertAction(action, scriptSteps, {
+      var convertBehavior = convertAction(actions[i], scriptSteps, {
         getSteps: getSteps,
         getRemainingActions: getRemainingActions
       }, external, actionConversionMap);
-    });
+      if (convertBehavior === exports.ConvertBehavior.SKIP_REMAINING_ACTIONS) {
+        return "break";
+      }
+    };
+    for (var i = 0; i < actions.length; i++) {
+      var _ret = _loop(i);
+      if (_ret === "break") break;
+    }
   });
   return scriptMap;
 }
