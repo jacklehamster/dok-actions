@@ -21,5 +21,3 @@ export function getDefaultConvertors(): ActionConvertorList {
         convertActionsProperty,
     ];
 }
-
-export const DEFAULT_CONVERTORS = getDefaultConvertors();

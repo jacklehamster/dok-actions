@@ -1,11 +1,14 @@
 import { ScriptAction } from "../actions/ScriptAction";
-import { execute } from "../execution/ExecutionStep";
-import { Convertor } from "./Convertor";
+import { ExecutionStep, execute } from "../execution/ExecutionStep";
+import { ConvertBehavior, Utils } from "./Convertor";
+import { ActionConvertorList } from "./convert-action";
 
-export const convertScriptProperty: Convertor<ScriptAction> = (
-        action,
-        results,
-        {getSteps}) => {
+export function convertScriptProperty<T>(
+        action: ScriptAction,
+        results: ExecutionStep[],
+        {getSteps}: Utils<T>,
+        _: Record<string, any>,
+        __: ActionConvertorList): ConvertBehavior|void {
     if (!action.script || action.scriptTags?.length) {
         return;
     }

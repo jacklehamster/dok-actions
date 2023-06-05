@@ -149,12 +149,82 @@ function filterScripts(scripts, filter) {
   });
 }
 
-var convertActionsProperty = function convertActionsProperty(action, results, getSteps, external, actionConvertorMap) {
-  var _action$actions;
-  (_action$actions = action.actions) === null || _action$actions === void 0 ? void 0 : _action$actions.forEach(function (action) {
-    return convertAction(action, results, getSteps, external, actionConvertorMap);
+function convertAction(action, stepResults, utils, external, actionConversionMap) {
+  for (var _iterator = _createForOfIteratorHelperLoose(actionConversionMap), _step; !(_step = _iterator()).done;) {
+    var convertor = _step.value;
+    var convertBehavior = convertor(action, stepResults, utils, external, actionConversionMap);
+    if (convertBehavior === exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS) {
+      return;
+    } else if (convertBehavior === exports.ConvertBehavior.SKIP_REMAINING_ACTIONS) {
+      return convertBehavior;
+    }
+  }
+  return;
+}
+function convertScripts(scripts, external, actionConversionMap) {
+  var scriptMap = new Map();
+  var getSteps = function getSteps(filter) {
+    var filteredScripts = filterScripts(scripts, filter);
+    var steps = [];
+    filteredScripts.forEach(function (script) {
+      var _scriptMap$get;
+      return steps.push.apply(steps, (_scriptMap$get = scriptMap.get(script)) != null ? _scriptMap$get : []);
+    });
+    return steps;
+  };
+  scripts.forEach(function (script) {
+    var _scriptMap$get2;
+    if (!scriptMap.has(script)) {
+      scriptMap.set(script, []);
+    }
+    var scriptSteps = (_scriptMap$get2 = scriptMap.get(script)) != null ? _scriptMap$get2 : [];
+    var actions = script.actions;
+    var _loop = function _loop(i) {
+      var getRemainingActions = function getRemainingActions() {
+        return actions.slice(i + 1);
+      };
+      var convertBehavior = convertAction(actions[i], scriptSteps, {
+        getSteps: getSteps,
+        getRemainingActions: getRemainingActions
+      }, external, actionConversionMap);
+      if (convertBehavior === exports.ConvertBehavior.SKIP_REMAINING_ACTIONS) {
+        return "break";
+      }
+    };
+    for (var i = 0; i < actions.length; i++) {
+      var _ret = _loop(i);
+      if (_ret === "break") break;
+    }
   });
-};
+  return scriptMap;
+}
+function executeScript(scriptName, parameters, scripts, external, actionConversionMap) {
+  if (parameters === void 0) {
+    parameters = {};
+  }
+  var context = createContext();
+  var scriptMap = convertScripts(scripts, external, actionConversionMap);
+  var script = scripts.find(function (_ref) {
+    var name = _ref.name;
+    return name === scriptName;
+  });
+  var steps = script ? scriptMap.get(script) : [];
+  execute(steps, parameters, context);
+  return function () {
+    context.cleanupActions.forEach(function (action) {
+      return action();
+    });
+    context.cleanupActions.length = 0;
+  };
+}
+function executeAction(action, parameters, context, utils, external, actionConversionMap) {
+  if (external === void 0) {
+    external = DEFAULT_EXTERNALS;
+  }
+  var results = [];
+  convertAction(action, results, utils, external, actionConversionMap);
+  execute(results, parameters, context);
+}
 
 function hasFormula(resolution) {
   if (isFormula(resolution)) {
@@ -199,176 +269,6 @@ function getFormulaEvaluator(value) {
   var mathEvaluator = math.parse(formula.substring(1, formula.length - 1)).compile();
   return mathEvaluator;
 }
-
-function calculateBoolean(value, defaultValue) {
-  if (defaultValue === void 0) {
-    defaultValue = false;
-  }
-  if (typeof value === "boolean" || typeof value === "number") {
-    return !!value;
-  }
-  if (value === undefined) {
-    return {
-      valueOf: function valueOf() {
-        return defaultValue;
-      }
-    };
-  }
-  var evaluator = getFormulaEvaluator(value);
-  return {
-    valueOf: function valueOf(context) {
-      return !!calculateEvaluator(evaluator, context, value, defaultValue);
-    }
-  };
-}
-
-var _excluded = ["condition"];
-var convertConditionProperty = function convertConditionProperty(action, results, getSteps, external, actionConversionMap) {
-  if (external === void 0) {
-    external = DEFAULT_EXTERNALS;
-  }
-  if (action.condition === undefined) {
-    return;
-  }
-  if (!action.condition) {
-    return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
-  }
-  var condition = action.condition,
-    subAction = _objectWithoutPropertiesLoose(action, _excluded);
-  var conditionResolution = calculateBoolean(condition);
-  var subStepResults = [];
-  convertAction(subAction, subStepResults, getSteps, external, actionConversionMap);
-  results.push(function (context, parameters) {
-    if (conditionResolution.valueOf(context)) {
-      execute(subStepResults, parameters, context);
-    }
-  });
-  return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
-};
-
-function calculateNumber(value, defaultValue) {
-  if (defaultValue === void 0) {
-    defaultValue = 0;
-  }
-  if (typeof value === "number") {
-    return value;
-  }
-  if (value === undefined) {
-    return {
-      valueOf: function valueOf() {
-        return defaultValue;
-      }
-    };
-  }
-  var evaluator = getFormulaEvaluator(value);
-  return {
-    valueOf: function valueOf(context) {
-      return calculateEvaluator(evaluator, context, value, defaultValue);
-    }
-  };
-}
-
-var _excluded$1 = ["delay"],
-  _excluded2 = ["pause"],
-  _excluded3 = ["lock", "unlock"];
-var convertDelayProperty = function convertDelayProperty(action, results, utils, external, actionConversionMap) {
-  if (external === void 0) {
-    external = DEFAULT_EXTERNALS;
-  }
-  if (!action.delay) {
-    return;
-  }
-  var delay = action.delay,
-    subAction = _objectWithoutPropertiesLoose(action, _excluded$1);
-  var delayAmount = calculateNumber(delay);
-  var postStepResults = [];
-  var remainingActions = utils.getRemainingActions();
-  convertAction(subAction, postStepResults, utils, external, actionConversionMap);
-  remainingActions.forEach(function (action) {
-    convertAction(action, postStepResults, utils, external, actionConversionMap);
-  });
-  var performPostSteps = function performPostSteps(context, parameters) {
-    execute(postStepResults, parameters, context);
-  };
-  results.push(function (context, parameters) {
-    var timeout = external.setTimeout(performPostSteps, delayAmount.valueOf(context), context, parameters);
-    context.cleanupActions.push(function () {
-      return clearTimeout(timeout);
-    });
-  });
-  return exports.ConvertBehavior.SKIP_REMAINING_ACTIONS;
-};
-var convertPauseProperty = function convertPauseProperty(action, results, utils, external, actionConversionMap) {
-  if (external === void 0) {
-    external = DEFAULT_EXTERNALS;
-  }
-  if (!action.pause) {
-    return;
-  }
-  var pause = action.pause,
-    subAction = _objectWithoutPropertiesLoose(action, _excluded2);
-  var pauseResolution = calculateBoolean(pause);
-  var postStepResults = [];
-  var remainingActions = utils.getRemainingActions();
-  convertAction(subAction, postStepResults, utils, external, actionConversionMap);
-  remainingActions.forEach(function (action) {
-    convertAction(action, postStepResults, utils, external, actionConversionMap);
-  });
-  var step = function step(context, parameters) {
-    if (!pauseResolution.valueOf(context)) {
-      context.postActionListener["delete"](step);
-      execute(postStepResults, parameters, context);
-    } else if (!context.postActionListener.has(step)) {
-      context.postActionListener.add(step);
-    }
-  };
-  results.push(step);
-  return exports.ConvertBehavior.SKIP_REMAINING_ACTIONS;
-};
-var convertLockProperty = function convertLockProperty(action, results, utils, external, actionConversionMap) {
-  if (external === void 0) {
-    external = DEFAULT_EXTERNALS;
-  }
-  if (!action.lock && !action.unlock) {
-    return;
-  }
-  var lock = action.lock,
-    unlock = action.unlock,
-    subAction = _objectWithoutPropertiesLoose(action, _excluded3);
-  if (unlock) {
-    var unlockResolution = calculateBoolean(unlock);
-    results.push(function (context) {
-      if (unlockResolution.valueOf(context)) {
-        context.locked = false;
-      }
-    });
-  }
-  if (lock) {
-    var lockResolution = calculateBoolean(lock);
-    var postStepResults = [];
-    var remainingActions = utils.getRemainingActions();
-    convertAction(subAction, postStepResults, utils, external, actionConversionMap);
-    remainingActions.forEach(function (action) {
-      convertAction(action, postStepResults, utils, external, actionConversionMap);
-    });
-    results.push(function (context, parameters) {
-      if (!lockResolution.valueOf(context)) {
-        execute(postStepResults, parameters, context);
-      } else {
-        context.locked = true;
-        var step = function step(context, parameters) {
-          if (!context.locked) {
-            context.postActionListener["delete"](step);
-            execute(postStepResults, parameters, context);
-          }
-        };
-        context.postActionListener.add(step);
-      }
-    });
-    return exports.ConvertBehavior.SKIP_REMAINING_ACTIONS;
-  }
-  return;
-};
 
 function calculateArray(value) {
   if (!hasFormula(value)) {
@@ -474,53 +374,27 @@ function calculateResolution(value) {
   };
 }
 
-var convertLogProperty = function convertLogProperty(action, results, _, external) {
-  if (external === void 0) {
-    external = DEFAULT_EXTERNALS;
+function calculateNumber(value, defaultValue) {
+  if (defaultValue === void 0) {
+    defaultValue = 0;
   }
-  if (action.log === undefined) {
-    return;
+  if (typeof value === "number") {
+    return value;
   }
-  var messages = Array.isArray(action.log) ? action.log : [action.log];
-  var resolutions = messages.map(function (m) {
-    return calculateResolution(m);
-  });
-  results.push(function (context) {
-    var _external;
-    return (_external = external).log.apply(_external, resolutions.map(function (r) {
-      return r === null || r === void 0 ? void 0 : r.valueOf(context);
-    }));
-  });
-};
-
-var _excluded$2 = ["loop"];
-var convertLoopProperty = function convertLoopProperty(action, stepResults, getSteps, external, actionConversionMap) {
-  if (external === void 0) {
-    external = DEFAULT_EXTERNALS;
+  if (value === undefined) {
+    return {
+      valueOf: function valueOf() {
+        return defaultValue;
+      }
+    };
   }
-  if (actionConversionMap === void 0) {
-    actionConversionMap = DEFAULT_CONVERTORS;
-  }
-  if (action.loop === undefined) {
-    return;
-  }
-  if (!action.loop) {
-    return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
-  }
-  var loop = action.loop,
-    subAction = _objectWithoutPropertiesLoose(action, _excluded$2);
-  var loopResolution = calculateNumber(loop, 0);
-  var subStepResults = [];
-  convertAction(subAction, subStepResults, getSteps, external, actionConversionMap);
-  stepResults.push(function (context, parameters) {
-    var numLoops = loopResolution.valueOf(context);
-    for (var i = 0; i < numLoops; i++) {
-      parameters.index = i;
-      execute(subStepResults, parameters, context);
+  var evaluator = getFormulaEvaluator(value);
+  return {
+    valueOf: function valueOf(context) {
+      return calculateEvaluator(evaluator, context, value, defaultValue);
     }
-  });
-  return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
-};
+  };
+}
 
 function calculateString(value, defaultValue) {
   if (defaultValue === void 0) {
@@ -544,196 +418,26 @@ function calculateString(value, defaultValue) {
   };
 }
 
-var _excluded$3 = ["parameters"],
-  _excluded2$1 = ["hooks"];
-function newParams(context) {
-  var _context$objectPool$p, _context$objectPool;
-  return (_context$objectPool$p = (_context$objectPool = context.objectPool) === null || _context$objectPool === void 0 ? void 0 : _context$objectPool.pop()) != null ? _context$objectPool$p : {};
-}
-function recycleParams(context, params) {
-  var _context$objectPool2;
-  for (var k in params) {
-    delete params[k];
+function calculateBoolean(value, defaultValue) {
+  if (defaultValue === void 0) {
+    defaultValue = false;
   }
-  (_context$objectPool2 = context.objectPool) === null || _context$objectPool2 === void 0 ? void 0 : _context$objectPool2.push(params);
-}
-var convertParametersProperty = function convertParametersProperty(action, results, utils, external, actionConversionMap) {
-  if (external === void 0) {
-    external = DEFAULT_EXTERNALS;
+  if (typeof value === "boolean" || typeof value === "number") {
+    return !!value;
   }
-  if (!action.parameters) {
-    return;
-  }
-  var parameters = action.parameters,
-    subAction = _objectWithoutPropertiesLoose(action, _excluded$3);
-  var paramResolutions = parameters;
-  var paramEntries = Object.entries(paramResolutions).map(function (_ref) {
-    var key = _ref[0],
-      resolution = _ref[1];
-    return [key, calculateResolution(resolution)];
-  });
-  var subStepResults = [];
-  convertAction(subAction, subStepResults, utils, external, actionConversionMap);
-  results.push(function (context, parameters) {
-    var paramValues = newParams(context);
-    for (var k in parameters) {
-      paramValues[k] = parameters[k];
-    }
-    for (var _iterator = _createForOfIteratorHelperLoose(paramEntries), _step; !(_step = _iterator()).done;) {
-      var _entry$;
-      var entry = _step.value;
-      var key = entry[0];
-      paramValues[key] = (_entry$ = entry[1]) === null || _entry$ === void 0 ? void 0 : _entry$.valueOf(context);
-    }
-    execute(subStepResults, paramValues, context);
-    recycleParams(context, paramValues);
-  });
-  return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
-};
-var convertHooksProperty = function convertHooksProperty(action, results, utils, external, actionConversionMap) {
-  if (external === void 0) {
-    external = DEFAULT_EXTERNALS;
-  }
-  if (!action.hooks) {
-    return;
-  }
-  var hooks = action.hooks,
-    subAction = _objectWithoutPropertiesLoose(action, _excluded2$1);
-  var hooksResolution = hooks;
-  var hooksValueOf = hooksResolution.map(function (hook) {
-    return calculateString(hook);
-  });
-  var subStepResults = [];
-  convertAction(subAction, subStepResults, utils, external, actionConversionMap);
-  results.push(function (context, parameters) {
-    var paramValues = newParams(context);
-    for (var k in parameters) {
-      paramValues[k] = parameters[k];
-    }
-    for (var _iterator2 = _createForOfIteratorHelperLoose(hooksValueOf), _step2; !(_step2 = _iterator2()).done;) {
-      var hook = _step2.value;
-      var h = hook.valueOf(context);
-      var x = external[h];
-      if (x) {
-        paramValues[h] = x;
-      }
-    }
-    execute(subStepResults, paramValues, context);
-    recycleParams(context, paramValues);
-  });
-  return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
-};
-
-var convertScriptProperty = function convertScriptProperty(action, results, _ref) {
-  var _action$scriptTags;
-  var getSteps = _ref.getSteps;
-  if (!action.script || (_action$scriptTags = action.scriptTags) !== null && _action$scriptTags !== void 0 && _action$scriptTags.length) {
-    return;
-  }
-  var steps = getSteps({
-    name: action.script,
-    tags: action.scriptTags
-  });
-  results.push(function (context, parameters) {
-    return execute(steps, parameters, context);
-  });
-};
-
-function getDefaultConvertors() {
-  return [convertHooksProperty, convertParametersProperty, convertLoopProperty, convertConditionProperty, convertDelayProperty, convertPauseProperty, convertLockProperty, convertLogProperty, convertScriptProperty, convertActionsProperty];
-}
-var DEFAULT_CONVERTORS = getDefaultConvertors();
-
-function convertAction(action, stepResults, utils, external, actionConversionMap) {
-  if (external === void 0) {
-    external = DEFAULT_EXTERNALS;
-  }
-  for (var _iterator = _createForOfIteratorHelperLoose(actionConversionMap), _step; !(_step = _iterator()).done;) {
-    var convertor = _step.value;
-    var convertBehavior = convertor(action, stepResults, utils, external, actionConversionMap);
-    if (convertBehavior === exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS) {
-      return;
-    } else if (convertBehavior === exports.ConvertBehavior.SKIP_REMAINING_ACTIONS) {
-      return convertBehavior;
-    }
-  }
-  return;
-}
-function convertScripts(scripts, external, actionConversionMap) {
-  if (external === void 0) {
-    external = DEFAULT_EXTERNALS;
-  }
-  if (actionConversionMap === void 0) {
-    actionConversionMap = DEFAULT_CONVERTORS;
-  }
-  var scriptMap = new Map();
-  var getSteps = function getSteps(filter) {
-    var filteredScripts = filterScripts(scripts, filter);
-    var steps = [];
-    filteredScripts.forEach(function (script) {
-      var _scriptMap$get;
-      return steps.push.apply(steps, (_scriptMap$get = scriptMap.get(script)) != null ? _scriptMap$get : []);
-    });
-    return steps;
-  };
-  scripts.forEach(function (script) {
-    var _scriptMap$get2;
-    if (!scriptMap.has(script)) {
-      scriptMap.set(script, []);
-    }
-    var scriptSteps = (_scriptMap$get2 = scriptMap.get(script)) != null ? _scriptMap$get2 : [];
-    var actions = script.actions;
-    var _loop = function _loop(i) {
-      var getRemainingActions = function getRemainingActions() {
-        return actions.slice(i + 1);
-      };
-      var convertBehavior = convertAction(actions[i], scriptSteps, {
-        getSteps: getSteps,
-        getRemainingActions: getRemainingActions
-      }, external, actionConversionMap);
-      if (convertBehavior === exports.ConvertBehavior.SKIP_REMAINING_ACTIONS) {
-        return "break";
+  if (value === undefined) {
+    return {
+      valueOf: function valueOf() {
+        return defaultValue;
       }
     };
-    for (var i = 0; i < actions.length; i++) {
-      var _ret = _loop(i);
-      if (_ret === "break") break;
+  }
+  var evaluator = getFormulaEvaluator(value);
+  return {
+    valueOf: function valueOf(context) {
+      return !!calculateEvaluator(evaluator, context, value, defaultValue);
     }
-  });
-  return scriptMap;
-}
-function executeScript(scriptName, parameters, scripts, external, actionConversionMap) {
-  if (parameters === void 0) {
-    parameters = {};
-  }
-  if (external === void 0) {
-    external = DEFAULT_EXTERNALS;
-  }
-  if (actionConversionMap === void 0) {
-    actionConversionMap = DEFAULT_CONVERTORS;
-  }
-  var context = createContext();
-  var scriptMap = convertScripts(scripts, external, actionConversionMap);
-  var script = scripts.find(function (_ref) {
-    var name = _ref.name;
-    return name === scriptName;
-  });
-  var steps = script ? scriptMap.get(script) : [];
-  execute(steps, parameters, context);
-  return function () {
-    context.cleanupActions.forEach(function (action) {
-      return action();
-    });
-    context.cleanupActions.length = 0;
   };
-}
-function executeAction(action, parameters, context, utils, external, actionConversionMap) {
-  if (external === void 0) {
-    external = DEFAULT_EXTERNALS;
-  }
-  var results = [];
-  convertAction(action, results, utils, external, actionConversionMap);
-  execute(results, parameters, context);
 }
 
 function calculateTypedArray(value, ArrayConstructor) {
@@ -787,13 +491,264 @@ function calculateTypedArray(value, ArrayConstructor) {
   };
 }
 
+function convertActionsProperty(action, results, utils, external, actionConvertorMap) {
+  var _action$actions;
+  (_action$actions = action.actions) === null || _action$actions === void 0 ? void 0 : _action$actions.forEach(function (action) {
+    return convertAction(action, results, utils, external, actionConvertorMap);
+  });
+}
+
+var _excluded = ["condition"];
+function convertConditionProperty(action, results, utils, external, actionConversionMap) {
+  if (action.condition === undefined) {
+    return;
+  }
+  if (!action.condition) {
+    return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+  }
+  var condition = action.condition,
+    subAction = _objectWithoutPropertiesLoose(action, _excluded);
+  var conditionResolution = calculateBoolean(condition);
+  var subStepResults = [];
+  convertAction(subAction, subStepResults, utils, external, actionConversionMap);
+  results.push(function (context, parameters) {
+    if (conditionResolution.valueOf(context)) {
+      execute(subStepResults, parameters, context);
+    }
+  });
+  return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+}
+
+var _excluded$1 = ["delay"],
+  _excluded2 = ["pause"],
+  _excluded3 = ["lock", "unlock"];
+function convertDelayProperty(action, results, utils, external, actionConversionMap) {
+  if (!action.delay) {
+    return;
+  }
+  var delay = action.delay,
+    subAction = _objectWithoutPropertiesLoose(action, _excluded$1);
+  var delayAmount = calculateNumber(delay);
+  var postStepResults = [];
+  var remainingActions = utils.getRemainingActions();
+  convertAction(subAction, postStepResults, utils, external, actionConversionMap);
+  remainingActions.forEach(function (action) {
+    convertAction(action, postStepResults, utils, external, actionConversionMap);
+  });
+  var performPostSteps = function performPostSteps(context, parameters) {
+    execute(postStepResults, parameters, context);
+  };
+  results.push(function (context, parameters) {
+    var timeout = external.setTimeout(performPostSteps, delayAmount.valueOf(context), context, parameters);
+    context.cleanupActions.push(function () {
+      return clearTimeout(timeout);
+    });
+  });
+  return exports.ConvertBehavior.SKIP_REMAINING_ACTIONS;
+}
+function convertPauseProperty(action, results, utils, external, actionConversionMap) {
+  if (!action.pause) {
+    return;
+  }
+  var pause = action.pause,
+    subAction = _objectWithoutPropertiesLoose(action, _excluded2);
+  var pauseResolution = calculateBoolean(pause);
+  var postStepResults = [];
+  var remainingActions = utils.getRemainingActions();
+  convertAction(subAction, postStepResults, utils, external, actionConversionMap);
+  remainingActions.forEach(function (action) {
+    convertAction(action, postStepResults, utils, external, actionConversionMap);
+  });
+  var step = function step(context, parameters) {
+    if (!pauseResolution.valueOf(context)) {
+      context.postActionListener["delete"](step);
+      execute(postStepResults, parameters, context);
+    } else if (!context.postActionListener.has(step)) {
+      context.postActionListener.add(step);
+    }
+  };
+  results.push(step);
+  return exports.ConvertBehavior.SKIP_REMAINING_ACTIONS;
+}
+function convertLockProperty(action, results, utils, external, actionConversionMap) {
+  if (!action.lock && !action.unlock) {
+    return;
+  }
+  var lock = action.lock,
+    unlock = action.unlock,
+    subAction = _objectWithoutPropertiesLoose(action, _excluded3);
+  if (unlock) {
+    var unlockResolution = calculateBoolean(unlock);
+    results.push(function (context) {
+      if (unlockResolution.valueOf(context)) {
+        context.locked = false;
+      }
+    });
+  }
+  if (lock) {
+    var lockResolution = calculateBoolean(lock);
+    var postStepResults = [];
+    var remainingActions = utils.getRemainingActions();
+    convertAction(subAction, postStepResults, utils, external, actionConversionMap);
+    remainingActions.forEach(function (action) {
+      convertAction(action, postStepResults, utils, external, actionConversionMap);
+    });
+    results.push(function (context, parameters) {
+      if (!lockResolution.valueOf(context)) {
+        execute(postStepResults, parameters, context);
+      } else {
+        context.locked = true;
+        var step = function step(context, parameters) {
+          if (!context.locked) {
+            context.postActionListener["delete"](step);
+            execute(postStepResults, parameters, context);
+          }
+        };
+        context.postActionListener.add(step);
+      }
+    });
+    return exports.ConvertBehavior.SKIP_REMAINING_ACTIONS;
+  }
+}
+
+function convertLogProperty(action, results, _, external, __) {
+  if (action.log === undefined) {
+    return;
+  }
+  var messages = Array.isArray(action.log) ? action.log : [action.log];
+  var resolutions = messages.map(function (m) {
+    return calculateResolution(m);
+  });
+  results.push(function (context) {
+    return external.log.apply(external, resolutions.map(function (r) {
+      return r === null || r === void 0 ? void 0 : r.valueOf(context);
+    }));
+  });
+}
+
+var _excluded$2 = ["loop"];
+function convertLoopProperty(action, stepResults, utils, external, actionConversionMap) {
+  if (action.loop === undefined) {
+    return;
+  }
+  if (!action.loop) {
+    return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+  }
+  var loop = action.loop,
+    subAction = _objectWithoutPropertiesLoose(action, _excluded$2);
+  var loopResolution = calculateNumber(loop, 0);
+  var subStepResults = [];
+  convertAction(subAction, subStepResults, utils, external, actionConversionMap);
+  stepResults.push(function (context, parameters) {
+    var numLoops = loopResolution.valueOf(context);
+    for (var i = 0; i < numLoops; i++) {
+      parameters.index = i;
+      execute(subStepResults, parameters, context);
+    }
+  });
+  return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+}
+
+var _excluded$3 = ["parameters"],
+  _excluded2$1 = ["hooks"];
+function newParams(context) {
+  var _context$objectPool$p, _context$objectPool;
+  return (_context$objectPool$p = (_context$objectPool = context.objectPool) === null || _context$objectPool === void 0 ? void 0 : _context$objectPool.pop()) != null ? _context$objectPool$p : {};
+}
+function recycleParams(context, params) {
+  var _context$objectPool2;
+  for (var k in params) {
+    delete params[k];
+  }
+  (_context$objectPool2 = context.objectPool) === null || _context$objectPool2 === void 0 ? void 0 : _context$objectPool2.push(params);
+}
+function convertParametersProperty(action, results, utils, external, actionConversionMap) {
+  if (!action.parameters) {
+    return;
+  }
+  var parameters = action.parameters,
+    subAction = _objectWithoutPropertiesLoose(action, _excluded$3);
+  var paramResolutions = parameters;
+  var paramEntries = Object.entries(paramResolutions).map(function (_ref) {
+    var key = _ref[0],
+      resolution = _ref[1];
+    return [key, calculateResolution(resolution)];
+  });
+  var subStepResults = [];
+  convertAction(subAction, subStepResults, utils, external, actionConversionMap);
+  results.push(function (context, parameters) {
+    var paramValues = newParams(context);
+    for (var k in parameters) {
+      paramValues[k] = parameters[k];
+    }
+    for (var _iterator = _createForOfIteratorHelperLoose(paramEntries), _step; !(_step = _iterator()).done;) {
+      var _entry$;
+      var entry = _step.value;
+      var key = entry[0];
+      paramValues[key] = (_entry$ = entry[1]) === null || _entry$ === void 0 ? void 0 : _entry$.valueOf(context);
+    }
+    execute(subStepResults, paramValues, context);
+    recycleParams(context, paramValues);
+  });
+  return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+}
+function convertHooksProperty(action, results, utils, external, actionConversionMap) {
+  if (!action.hooks) {
+    return;
+  }
+  var hooks = action.hooks,
+    subAction = _objectWithoutPropertiesLoose(action, _excluded2$1);
+  var hooksResolution = hooks;
+  var hooksValueOf = hooksResolution.map(function (hook) {
+    return calculateString(hook);
+  });
+  var subStepResults = [];
+  convertAction(subAction, subStepResults, utils, external, actionConversionMap);
+  results.push(function (context, parameters) {
+    var paramValues = newParams(context);
+    for (var k in parameters) {
+      paramValues[k] = parameters[k];
+    }
+    for (var _iterator2 = _createForOfIteratorHelperLoose(hooksValueOf), _step2; !(_step2 = _iterator2()).done;) {
+      var hook = _step2.value;
+      var h = hook.valueOf(context);
+      var x = external[h];
+      if (x) {
+        paramValues[h] = x;
+      }
+    }
+    execute(subStepResults, paramValues, context);
+    recycleParams(context, paramValues);
+  });
+  return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+}
+
+function convertScriptProperty(action, results, _ref, _, __) {
+  var _action$scriptTags;
+  var getSteps = _ref.getSteps;
+  if (!action.script || (_action$scriptTags = action.scriptTags) !== null && _action$scriptTags !== void 0 && _action$scriptTags.length) {
+    return;
+  }
+  var steps = getSteps({
+    name: action.script,
+    tags: action.scriptTags
+  });
+  results.push(function (context, parameters) {
+    return execute(steps, parameters, context);
+  });
+}
+
+function getDefaultConvertors() {
+  return [convertHooksProperty, convertParametersProperty, convertLoopProperty, convertConditionProperty, convertDelayProperty, convertPauseProperty, convertLockProperty, convertLogProperty, convertScriptProperty, convertActionsProperty];
+}
+
 var ScriptProcessor = /*#__PURE__*/function () {
   function ScriptProcessor(scripts, external, actionConversionMap) {
     if (external === void 0) {
       external = {};
     }
     if (actionConversionMap === void 0) {
-      actionConversionMap = DEFAULT_CONVERTORS;
+      actionConversionMap = getDefaultConvertors();
     }
     this.scripts = scripts;
     this.scriptMap = convertScripts(this.scripts, external, actionConversionMap);
@@ -804,8 +759,8 @@ var ScriptProcessor = /*#__PURE__*/function () {
     var cleanupActions = context.cleanupActions;
     return behavior.cleanupAfterLoop && cleanupActions ? function () {
       for (var _iterator = _createForOfIteratorHelperLoose(cleanupActions), _step; !(_step = _iterator()).done;) {
-        var action = _step.value;
-        action();
+        var cleanup = _step.value;
+        cleanup();
       }
       cleanupActions.length = 0;
     } : function () {};
@@ -887,7 +842,6 @@ var ScriptProcessor = /*#__PURE__*/function () {
   return ScriptProcessor;
 }();
 
-exports.DEFAULT_CONVERTORS = DEFAULT_CONVERTORS;
 exports.DEFAULT_EXTERNALS = DEFAULT_EXTERNALS;
 exports.ScriptProcessor = ScriptProcessor;
 exports.calculateArray = calculateArray;

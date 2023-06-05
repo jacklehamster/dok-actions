@@ -3,15 +3,15 @@ import { Context } from "../context/Context";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
 import { calculateBoolean } from "../resolutions/calculateBoolean";
 import { calculateNumber } from "../resolutions/calculateNumber";
-import { ConvertBehavior, Convertor, DEFAULT_EXTERNALS, Utils } from "./Convertor";
-import { convertAction } from "./convert-action";
+import { ConvertBehavior, Utils } from "./Convertor";
+import { ActionConvertorList, convertAction } from "./convert-action";
 
-export const convertDelayProperty: Convertor<PauseAction> = (
-        action,
-        results,
-        utils: Utils<PauseAction>,
-        external = DEFAULT_EXTERNALS,
-        actionConversionMap) => {
+export function convertDelayProperty<T>(
+        action: PauseAction,
+        results: ExecutionStep[],
+        utils: Utils<T & PauseAction>,
+        external: Record<string, any>,
+        actionConversionMap: ActionConvertorList): ConvertBehavior | void {
     if (!action.delay) {
         return;
     }
@@ -35,12 +35,12 @@ export const convertDelayProperty: Convertor<PauseAction> = (
     return ConvertBehavior.SKIP_REMAINING_ACTIONS;
 }
 
-export const convertPauseProperty: Convertor<PauseAction> = (
-        action,
-        results,
-        utils: Utils<PauseAction>,
-        external = DEFAULT_EXTERNALS,
-        actionConversionMap) => {
+export function convertPauseProperty<T>(
+        action: PauseAction,
+        results: ExecutionStep[],
+        utils: Utils<T & PauseAction>,
+        external: Record<string, any>,
+        actionConversionMap: ActionConvertorList): ConvertBehavior | void {
     if (!action.pause) {
         return;
     }
@@ -67,12 +67,12 @@ export const convertPauseProperty: Convertor<PauseAction> = (
     return ConvertBehavior.SKIP_REMAINING_ACTIONS;
 }
 
-export const convertLockProperty: Convertor<PauseAction> = (
-        action,
-        results,
-        utils: Utils<PauseAction>,
-        external = DEFAULT_EXTERNALS,
-        actionConversionMap) => {
+export function convertLockProperty<T>(
+        action: PauseAction,
+        results: ExecutionStep[],
+        utils: Utils<T & PauseAction>,
+        external: Record<string, any>,
+        actionConversionMap: ActionConvertorList): ConvertBehavior | void {
     if (!action.lock && !action.unlock) {
         return;
     }
@@ -114,5 +114,4 @@ export const convertLockProperty: Convertor<PauseAction> = (
         });
         return ConvertBehavior.SKIP_REMAINING_ACTIONS;
     }
-    return;
 }

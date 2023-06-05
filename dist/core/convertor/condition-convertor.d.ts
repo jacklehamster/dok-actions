@@ -1,3 +1,5 @@
-import { Convertor } from "./Convertor";
-import { DokAction } from "../actions/Action";
-export declare const convertConditionProperty: Convertor<DokAction>;
+import { ConvertBehavior, Utils } from "./Convertor";
+import { ExecutionStep } from "../execution/ExecutionStep";
+import { ActionConvertorList } from "./convert-action";
+import { LogicAction } from "../actions/LogicAction";
+export declare function convertConditionProperty<T>(action: LogicAction, results: ExecutionStep[], utils: Utils<T & LogicAction>, external: Record<string, any>, actionConversionMap: ActionConvertorList): ConvertBehavior | void;

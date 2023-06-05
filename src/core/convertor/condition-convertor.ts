@@ -1,15 +1,15 @@
-import { ConvertBehavior, Convertor, DEFAULT_EXTERNALS } from "./Convertor";
+import { ConvertBehavior, Utils } from "./Convertor";
 import { ExecutionStep, execute } from "../execution/ExecutionStep";
-import { convertAction } from "./convert-action";
-import { DokAction } from "../actions/Action";
+import { ActionConvertorList, convertAction } from "./convert-action";
 import { calculateBoolean } from "../resolutions/calculateBoolean";
+import { LogicAction } from "../actions/LogicAction";
 
-export const convertConditionProperty: Convertor<DokAction> = (
-        action,
-        results,
-        getSteps,
-        external = DEFAULT_EXTERNALS,
-        actionConversionMap) => {
+export function convertConditionProperty<T>(
+        action: LogicAction,
+        results: ExecutionStep[],
+        utils: Utils<T & LogicAction>,
+        external: Record<string, any>,
+        actionConversionMap: ActionConvertorList): ConvertBehavior | void {
     if (action.condition === undefined) {
         return;
     }
@@ -19,11 +19,11 @@ export const convertConditionProperty: Convertor<DokAction> = (
     const { condition, ...subAction } = action;
     const conditionResolution = calculateBoolean(condition);
     const subStepResults: ExecutionStep[] = [];
-    convertAction(subAction, subStepResults, getSteps, external, actionConversionMap);
+    convertAction(subAction, subStepResults, utils, external, actionConversionMap);
     results.push((context, parameters) => {
         if (conditionResolution.valueOf(context)) {
             execute(subStepResults, parameters, context);
         }
     });
-    return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+    return ConvertBehavior.SKIP_REMAINING_CONVERTORS;        
 }

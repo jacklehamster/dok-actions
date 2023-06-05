@@ -1,3 +1,4 @@
+import { DokAction } from "../actions/Action";
 import { Resolution } from "../resolutions/Resolution";
 
 export type Tag = string|[string, string|number|boolean];
@@ -5,7 +6,7 @@ export type Tag = string|[string, string|number|boolean];
 export interface Script<T> {
     name?: string;
     parameters?: (string|[string, Resolution])[];
-    actions: T[];
+    actions: (T & DokAction<T>)[];
     tags?: Tag[];
 }
 

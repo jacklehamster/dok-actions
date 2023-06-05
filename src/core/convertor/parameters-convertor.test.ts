@@ -1,7 +1,8 @@
+import { ScriptAction } from "../actions/ScriptAction";
 import { createContext } from "../context/Context";
 import { ExecutionStep, execute } from "../execution/ExecutionStep";
 import { DEFAULT_EXTERNALS } from "./Convertor";
-import { DEFAULT_CONVERTORS } from "./default-convertors";
+import { getDefaultConvertors } from "./default-convertors";
 import { convertHooksProperty, convertParametersProperty } from "./parameters-convertor";
 
 describe('parameters convertor', () => {
@@ -26,7 +27,7 @@ describe('parameters convertor', () => {
             results,
             {getSteps, getRemainingActions},
             DEFAULT_EXTERNALS,
-            DEFAULT_CONVERTORS,
+            getDefaultConvertors(),
         );
         execute(results);
         expect(mock).toBeCalledWith({
@@ -49,7 +50,7 @@ describe('parameters convertor', () => {
             results,
             {getSteps, getRemainingActions},
             DEFAULT_EXTERNALS,
-            DEFAULT_CONVERTORS,
+            getDefaultConvertors(),
         );
         execute(results);
         expect(mock).toBeCalledWith({
@@ -61,7 +62,7 @@ describe('parameters convertor', () => {
         const context = createContext();
         const fun = jest.fn().mockReturnValue(69);
         const results: ExecutionStep[] = [];
-        convertHooksProperty({
+        convertHooksProperty<ScriptAction>({
                 hooks: ["fun"],
                 script: "script",
                 parameters: {
@@ -71,7 +72,7 @@ describe('parameters convertor', () => {
             results,
             {getSteps, getRemainingActions},
             {...DEFAULT_EXTERNALS, fun},
-            DEFAULT_CONVERTORS,
+            getDefaultConvertors(),
         );
         execute(results, {}, context);
         expect(mock).toBeCalledWith({

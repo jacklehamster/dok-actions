@@ -1,7 +1,7 @@
 import { Context, createContext } from "../context/Context";
 import { DEFAULT_EXTERNALS } from "../convertor/Convertor";
 import { ActionConvertorList, convertScripts } from "../convertor/convert-action";
-import { DEFAULT_CONVERTORS } from "../convertor/default-convertors";
+import { getDefaultConvertors } from "../convertor/default-convertors";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
 import { Script, ScriptFilter, Tag, filterScripts } from "../scripts/Script";
 
@@ -14,7 +14,7 @@ export class ScriptProcessor<T, E = {}> {
     scriptMap: Map<Script<T>, ExecutionStep[]>;
     external: (E|{}) & typeof DEFAULT_EXTERNALS;
 
-    constructor(scripts: Script<T>[], external = {}, actionConversionMap: ActionConvertorList = DEFAULT_CONVERTORS) {
+    constructor(scripts: Script<T>[], external = {}, actionConversionMap: ActionConvertorList = getDefaultConvertors()) {
         this.scripts = scripts;
         this.scriptMap = convertScripts(this.scripts, external, actionConversionMap);
         this.external = {...DEFAULT_EXTERNALS, ...external};
@@ -23,8 +23,8 @@ export class ScriptProcessor<T, E = {}> {
     private createLoopCleanup(behavior: LoopBehavior, context: Context) {
         const cleanupActions = context.cleanupActions;
         return behavior.cleanupAfterLoop && cleanupActions ? () => {
-            for (let action of cleanupActions) {
-                action();
+            for (let cleanup of cleanupActions) {
+                cleanup();
             }
             cleanupActions.length = 0;
         } : () => {};

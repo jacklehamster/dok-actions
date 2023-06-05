@@ -1,33 +1,33 @@
-import { ConvertBehavior, Convertor, DEFAULT_EXTERNALS } from "./Convertor";
+import { ConvertBehavior, Utils } from "./Convertor";
 import { Resolution } from "../resolutions/Resolution";
 import { calculateResolution } from "../resolutions/calculate";
 import { ValueOf } from "../types/ValueOf";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
-import { convertAction } from "./convert-action";
+import { ActionConvertorList, convertAction } from "./convert-action";
 import { SupportedTypes } from "../resolutions/SupportedTypes";
 import { ScriptAction } from "../actions/ScriptAction";
 import { Context } from "../context/Context";
 import { StringResolution } from "../resolutions/StringResolution";
 import { calculateString } from "../resolutions/calculateString";
-import { DokAction } from "../actions/Action";
+import { HookAction } from "../actions/HookAction";
 
-export function newParams(context: Context): ExecutionParameters {
+function newParams(context: Context): ExecutionParameters {
     return context.objectPool?.pop() ?? {};
 }
 
-export function recycleParams(context: Context, params: ExecutionParameters): void {
+function recycleParams(context: Context, params: ExecutionParameters): void {
     for (let k in params) {
         delete params[k];
     }
     context.objectPool?.push(params);
 }
 
-export const convertParametersProperty: Convertor<ScriptAction> = (
-        action,
-        results,
-        utils,
-        external = DEFAULT_EXTERNALS,
-        actionConversionMap) => {
+export function convertParametersProperty<T>(
+        action: ScriptAction,
+        results: ExecutionStep[],
+        utils: Utils<T & ScriptAction>,
+        external: Record<string, any>,
+        actionConversionMap: ActionConvertorList): ConvertBehavior | void {
     if (!action.parameters) {
         return;
     }
@@ -57,12 +57,12 @@ export const convertParametersProperty: Convertor<ScriptAction> = (
     return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
 }
 
-export const convertHooksProperty: Convertor<DokAction> = (
-        action,
-        results,
-        utils,
-        external = DEFAULT_EXTERNALS,
-        actionConversionMap) => {
+export function convertHooksProperty<T>(
+        action: HookAction & T,
+        results: ExecutionStep[],
+        utils: Utils<T & HookAction>,
+        external: Record<string, any>,
+        actionConversionMap: ActionConvertorList): ConvertBehavior|void {
     if (!action.hooks) {
         return;
     }

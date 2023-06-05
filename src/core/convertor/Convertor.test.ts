@@ -8,7 +8,7 @@ import { Resolution } from "../resolutions/Resolution";
 import { calculateResolution } from "../resolutions/calculate";
 import { DEFAULT_EXTERNALS } from "./Convertor";
 import { DokAction } from "../actions/Action";
-import { DEFAULT_CONVERTORS } from "./default-convertors";
+import { getDefaultConvertors } from "./default-convertors";
 
 describe('convertor', () => {
     const getSteps = jest.fn();
@@ -27,7 +27,7 @@ describe('convertor', () => {
             parameters: {"x": "{1 + 2}"},
         };
         const steps: ExecutionStep[] = [];
-        convertAction(action, steps, {getSteps, getRemainingActions}, DEFAULT_EXTERNALS, DEFAULT_CONVERTORS);
+        convertAction(action, steps, {getSteps, getRemainingActions}, DEFAULT_EXTERNALS, getDefaultConvertors());
 
         expect(getSteps).toBeCalledWith({name: "myScript"});
         assert(steps.length);
@@ -48,7 +48,7 @@ describe('convertor', () => {
             script: "myScript",
         };
         const steps: ExecutionStep[] = [];
-        convertAction(action, steps, {getSteps, getRemainingActions}, DEFAULT_EXTERNALS, DEFAULT_CONVERTORS)
+        convertAction(action, steps, {getSteps, getRemainingActions}, DEFAULT_EXTERNALS, getDefaultConvertors())
 
         expect(getSteps).toBeCalledWith({name: "myScript"});
         assert(steps.length);
@@ -64,7 +64,7 @@ describe('convertor', () => {
             log: ["hello", "world"],
         };
         const steps: ExecutionStep[] = [];
-        convertAction(action, steps, {getSteps, getRemainingActions}, { log }, DEFAULT_CONVERTORS);
+        convertAction(action, steps, {getSteps, getRemainingActions}, { log }, getDefaultConvertors());
 
         assert(steps.length);
         execute(steps, {}, context);
@@ -77,7 +77,7 @@ describe('convertor', () => {
             log: ["hello", "{1 + 3}"],
         };
         const steps: ExecutionStep[] = [];
-        convertAction(action, steps, {getSteps, getRemainingActions}, { log }, DEFAULT_CONVERTORS);
+        convertAction(action, steps, {getSteps, getRemainingActions}, { log }, getDefaultConvertors());
         assert(steps.length);
         execute(steps, {}, context);
         expect(log).toBeCalledWith("hello", 4);
@@ -108,10 +108,9 @@ describe('convertor', () => {
                 ]
             }
         ];
-        const scriptMap = convertScripts<DokAction>(scripts,
-        {
+        const scriptMap = convertScripts<DokAction>(scripts, {
             log,
-        });
+        }, getDefaultConvertors());
 
         scriptMap.get(scripts.find(({name}) => name === "ScriptTest")!)!.forEach(step => step(context, {}));
         expect(log).toBeCalledWith("hello", "test");
@@ -139,7 +138,7 @@ describe('convertor', () => {
                     },
                 ],
             },
-        ], {log});
+        ], {log}, getDefaultConvertors());
         expect(log).toBeCalledWith(0, "hello", "test");
         expect(log).toBeCalledWith(1, "hello", "test");
         expect(log).toBeCalledWith(2, "hello", "test");
@@ -182,7 +181,7 @@ describe('convertor', () => {
                     }
                 ],
             },
-        ], {log});
+        ], {log}, getDefaultConvertors());
         expect(log).toBeCalledWith(0, "hello", "test");
         expect(log).not.toBeCalledWith(0, "hello", "test2");
         expect(log).not.toBeCalledWith(0, "hello", "loopingtest");
@@ -219,7 +218,7 @@ describe('convertor', () => {
                     },
                 ],
             },
-        ], {log});
+        ], {log}, getDefaultConvertors());
         expect(log).toBeCalledWith("hello", "test", "sub2");
     });
     
@@ -252,8 +251,8 @@ describe('convertor', () => {
                     },
                 ],
             },
-        ], undefined, [
-            ...DEFAULT_CONVERTORS,
+        ], {}, [
+            ...getDefaultConvertors(),
             (action, results) => {
                 if (!action.custom) {
                     return;

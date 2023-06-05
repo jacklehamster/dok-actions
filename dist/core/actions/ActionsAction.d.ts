@@ -1,4 +1,4 @@
 import { DokAction } from "./Action";
-export interface ActionsAction {
-    actions?: DokAction[];
+export interface ActionsAction<T> {
+    actions?: (T & DokAction<T>)[];
 }

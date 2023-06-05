@@ -1,16 +1,15 @@
 import { ExecutionStep, execute } from "../execution/ExecutionStep";
-import { ConvertBehavior, Convertor, DEFAULT_EXTERNALS } from "./Convertor";
+import { ConvertBehavior, Utils } from "./Convertor";
 import { calculateNumber } from "../resolutions/calculateNumber";
-import { convertAction } from "./convert-action";
+import { ActionConvertorList, convertAction } from "./convert-action";
 import { LogicAction } from "../actions/LogicAction";
-import { DEFAULT_CONVERTORS } from "./default-convertors";
 
-export const convertLoopProperty: Convertor<LogicAction> = (
-        action,
+export function convertLoopProperty<T>(
+        action: LogicAction,
         stepResults: ExecutionStep[],
-        getSteps,
-        external = DEFAULT_EXTERNALS,
-        actionConversionMap = DEFAULT_CONVERTORS) => {
+        utils: Utils<T & LogicAction>,
+        external: Record<string, any>,
+        actionConversionMap: ActionConvertorList): ConvertBehavior | void {
     if (action.loop === undefined) {
         return;
     }
@@ -20,7 +19,7 @@ export const convertLoopProperty: Convertor<LogicAction> = (
     const { loop, ...subAction } = action;
     const loopResolution = calculateNumber(loop, 0);
     const subStepResults: ExecutionStep[] = [];
-    convertAction(subAction, subStepResults, getSteps, external, actionConversionMap);
+    convertAction<LogicAction>(subAction, subStepResults, utils, external, actionConversionMap);
     stepResults.push((context, parameters) => {
         const numLoops = loopResolution.valueOf(context);
         for (let i = 0; i < numLoops; i++) {

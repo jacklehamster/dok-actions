@@ -1,9 +1,7 @@
-import { Convertor } from "./Convertor";
-import { ExecutionParameters } from "../execution/ExecutionStep";
+import { ConvertBehavior, Utils } from "./Convertor";
+import { ExecutionStep } from "../execution/ExecutionStep";
+import { ActionConvertorList } from "./convert-action";
 import { ScriptAction } from "../actions/ScriptAction";
-import { Context } from "../context/Context";
-import { DokAction } from "../actions/Action";
-export declare function newParams(context: Context): ExecutionParameters;
-export declare function recycleParams(context: Context, params: ExecutionParameters): void;
-export declare const convertParametersProperty: Convertor<ScriptAction>;
-export declare const convertHooksProperty: Convertor<DokAction>;
+import { HookAction } from "../actions/HookAction";
+export declare function convertParametersProperty<T>(action: ScriptAction, results: ExecutionStep[], utils: Utils<T & ScriptAction>, external: Record<string, any>, actionConversionMap: ActionConvertorList): ConvertBehavior | void;
+export declare function convertHooksProperty<T>(action: HookAction & T, results: ExecutionStep[], utils: Utils<T & HookAction>, external: Record<string, any>, actionConversionMap: ActionConvertorList): ConvertBehavior | void;

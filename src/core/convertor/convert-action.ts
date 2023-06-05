@@ -2,7 +2,6 @@ import { Context, createContext } from "../context/Context";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
 import { Script, ScriptFilter, filterScripts } from "../scripts/Script";
 import { ConvertBehavior, Convertor, DEFAULT_EXTERNALS, Utils } from "./Convertor";
-import { DEFAULT_CONVERTORS } from "./default-convertors";
 
 export type ActionConvertorList = Convertor<any>[];
 
@@ -10,7 +9,7 @@ export function convertAction<T>(
         action: T,
         stepResults: ExecutionStep[],
         utils: Utils<T>,
-        external: Record<string, any> = DEFAULT_EXTERNALS,
+        external: Record<string, any>,
         actionConversionMap: ActionConvertorList): ConvertBehavior | undefined {
     for (let convertor of actionConversionMap) {
         const convertBehavior = convertor(action, stepResults, utils, external, actionConversionMap);
@@ -25,8 +24,8 @@ export function convertAction<T>(
 
 export function convertScripts<T>(
         scripts: Script<T>[],
-        external: Record<string, any> = DEFAULT_EXTERNALS,
-        actionConversionMap = DEFAULT_CONVERTORS): Map<Script<T>, ExecutionStep[]> {
+        external: Record<string, any>,
+        actionConversionMap: ActionConvertorList): Map<Script<T>, ExecutionStep[]> {
     const scriptMap: Map<Script<T>, ExecutionStep[]> = new Map();
     const getSteps = (filter: ScriptFilter) => {
         const filteredScripts = filterScripts(scripts, filter);
@@ -55,8 +54,8 @@ export function executeScript<T>(
         scriptName: string,
         parameters: ExecutionParameters = {},
         scripts: Script<T>[],
-        external: Record<string, any> = DEFAULT_EXTERNALS,
-        actionConversionMap: ActionConvertorList = DEFAULT_CONVERTORS): () => void {
+        external: Record<string, any>,
+        actionConversionMap: ActionConvertorList): () => void {
     const context: Context = createContext();
     const scriptMap = convertScripts(scripts, external, actionConversionMap);
     const script = scripts.find(({name}) => name === scriptName);
