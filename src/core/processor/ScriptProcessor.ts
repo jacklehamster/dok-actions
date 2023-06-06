@@ -1,7 +1,7 @@
 import { Context, createContext } from "../context/Context";
-import { DEFAULT_EXTERNALS } from "../convertor/Convertor";
 import { ActionConvertorList, convertScripts } from "../convertor/convert-action";
 import { getDefaultConvertors } from "../convertor/default-convertors";
+import { DEFAULT_EXTERNALS } from "../convertor/default-externals";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
 import { Script, ScriptFilter, Tag, filterScripts } from "../scripts/Script";
 
@@ -10,14 +10,22 @@ export interface LoopBehavior {
 }
 
 export class ScriptProcessor<T, E = {}> {
-    scripts: Script<T>[];
-    scriptMap: Map<Script<T>, ExecutionStep[]>;
-    external: (E|{}) & typeof DEFAULT_EXTERNALS;
+    private scripts: Script<T>[];
+    private scriptMap?: Map<Script<T>, ExecutionStep[]>;
+    private external: (E|{}) & typeof DEFAULT_EXTERNALS;
+    private actionConversionMap: ActionConvertorList;
 
     constructor(scripts: Script<T>[], external = {}, actionConversionMap: ActionConvertorList = getDefaultConvertors()) {
         this.scripts = scripts;
-        this.scriptMap = convertScripts(this.scripts, external, actionConversionMap);
+        this.actionConversionMap = actionConversionMap;
         this.external = {...DEFAULT_EXTERNALS, ...external};
+    }
+
+    private async fetchScripts(): Promise<Map<Script<T>, ExecutionStep[]>> {
+        if (!this.scriptMap) {
+            this.scriptMap = await convertScripts(this.scripts, this.external, this.actionConversionMap);
+        }
+        return this.scriptMap!;
     }
 
     private createLoopCleanup(behavior: LoopBehavior, context: Context) {
@@ -30,29 +38,30 @@ export class ScriptProcessor<T, E = {}> {
         } : () => {};
     }
 
-    getSteps(filter: ScriptFilter) {
+    async getSteps(filter: ScriptFilter) {
+        const scriptMap = await this.fetchScripts();
         const scripts = filterScripts(this.scripts, filter);
         const steps: ExecutionStep[] = [];
-        scripts.forEach(script => this.scriptMap.get(script)?.forEach(step => steps.push(step)));
+        scripts.forEach(script => scriptMap.get(script)?.forEach(step => steps.push(step)));
         return steps;
     }
 
-    runByName(name: string): () => void {
+    async runByName(name: string) {
         const context: Context = createContext();
-        execute(this.getSteps({ name }), undefined, context);
+        execute(await this.getSteps({ name }), undefined, context);
         return () => context.cleanupActions?.forEach(action => action());
     }
 
-    runByTags(tags: Tag[]): () => void {
+    async runByTags(tags: Tag[]) {
         const context: Context = createContext();
-        execute(this.getSteps({ tags }), undefined, context);
+        execute(await this.getSteps({ tags }), undefined, context);
         return () => context.cleanupActions?.forEach(action => action());
     }
 
-    private loopWithFilter(filter: ScriptFilter, behavior: LoopBehavior = {}): () => void {
+    private async loopWithFilter(filter: ScriptFilter, behavior: LoopBehavior = {}) {
         const context: Context = createContext();
         const parameters: ExecutionParameters = { time: 0 };
-        const steps = this.getSteps(filter);
+        const steps = await this.getSteps(filter);
         const loopCleanup = this.createLoopCleanup(behavior, context);
         const loop = (time: number) => {
             parameters.time = time;
@@ -67,11 +76,11 @@ export class ScriptProcessor<T, E = {}> {
         }
     }
     
-    loopByName(name: string, behavior: LoopBehavior = {}): () => void {
-        return this.loopWithFilter({ name }, behavior);
+    async loopByName(name: string, behavior: LoopBehavior = {}) {
+        return await this.loopWithFilter({ name }, behavior);
     }
 
-    loopByTags(tags: string[], behavior: LoopBehavior = {}) {
-        return this.loopWithFilter({ tags }, behavior);
+    async loopByTags(tags: string[], behavior: LoopBehavior = {}) {
+        return await this.loopWithFilter({ tags }, behavior);
     }
 }

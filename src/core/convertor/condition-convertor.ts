@@ -4,12 +4,12 @@ import { ActionConvertorList, convertAction } from "./convert-action";
 import { calculateBoolean } from "../resolutions/calculateBoolean";
 import { LogicAction } from "../actions/LogicAction";
 
-export function convertConditionProperty<T>(
+export async function convertConditionProperty<T>(
         action: LogicAction,
         results: ExecutionStep[],
         utils: Utils<T & LogicAction>,
         external: Record<string, any>,
-        actionConversionMap: ActionConvertorList): ConvertBehavior | void {
+        actionConversionMap: ActionConvertorList): Promise<ConvertBehavior | void> {
     if (action.condition === undefined) {
         return;
     }
@@ -19,7 +19,7 @@ export function convertConditionProperty<T>(
     const { condition, ...subAction } = action;
     const conditionResolution = calculateBoolean(condition);
     const subStepResults: ExecutionStep[] = [];
-    convertAction(subAction, subStepResults, utils, external, actionConversionMap);
+    await convertAction(subAction, subStepResults, utils, external, actionConversionMap);
     results.push((context, parameters) => {
         if (conditionResolution.valueOf(context)) {
             execute(subStepResults, parameters, context);

@@ -1,4 +1,4 @@
-import { DEFAULT_EXTERNALS } from "../convertor/Convertor";
+import { DEFAULT_EXTERNALS } from "../convertor/default-externals";
 import { ExecutionParameters, ExecutionStep } from "../execution/ExecutionStep";
 export interface Context<E = {}> {
     parameters: ExecutionParameters[];

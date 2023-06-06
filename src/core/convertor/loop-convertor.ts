@@ -4,12 +4,12 @@ import { calculateNumber } from "../resolutions/calculateNumber";
 import { ActionConvertorList, convertAction } from "./convert-action";
 import { LogicAction } from "../actions/LogicAction";
 
-export function convertLoopProperty<T>(
-        action: LogicAction,
+export async function convertLoopProperty<T>(
+        action: T & LogicAction,
         stepResults: ExecutionStep[],
         utils: Utils<T & LogicAction>,
         external: Record<string, any>,
-        actionConversionMap: ActionConvertorList): ConvertBehavior | void {
+        actionConversionMap: ActionConvertorList): Promise<ConvertBehavior | void> {
     if (action.loop === undefined) {
         return;
     }
@@ -19,7 +19,7 @@ export function convertLoopProperty<T>(
     const { loop, ...subAction } = action;
     const loopResolution = calculateNumber(loop, 0);
     const subStepResults: ExecutionStep[] = [];
-    convertAction<LogicAction>(subAction, subStepResults, utils, external, actionConversionMap);
+    await convertAction<LogicAction>(subAction, subStepResults, utils, external, actionConversionMap);
     stepResults.push((context, parameters) => {
         const numLoops = loopResolution.valueOf(context);
         for (let i = 0; i < numLoops; i++) {

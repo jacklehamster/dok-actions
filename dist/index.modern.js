@@ -58,16 +58,11 @@ function _createForOfIteratorHelperLoose(o, allowArrayLike) {
   throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 }
 
-var ConvertBehavior;
-(function (ConvertBehavior) {
-  ConvertBehavior[ConvertBehavior["NONE"] = 0] = "NONE";
-  ConvertBehavior[ConvertBehavior["SKIP_REMAINING_CONVERTORS"] = 1] = "SKIP_REMAINING_CONVERTORS";
-  ConvertBehavior[ConvertBehavior["SKIP_REMAINING_ACTIONS"] = 2] = "SKIP_REMAINING_ACTIONS";
-})(ConvertBehavior || (ConvertBehavior = {}));
 var DEFAULT_EXTERNALS = {
   log: console.log,
   setTimeout: setTimeout,
-  clearTimeout: clearTimeout
+  clearTimeout: clearTimeout,
+  fetch: global.fetch
 };
 
 function createContext(_temp) {
@@ -92,6 +87,174 @@ function createContext(_temp) {
   };
 }
 
+var ConvertBehavior;
+(function (ConvertBehavior) {
+  ConvertBehavior[ConvertBehavior["NONE"] = 0] = "NONE";
+  ConvertBehavior[ConvertBehavior["SKIP_REMAINING_CONVERTORS"] = 1] = "SKIP_REMAINING_CONVERTORS";
+  ConvertBehavior[ConvertBehavior["SKIP_REMAINING_ACTIONS"] = 2] = "SKIP_REMAINING_ACTIONS";
+})(ConvertBehavior || (ConvertBehavior = {}));
+
+// A type of promise-like that resolves synchronously and supports only one observer
+const _Pact = /*#__PURE__*/(function() {
+	function _Pact() {}
+	_Pact.prototype.then = function(onFulfilled, onRejected) {
+		const result = new _Pact();
+		const state = this.s;
+		if (state) {
+			const callback = state & 1 ? onFulfilled : onRejected;
+			if (callback) {
+				try {
+					_settle(result, 1, callback(this.v));
+				} catch (e) {
+					_settle(result, 2, e);
+				}
+				return result;
+			} else {
+				return this;
+			}
+		}
+		this.o = function(_this) {
+			try {
+				const value = _this.v;
+				if (_this.s & 1) {
+					_settle(result, 1, onFulfilled ? onFulfilled(value) : value);
+				} else if (onRejected) {
+					_settle(result, 1, onRejected(value));
+				} else {
+					_settle(result, 2, value);
+				}
+			} catch (e) {
+				_settle(result, 2, e);
+			}
+		};
+		return result;
+	};
+	return _Pact;
+})();
+
+// Settles a pact synchronously
+function _settle(pact, state, value) {
+	if (!pact.s) {
+		if (value instanceof _Pact) {
+			if (value.s) {
+				if (state & 1) {
+					state = value.s;
+				}
+				value = value.v;
+			} else {
+				value.o = _settle.bind(null, pact, state);
+				return;
+			}
+		}
+		if (value && value.then) {
+			value.then(_settle.bind(null, pact, state), _settle.bind(null, pact, 2));
+			return;
+		}
+		pact.s = state;
+		pact.v = value;
+		const observer = pact.o;
+		if (observer) {
+			observer(pact);
+		}
+	}
+}
+
+function _isSettledPact(thenable) {
+	return thenable instanceof _Pact && thenable.s & 1;
+}
+
+// Asynchronously iterate through an object that has a length property, passing the index as the first argument to the callback (even as the length property changes)
+function _forTo(array, body, check) {
+	var i = -1, pact, reject;
+	function _cycle(result) {
+		try {
+			while (++i < array.length && (!check || !check())) {
+				result = body(i);
+				if (result && result.then) {
+					if (_isSettledPact(result)) {
+						result = result.v;
+					} else {
+						result.then(_cycle, reject || (reject = _settle.bind(null, pact = new _Pact(), 2)));
+						return;
+					}
+				}
+			}
+			if (pact) {
+				_settle(pact, 1, result);
+			} else {
+				pact = result;
+			}
+		} catch (e) {
+			_settle(pact || (pact = new _Pact()), 2, e);
+		}
+	}
+	_cycle();
+	return pact;
+}
+
+const _iteratorSymbol = /*#__PURE__*/ typeof Symbol !== "undefined" ? (Symbol.iterator || (Symbol.iterator = Symbol("Symbol.iterator"))) : "@@iterator";
+
+// Asynchronously iterate through an object's values
+// Uses for...of if the runtime supports it, otherwise iterates until length on a copy
+function _forOf(target, body, check) {
+	if (typeof target[_iteratorSymbol] === "function") {
+		var iterator = target[_iteratorSymbol](), step, pact, reject;
+		function _cycle(result) {
+			try {
+				while (!(step = iterator.next()).done && (!check || !check())) {
+					result = body(step.value);
+					if (result && result.then) {
+						if (_isSettledPact(result)) {
+							result = result.v;
+						} else {
+							result.then(_cycle, reject || (reject = _settle.bind(null, pact = new _Pact(), 2)));
+							return;
+						}
+					}
+				}
+				if (pact) {
+					_settle(pact, 1, result);
+				} else {
+					pact = result;
+				}
+			} catch (e) {
+				_settle(pact || (pact = new _Pact()), 2, e);
+			}
+		}
+		_cycle();
+		if (iterator.return) {
+			var _fixup = function(value) {
+				try {
+					if (!step.done) {
+						iterator.return();
+					}
+				} catch(e) {
+				}
+				return value;
+			};
+			if (pact && pact.then) {
+				return pact.then(_fixup, function(e) {
+					throw _fixup(e);
+				});
+			}
+			_fixup();
+		}
+		return pact;
+	}
+	// No support for Symbol.iterator
+	if (!("length" in target)) {
+		throw new TypeError("Object is not iterable");
+	}
+	// Handle live collections properly
+	var values = [];
+	for (var i = 0; i < target.length; i++) {
+		values.push(target[i]);
+	}
+	return _forTo(values, function(i) { return body(values[i]); }, check);
+}
+
+const _asyncIteratorSymbol = /*#__PURE__*/ typeof Symbol !== "undefined" ? (Symbol.asyncIterator || (Symbol.asyncIterator = Symbol("Symbol.asyncIterator"))) : "@@asyncIterator";
+
 function execute(steps, parameters, context) {
   if (parameters === void 0) {
     parameters = {};
@@ -105,9 +268,10 @@ function execute(steps, parameters, context) {
   if (!context.parameters) {
     context.parameters = [];
   }
-  var changedParameters = context.parameters[context.parameters.length - 1] !== parameters;
+  var params = context.parameters;
+  var changedParameters = params[params.length - 1] !== parameters;
   if (changedParameters) {
-    context.parameters.push(parameters);
+    params.push(parameters);
   }
   for (var _iterator = _createForOfIteratorHelperLoose(steps), _step; !(_step = _iterator()).done;) {
     var step = _step.value;
@@ -117,7 +281,7 @@ function execute(steps, parameters, context) {
     return listener(context, parameters);
   });
   if (changedParameters) {
-    context.parameters.pop();
+    params.pop();
   }
 }
 
@@ -150,78 +314,94 @@ function filterScripts(scripts, filter) {
   });
 }
 
-function convertAction(action, stepResults, utils, external, actionConversionMap) {
-  for (var _iterator = _createForOfIteratorHelperLoose(actionConversionMap), _step; !(_step = _iterator()).done;) {
-    var convertor = _step.value;
-    var convertBehavior = convertor(action, stepResults, utils, external, actionConversionMap);
-    if (convertBehavior === ConvertBehavior.SKIP_REMAINING_CONVERTORS) {
-      return;
-    } else if (convertBehavior === ConvertBehavior.SKIP_REMAINING_ACTIONS) {
-      return convertBehavior;
-    }
-  }
-  return;
-}
-function convertScripts(scripts, external, actionConversionMap) {
-  var scriptMap = new Map();
-  var getSteps = function getSteps(filter) {
-    var filteredScripts = filterScripts(scripts, filter);
-    var steps = [];
-    filteredScripts.forEach(function (script) {
-      var _scriptMap$get;
-      return steps.push.apply(steps, (_scriptMap$get = scriptMap.get(script)) != null ? _scriptMap$get : []);
-    });
-    return steps;
-  };
-  scripts.forEach(function (script) {
-    var _scriptMap$get2;
-    if (!scriptMap.has(script)) {
-      scriptMap.set(script, []);
-    }
-    var scriptSteps = (_scriptMap$get2 = scriptMap.get(script)) != null ? _scriptMap$get2 : [];
-    var actions = script.actions;
-    var _loop = function _loop(i) {
-      var getRemainingActions = function getRemainingActions() {
-        return actions.slice(i + 1);
-      };
-      var convertBehavior = convertAction(actions[i], scriptSteps, {
-        getSteps: getSteps,
-        getRemainingActions: getRemainingActions
-      }, external, actionConversionMap);
-      if (convertBehavior === ConvertBehavior.SKIP_REMAINING_ACTIONS) {
-        return "break";
-      }
-    };
-    for (var i = 0; i < actions.length; i++) {
-      var _ret = _loop(i);
-      if (_ret === "break") break;
-    }
-  });
-  return scriptMap;
-}
-function executeScript(scriptName, parameters, scripts, external, actionConversionMap) {
+var executeScript = function executeScript(scriptName, parameters, scripts, external, actionConversionMap) {
   if (parameters === void 0) {
     parameters = {};
   }
-  var context = createContext();
-  var scriptMap = convertScripts(scripts, external, actionConversionMap);
-  var script = scripts.find(function (_ref) {
-    var name = _ref.name;
-    return name === scriptName;
-  });
-  var steps = script ? scriptMap.get(script) : [];
-  execute(steps, parameters, context);
-  return function () {
-    context.cleanupActions.forEach(function (action) {
-      return action();
+  try {
+    var context = createContext();
+    return Promise.resolve(convertScripts(scripts, external, actionConversionMap)).then(function (scriptMap) {
+      var script = scripts.find(function (_ref) {
+        var name = _ref.name;
+        return name === scriptName;
+      });
+      var steps = script ? scriptMap.get(script) : [];
+      execute(steps, parameters, context);
+      return function () {
+        context.cleanupActions.forEach(function (action) {
+          return action();
+        });
+        context.cleanupActions.length = 0;
+      };
     });
-    context.cleanupActions.length = 0;
-  };
-}
-function executeAction(action, parameters, context, utils, external, actionConversionMap) {
-  if (external === void 0) {
-    external = DEFAULT_EXTERNALS;
+  } catch (e) {
+    return Promise.reject(e);
   }
+};
+var convertScripts = function convertScripts(scripts, external, actionConversionMap) {
+  try {
+    var scriptMap = new Map();
+    var getSteps = function getSteps(filter) {
+      var filteredScripts = filterScripts(scripts, filter);
+      var steps = [];
+      filteredScripts.forEach(function (script) {
+        var _scriptMap$get;
+        return steps.push.apply(steps, (_scriptMap$get = scriptMap.get(script)) != null ? _scriptMap$get : []);
+      });
+      return steps;
+    };
+    var _temp2 = _forOf(scripts, function (script) {
+      var _scriptMap$get2;
+      var _interrupt = false;
+      if (!scriptMap.has(script)) {
+        scriptMap.set(script, []);
+      }
+      var scriptSteps = (_scriptMap$get2 = scriptMap.get(script)) != null ? _scriptMap$get2 : [];
+      var actions = script.actions;
+      var _temp = _forTo(actions, function (i) {
+        var getRemainingActions = function getRemainingActions() {
+          return actions.slice(i + 1);
+        };
+        return Promise.resolve(convertAction(actions[i], scriptSteps, {
+          getSteps: getSteps,
+          getRemainingActions: getRemainingActions
+        }, external, actionConversionMap)).then(function (convertBehavior) {
+          if (convertBehavior === ConvertBehavior.SKIP_REMAINING_ACTIONS) {
+            _interrupt = true;
+          }
+        });
+      }, function () {
+        return _interrupt;
+      });
+      if (_temp && _temp.then) return _temp.then(function () {});
+    });
+    return Promise.resolve(_temp2 && _temp2.then ? _temp2.then(function () {
+      return scriptMap;
+    }) : scriptMap);
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+var convertAction = function convertAction(action, stepResults, utils, external, actionConversionMap) {
+  try {
+    var _exit = false;
+    return Promise.resolve(_forOf(actionConversionMap, function (convertor) {
+      return Promise.resolve(convertor(action, stepResults, utils, external, actionConversionMap)).then(function (convertBehavior) {
+        if (convertBehavior === ConvertBehavior.SKIP_REMAINING_CONVERTORS) {
+          _exit = true;
+        } else if (convertBehavior === ConvertBehavior.SKIP_REMAINING_ACTIONS) {
+          _exit = true;
+          return convertBehavior;
+        }
+      });
+    }, function () {
+      return _exit;
+    }));
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+function executeAction(action, parameters, context, utils, external, actionConversionMap) {
   var results = [];
   convertAction(action, results, utils, external, actionConversionMap);
   execute(results, parameters, context);
@@ -492,166 +672,298 @@ function calculateTypedArray(value, ArrayConstructor) {
   };
 }
 
-function convertActionsProperty(action, results, utils, external, actionConvertorMap) {
-  var _action$actions;
-  (_action$actions = action.actions) === null || _action$actions === void 0 ? void 0 : _action$actions.forEach(function (action) {
-    return convertAction(action, results, utils, external, actionConvertorMap);
-  });
-}
+var convertActionsProperty = function convertActionsProperty(action, results, utils, external, actionConvertorMap) {
+  try {
+    var _action$actions;
+    if (!((_action$actions = action.actions) !== null && _action$actions !== void 0 && _action$actions.length)) {
+      return Promise.resolve();
+    }
+    var _temp = _forOf(action.actions, function (a) {
+      return Promise.resolve(convertAction(a, results, utils, external, actionConvertorMap)).then(function () {});
+    });
+    return Promise.resolve(_temp && _temp.then ? _temp.then(function () {}) : void 0);
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
 
 var _excluded = ["condition"];
-function convertConditionProperty(action, results, utils, external, actionConversionMap) {
-  if (action.condition === undefined) {
-    return;
-  }
-  if (!action.condition) {
-    return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
-  }
-  var condition = action.condition,
-    subAction = _objectWithoutPropertiesLoose(action, _excluded);
-  var conditionResolution = calculateBoolean(condition);
-  var subStepResults = [];
-  convertAction(subAction, subStepResults, utils, external, actionConversionMap);
-  results.push(function (context, parameters) {
-    if (conditionResolution.valueOf(context)) {
-      execute(subStepResults, parameters, context);
+var convertConditionProperty = function convertConditionProperty(action, results, utils, external, actionConversionMap) {
+  try {
+    if (action.condition === undefined) {
+      return Promise.resolve();
     }
-  });
-  return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
-}
+    if (!action.condition) {
+      return Promise.resolve(ConvertBehavior.SKIP_REMAINING_CONVERTORS);
+    }
+    var condition = action.condition,
+      subAction = _objectWithoutPropertiesLoose(action, _excluded);
+    var conditionResolution = calculateBoolean(condition);
+    var subStepResults = [];
+    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
+      results.push(function (context, parameters) {
+        if (conditionResolution.valueOf(context)) {
+          execute(subStepResults, parameters, context);
+        }
+      });
+      return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
 
 var _excluded$1 = ["delay"],
   _excluded2 = ["pause"],
   _excluded3 = ["lock", "unlock"];
-function convertDelayProperty(action, results, utils, external, actionConversionMap) {
-  if (!action.delay) {
-    return;
-  }
-  var delay = action.delay,
-    subAction = _objectWithoutPropertiesLoose(action, _excluded$1);
-  var delayAmount = calculateNumber(delay);
-  var postStepResults = [];
-  var remainingActions = utils.getRemainingActions();
-  convertAction(subAction, postStepResults, utils, external, actionConversionMap);
-  remainingActions.forEach(function (action) {
-    convertAction(action, postStepResults, utils, external, actionConversionMap);
-  });
-  var performPostSteps = function performPostSteps(context, parameters) {
-    execute(postStepResults, parameters, context);
-  };
-  results.push(function (context, parameters) {
-    var timeout = external.setTimeout(performPostSteps, delayAmount.valueOf(context), context, parameters);
-    context.cleanupActions.push(function () {
-      return clearTimeout(timeout);
-    });
-  });
-  return ConvertBehavior.SKIP_REMAINING_ACTIONS;
-}
-function convertPauseProperty(action, results, utils, external, actionConversionMap) {
-  if (!action.pause) {
-    return;
-  }
-  var pause = action.pause,
-    subAction = _objectWithoutPropertiesLoose(action, _excluded2);
-  var pauseResolution = calculateBoolean(pause);
-  var postStepResults = [];
-  var remainingActions = utils.getRemainingActions();
-  convertAction(subAction, postStepResults, utils, external, actionConversionMap);
-  remainingActions.forEach(function (action) {
-    convertAction(action, postStepResults, utils, external, actionConversionMap);
-  });
-  var step = function step(context, parameters) {
-    if (!pauseResolution.valueOf(context)) {
-      context.postActionListener["delete"](step);
-      execute(postStepResults, parameters, context);
-    } else if (!context.postActionListener.has(step)) {
-      context.postActionListener.add(step);
+var convertLockProperty = function convertLockProperty(action, results, utils, external, actionConversionMap) {
+  try {
+    if (!action.lock && !action.unlock) {
+      return Promise.resolve();
     }
-  };
-  results.push(step);
-  return ConvertBehavior.SKIP_REMAINING_ACTIONS;
-}
-function convertLockProperty(action, results, utils, external, actionConversionMap) {
-  if (!action.lock && !action.unlock) {
-    return;
-  }
-  var lock = action.lock,
-    unlock = action.unlock,
-    subAction = _objectWithoutPropertiesLoose(action, _excluded3);
-  if (unlock) {
-    var unlockResolution = calculateBoolean(unlock);
-    results.push(function (context) {
-      if (unlockResolution.valueOf(context)) {
-        context.locked = false;
+    var lock = action.lock,
+      unlock = action.unlock,
+      subAction = _objectWithoutPropertiesLoose(action, _excluded3);
+    if (unlock) {
+      var unlockResolution = calculateBoolean(unlock);
+      results.push(function (context) {
+        if (unlockResolution.valueOf(context)) {
+          context.locked = false;
+        }
+      });
+    }
+    return Promise.resolve(function () {
+      if (lock) {
+        var lockResolution = calculateBoolean(lock);
+        var postStepResults = [];
+        var remainingActions = utils.getRemainingActions();
+        return Promise.resolve(convertAction(subAction, postStepResults, utils, external, actionConversionMap)).then(function () {
+          function _temp6() {
+            results.push(function (context, parameters) {
+              if (!lockResolution.valueOf(context)) {
+                execute(postStepResults, parameters, context);
+              } else {
+                context.locked = true;
+                var step = function step(context, parameters) {
+                  if (!context.locked) {
+                    context.postActionListener["delete"](step);
+                    execute(postStepResults, parameters, context);
+                  }
+                };
+                context.postActionListener.add(step);
+              }
+            });
+            return ConvertBehavior.SKIP_REMAINING_ACTIONS;
+          }
+          var _temp5 = _forOf(remainingActions, function (action) {
+            return Promise.resolve(convertAction(action, postStepResults, utils, external, actionConversionMap)).then(function () {});
+          });
+          return _temp5 && _temp5.then ? _temp5.then(_temp6) : _temp6(_temp5);
+        });
       }
-    });
+    }());
+  } catch (e) {
+    return Promise.reject(e);
   }
-  if (lock) {
-    var lockResolution = calculateBoolean(lock);
+};
+var convertPauseProperty = function convertPauseProperty(action, results, utils, external, actionConversionMap) {
+  try {
+    if (!action.pause) {
+      return Promise.resolve();
+    }
+    var pause = action.pause,
+      subAction = _objectWithoutPropertiesLoose(action, _excluded2);
+    var pauseResolution = calculateBoolean(pause);
     var postStepResults = [];
     var remainingActions = utils.getRemainingActions();
-    convertAction(subAction, postStepResults, utils, external, actionConversionMap);
-    remainingActions.forEach(function (action) {
-      convertAction(action, postStepResults, utils, external, actionConversionMap);
-    });
-    results.push(function (context, parameters) {
-      if (!lockResolution.valueOf(context)) {
-        execute(postStepResults, parameters, context);
-      } else {
-        context.locked = true;
+    return Promise.resolve(convertAction(subAction, postStepResults, utils, external, actionConversionMap)).then(function () {
+      function _temp4() {
         var step = function step(context, parameters) {
-          if (!context.locked) {
+          if (!pauseResolution.valueOf(context)) {
             context.postActionListener["delete"](step);
             execute(postStepResults, parameters, context);
+          } else if (!context.postActionListener.has(step)) {
+            context.postActionListener.add(step);
           }
         };
-        context.postActionListener.add(step);
+        results.push(step);
+        return ConvertBehavior.SKIP_REMAINING_ACTIONS;
       }
+      var _temp3 = _forOf(remainingActions, function (action) {
+        return Promise.resolve(convertAction(action, postStepResults, utils, external, actionConversionMap)).then(function () {});
+      });
+      return _temp3 && _temp3.then ? _temp3.then(_temp4) : _temp4(_temp3);
     });
-    return ConvertBehavior.SKIP_REMAINING_ACTIONS;
+  } catch (e) {
+    return Promise.reject(e);
   }
-}
-
-function convertLogProperty(action, results, _, external, __) {
-  if (action.log === undefined) {
-    return;
-  }
-  var messages = Array.isArray(action.log) ? action.log : [action.log];
-  var resolutions = messages.map(function (m) {
-    return calculateResolution(m);
-  });
-  results.push(function (context) {
-    return external.log.apply(external, resolutions.map(function (r) {
-      return r === null || r === void 0 ? void 0 : r.valueOf(context);
-    }));
-  });
-}
-
-var _excluded$2 = ["loop"];
-function convertLoopProperty(action, stepResults, utils, external, actionConversionMap) {
-  if (action.loop === undefined) {
-    return;
-  }
-  if (!action.loop) {
-    return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
-  }
-  var loop = action.loop,
-    subAction = _objectWithoutPropertiesLoose(action, _excluded$2);
-  var loopResolution = calculateNumber(loop, 0);
-  var subStepResults = [];
-  convertAction(subAction, subStepResults, utils, external, actionConversionMap);
-  stepResults.push(function (context, parameters) {
-    var numLoops = loopResolution.valueOf(context);
-    for (var i = 0; i < numLoops; i++) {
-      parameters.index = i;
-      execute(subStepResults, parameters, context);
+};
+var convertDelayProperty = function convertDelayProperty(action, results, utils, external, actionConversionMap) {
+  try {
+    if (!action.delay) {
+      return Promise.resolve();
     }
-  });
-  return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
-}
+    var delay = action.delay,
+      subAction = _objectWithoutPropertiesLoose(action, _excluded$1);
+    var delayAmount = calculateNumber(delay);
+    var postStepResults = [];
+    var remainingActions = utils.getRemainingActions();
+    return Promise.resolve(convertAction(subAction, postStepResults, utils, external, actionConversionMap)).then(function () {
+      function _temp2() {
+        var performPostSteps = function performPostSteps(context, parameters) {
+          execute(postStepResults, parameters, context);
+        };
+        results.push(function (context, parameters) {
+          var timeout = external.setTimeout(performPostSteps, delayAmount.valueOf(context), context, parameters);
+          context.cleanupActions.push(function () {
+            return clearTimeout(timeout);
+          });
+        });
+        return ConvertBehavior.SKIP_REMAINING_ACTIONS;
+      }
+      var _temp = _forOf(remainingActions, function (action) {
+        return Promise.resolve(convertAction(action, postStepResults, utils, external, actionConversionMap)).then(function () {});
+      });
+      return _temp && _temp.then ? _temp.then(_temp2) : _temp2(_temp);
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
 
-var _excluded$3 = ["parameters"],
+var _excluded$2 = ["reference"];
+var convertReferenceProperty = function convertReferenceProperty(action, results, utils, external, actionConversionMap) {
+  try {
+    if (action.reference === undefined) {
+      return Promise.resolve();
+    }
+    var reference = action.reference,
+      subAction = _objectWithoutPropertiesLoose(action, _excluded$2);
+    if (Object.keys(subAction).length) {
+      console.warn("Remaining properties on reference are ignored:", subAction);
+    }
+    if (typeof reference === "string") {
+      return Promise.resolve(fetchAction(reference, results, utils, external, actionConversionMap)).then(function () {
+        return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+      });
+    } else {
+      var postStepResults = [];
+      var remainingActions = utils.getRemainingActions();
+      for (var _iterator = _createForOfIteratorHelperLoose(remainingActions), _step; !(_step = _iterator()).done;) {
+        var _action = _step.value;
+        convertAction(_action, postStepResults, utils, external, actionConversionMap);
+      }
+      var fetchedResults = [];
+      var path = calculateString(reference);
+      results.push(function (context, parameters) {
+        fetchAction(path.valueOf(context), fetchedResults, utils, external, actionConversionMap).then(function () {
+          execute(fetchedResults, parameters, context);
+          execute(postStepResults, parameters, context);
+        });
+      });
+      return Promise.resolve(ConvertBehavior.SKIP_REMAINING_ACTIONS);
+    }
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+var fetchAction = function fetchAction(path, results, utils, external, actionConversionMap) {
+  try {
+    return Promise.resolve(external.fetch(path)).then(function (response) {
+      return Promise.resolve(response.json()).then(function (json) {
+        return Promise.resolve(convertAction(json, results, utils, external, actionConversionMap)).then(function () {});
+      });
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+
+var convertLogProperty = function convertLogProperty(action, results, _, external, __) {
+  try {
+    if (action.log === undefined) {
+      return Promise.resolve();
+    }
+    var messages = Array.isArray(action.log) ? action.log : [action.log];
+    var resolutions = messages.map(function (m) {
+      return calculateResolution(m);
+    });
+    results.push(function (context) {
+      return external.log.apply(external, resolutions.map(function (r) {
+        return r === null || r === void 0 ? void 0 : r.valueOf(context);
+      }));
+    });
+    return Promise.resolve();
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+
+var _excluded$3 = ["loop"];
+var convertLoopProperty = function convertLoopProperty(action, stepResults, utils, external, actionConversionMap) {
+  try {
+    if (action.loop === undefined) {
+      return Promise.resolve();
+    }
+    if (!action.loop) {
+      return Promise.resolve(ConvertBehavior.SKIP_REMAINING_CONVERTORS);
+    }
+    var loop = action.loop,
+      subAction = _objectWithoutPropertiesLoose(action, _excluded$3);
+    var loopResolution = calculateNumber(loop, 0);
+    var subStepResults = [];
+    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
+      stepResults.push(function (context, parameters) {
+        var numLoops = loopResolution.valueOf(context);
+        for (var i = 0; i < numLoops; i++) {
+          parameters.index = i;
+          execute(subStepResults, parameters, context);
+        }
+      });
+      return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+
+var _excluded$4 = ["parameters"],
   _excluded2$1 = ["hooks"];
+var convertHooksProperty = function convertHooksProperty(action, results, utils, external, actionConversionMap) {
+  try {
+    if (!action.hooks) {
+      return Promise.resolve();
+    }
+    var hooks = action.hooks,
+      subAction = _objectWithoutPropertiesLoose(action, _excluded2$1);
+    var hooksResolution = hooks;
+    var hooksValueOf = hooksResolution.map(function (hook) {
+      return calculateString(hook);
+    });
+    var subStepResults = [];
+    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
+      results.push(function (context, parameters) {
+        var paramValues = newParams(context);
+        for (var k in parameters) {
+          paramValues[k] = parameters[k];
+        }
+        for (var _iterator2 = _createForOfIteratorHelperLoose(hooksValueOf), _step2; !(_step2 = _iterator2()).done;) {
+          var hook = _step2.value;
+          var h = hook.valueOf(context);
+          var x = external[h];
+          if (x) {
+            paramValues[h] = x;
+          }
+        }
+        execute(subStepResults, paramValues, context);
+        recycleParams(context, paramValues);
+      });
+      return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
 function newParams(context) {
   var _context$objectPool$p, _context$objectPool;
   return (_context$objectPool$p = (_context$objectPool = context.objectPool) === null || _context$objectPool === void 0 ? void 0 : _context$objectPool.pop()) != null ? _context$objectPool$p : {};
@@ -663,84 +975,64 @@ function recycleParams(context, params) {
   }
   (_context$objectPool2 = context.objectPool) === null || _context$objectPool2 === void 0 ? void 0 : _context$objectPool2.push(params);
 }
-function convertParametersProperty(action, results, utils, external, actionConversionMap) {
-  if (!action.parameters) {
-    return;
+var convertParametersProperty = function convertParametersProperty(action, results, utils, external, actionConversionMap) {
+  try {
+    if (!action.parameters) {
+      return Promise.resolve();
+    }
+    var parameters = action.parameters,
+      subAction = _objectWithoutPropertiesLoose(action, _excluded$4);
+    var paramResolutions = parameters;
+    var paramEntries = Object.entries(paramResolutions).map(function (_ref) {
+      var key = _ref[0],
+        resolution = _ref[1];
+      return [key, calculateResolution(resolution)];
+    });
+    var subStepResults = [];
+    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
+      results.push(function (context, parameters) {
+        var paramValues = newParams(context);
+        for (var k in parameters) {
+          paramValues[k] = parameters[k];
+        }
+        for (var _iterator = _createForOfIteratorHelperLoose(paramEntries), _step; !(_step = _iterator()).done;) {
+          var _entry$;
+          var entry = _step.value;
+          var key = entry[0];
+          paramValues[key] = (_entry$ = entry[1]) === null || _entry$ === void 0 ? void 0 : _entry$.valueOf(context);
+        }
+        execute(subStepResults, paramValues, context);
+        recycleParams(context, paramValues);
+      });
+      return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+    });
+  } catch (e) {
+    return Promise.reject(e);
   }
-  var parameters = action.parameters,
-    subAction = _objectWithoutPropertiesLoose(action, _excluded$3);
-  var paramResolutions = parameters;
-  var paramEntries = Object.entries(paramResolutions).map(function (_ref) {
-    var key = _ref[0],
-      resolution = _ref[1];
-    return [key, calculateResolution(resolution)];
-  });
-  var subStepResults = [];
-  convertAction(subAction, subStepResults, utils, external, actionConversionMap);
-  results.push(function (context, parameters) {
-    var paramValues = newParams(context);
-    for (var k in parameters) {
-      paramValues[k] = parameters[k];
-    }
-    for (var _iterator = _createForOfIteratorHelperLoose(paramEntries), _step; !(_step = _iterator()).done;) {
-      var _entry$;
-      var entry = _step.value;
-      var key = entry[0];
-      paramValues[key] = (_entry$ = entry[1]) === null || _entry$ === void 0 ? void 0 : _entry$.valueOf(context);
-    }
-    execute(subStepResults, paramValues, context);
-    recycleParams(context, paramValues);
-  });
-  return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
-}
-function convertHooksProperty(action, results, utils, external, actionConversionMap) {
-  if (!action.hooks) {
-    return;
-  }
-  var hooks = action.hooks,
-    subAction = _objectWithoutPropertiesLoose(action, _excluded2$1);
-  var hooksResolution = hooks;
-  var hooksValueOf = hooksResolution.map(function (hook) {
-    return calculateString(hook);
-  });
-  var subStepResults = [];
-  convertAction(subAction, subStepResults, utils, external, actionConversionMap);
-  results.push(function (context, parameters) {
-    var paramValues = newParams(context);
-    for (var k in parameters) {
-      paramValues[k] = parameters[k];
-    }
-    for (var _iterator2 = _createForOfIteratorHelperLoose(hooksValueOf), _step2; !(_step2 = _iterator2()).done;) {
-      var hook = _step2.value;
-      var h = hook.valueOf(context);
-      var x = external[h];
-      if (x) {
-        paramValues[h] = x;
-      }
-    }
-    execute(subStepResults, paramValues, context);
-    recycleParams(context, paramValues);
-  });
-  return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
-}
+};
 
-function convertScriptProperty(action, results, _ref, _, __) {
-  var _action$scriptTags;
+var convertScriptProperty = function convertScriptProperty(action, results, _ref, _, __) {
   var getSteps = _ref.getSteps;
-  if (!action.script || (_action$scriptTags = action.scriptTags) !== null && _action$scriptTags !== void 0 && _action$scriptTags.length) {
-    return;
+  try {
+    var _action$scriptTags;
+    if (!action.script || (_action$scriptTags = action.scriptTags) !== null && _action$scriptTags !== void 0 && _action$scriptTags.length) {
+      return Promise.resolve();
+    }
+    var steps = getSteps({
+      name: action.script,
+      tags: action.scriptTags
+    });
+    results.push(function (context, parameters) {
+      return execute(steps, parameters, context);
+    });
+    return Promise.resolve();
+  } catch (e) {
+    return Promise.reject(e);
   }
-  var steps = getSteps({
-    name: action.script,
-    tags: action.scriptTags
-  });
-  results.push(function (context, parameters) {
-    return execute(steps, parameters, context);
-  });
-}
+};
 
 function getDefaultConvertors() {
-  return [convertHooksProperty, convertParametersProperty, convertLoopProperty, convertConditionProperty, convertDelayProperty, convertPauseProperty, convertLockProperty, convertLogProperty, convertScriptProperty, convertActionsProperty];
+  return [convertHooksProperty, convertParametersProperty, convertReferenceProperty, convertLoopProperty, convertConditionProperty, convertDelayProperty, convertPauseProperty, convertLockProperty, convertLogProperty, convertScriptProperty, convertActionsProperty];
 }
 
 var ScriptProcessor = /*#__PURE__*/function () {
@@ -752,10 +1044,28 @@ var ScriptProcessor = /*#__PURE__*/function () {
       actionConversionMap = getDefaultConvertors();
     }
     this.scripts = scripts;
-    this.scriptMap = convertScripts(this.scripts, external, actionConversionMap);
+    this.actionConversionMap = actionConversionMap;
     this.external = _extends({}, DEFAULT_EXTERNALS, external);
   }
   var _proto = ScriptProcessor.prototype;
+  _proto.fetchScripts = function fetchScripts() {
+    try {
+      var _temp2 = function _temp2() {
+        return _this.scriptMap;
+      };
+      var _this = this;
+      var _temp = function () {
+        if (!_this.scriptMap) {
+          return Promise.resolve(convertScripts(_this.scripts, _this.external, _this.actionConversionMap)).then(function (_convertScripts) {
+            _this.scriptMap = _convertScripts;
+          });
+        }
+      }();
+      return Promise.resolve(_temp && _temp.then ? _temp.then(_temp2) : _temp2(_temp));
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  };
   _proto.createLoopCleanup = function createLoopCleanup(behavior, context) {
     var cleanupActions = context.cleanupActions;
     return behavior.cleanupAfterLoop && cleanupActions ? function () {
@@ -767,78 +1077,114 @@ var ScriptProcessor = /*#__PURE__*/function () {
     } : function () {};
   };
   _proto.getSteps = function getSteps(filter) {
-    var _this = this;
-    var scripts = filterScripts(this.scripts, filter);
-    var steps = [];
-    scripts.forEach(function (script) {
-      var _this$scriptMap$get;
-      return (_this$scriptMap$get = _this.scriptMap.get(script)) === null || _this$scriptMap$get === void 0 ? void 0 : _this$scriptMap$get.forEach(function (step) {
-        return steps.push(step);
+    try {
+      var _this2 = this;
+      return Promise.resolve(_this2.fetchScripts()).then(function (scriptMap) {
+        var scripts = filterScripts(_this2.scripts, filter);
+        var steps = [];
+        scripts.forEach(function (script) {
+          var _scriptMap$get;
+          return (_scriptMap$get = scriptMap.get(script)) === null || _scriptMap$get === void 0 ? void 0 : _scriptMap$get.forEach(function (step) {
+            return steps.push(step);
+          });
+        });
+        return steps;
       });
-    });
-    return steps;
+    } catch (e) {
+      return Promise.reject(e);
+    }
   };
   _proto.runByName = function runByName(name) {
-    var context = createContext();
-    execute(this.getSteps({
-      name: name
-    }), undefined, context);
-    return function () {
-      var _context$cleanupActio;
-      return (_context$cleanupActio = context.cleanupActions) === null || _context$cleanupActio === void 0 ? void 0 : _context$cleanupActio.forEach(function (action) {
-        return action();
+    try {
+      var _this3 = this;
+      var context = createContext();
+      return Promise.resolve(_this3.getSteps({
+        name: name
+      })).then(function (_this3$getSteps) {
+        execute(_this3$getSteps, undefined, context);
+        return function () {
+          var _context$cleanupActio;
+          return (_context$cleanupActio = context.cleanupActions) === null || _context$cleanupActio === void 0 ? void 0 : _context$cleanupActio.forEach(function (action) {
+            return action();
+          });
+        };
       });
-    };
+    } catch (e) {
+      return Promise.reject(e);
+    }
   };
   _proto.runByTags = function runByTags(tags) {
-    var context = createContext();
-    execute(this.getSteps({
-      tags: tags
-    }), undefined, context);
-    return function () {
-      var _context$cleanupActio2;
-      return (_context$cleanupActio2 = context.cleanupActions) === null || _context$cleanupActio2 === void 0 ? void 0 : _context$cleanupActio2.forEach(function (action) {
-        return action();
+    try {
+      var _this4 = this;
+      var context = createContext();
+      return Promise.resolve(_this4.getSteps({
+        tags: tags
+      })).then(function (_this4$getSteps) {
+        execute(_this4$getSteps, undefined, context);
+        return function () {
+          var _context$cleanupActio2;
+          return (_context$cleanupActio2 = context.cleanupActions) === null || _context$cleanupActio2 === void 0 ? void 0 : _context$cleanupActio2.forEach(function (action) {
+            return action();
+          });
+        };
       });
-    };
+    } catch (e) {
+      return Promise.reject(e);
+    }
   };
   _proto.loopWithFilter = function loopWithFilter(filter, behavior) {
     if (behavior === void 0) {
       behavior = {};
     }
-    var context = createContext();
-    var parameters = {
-      time: 0
-    };
-    var steps = this.getSteps(filter);
-    var loopCleanup = this.createLoopCleanup(behavior, context);
-    var loop = function loop(time) {
-      parameters.time = time;
-      execute(steps, parameters, context);
-      loopCleanup();
-      animationFrameId = requestAnimationFrame(loop);
-    };
-    var animationFrameId = requestAnimationFrame(loop);
-    return function () {
-      loopCleanup();
-      cancelAnimationFrame(animationFrameId);
-    };
+    try {
+      var _this5 = this;
+      var context = createContext();
+      var parameters = {
+        time: 0
+      };
+      return Promise.resolve(_this5.getSteps(filter)).then(function (steps) {
+        var loopCleanup = _this5.createLoopCleanup(behavior, context);
+        var loop = function loop(time) {
+          parameters.time = time;
+          execute(steps, parameters, context);
+          loopCleanup();
+          animationFrameId = requestAnimationFrame(loop);
+        };
+        var animationFrameId = requestAnimationFrame(loop);
+        return function () {
+          loopCleanup();
+          cancelAnimationFrame(animationFrameId);
+        };
+      });
+    } catch (e) {
+      return Promise.reject(e);
+    }
   };
   _proto.loopByName = function loopByName(name, behavior) {
     if (behavior === void 0) {
       behavior = {};
     }
-    return this.loopWithFilter({
-      name: name
-    }, behavior);
+    try {
+      var _this6 = this;
+      return Promise.resolve(_this6.loopWithFilter({
+        name: name
+      }, behavior));
+    } catch (e) {
+      return Promise.reject(e);
+    }
   };
   _proto.loopByTags = function loopByTags(tags, behavior) {
     if (behavior === void 0) {
       behavior = {};
     }
-    return this.loopWithFilter({
-      tags: tags
-    }, behavior);
+    try {
+      var _this7 = this;
+      return Promise.resolve(_this7.loopWithFilter({
+        tags: tags
+      }, behavior));
+    } catch (e) {
+      return Promise.reject(e);
+    }
   };
   return ScriptProcessor;
 }();

@@ -1,18 +1,18 @@
 import { Context, createContext } from "../context/Context";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
 import { Script, ScriptFilter, filterScripts } from "../scripts/Script";
-import { ConvertBehavior, Convertor, DEFAULT_EXTERNALS, Utils } from "./Convertor";
+import { ConvertBehavior, Convertor, Utils } from "./Convertor";
 
 export type ActionConvertorList = Convertor<any>[];
 
-export function convertAction<T>(
+export async function convertAction<T>(
         action: T,
         stepResults: ExecutionStep[],
         utils: Utils<T>,
         external: Record<string, any>,
-        actionConversionMap: ActionConvertorList): ConvertBehavior | undefined {
+        actionConversionMap: ActionConvertorList): Promise<ConvertBehavior | void> {
     for (let convertor of actionConversionMap) {
-        const convertBehavior = convertor(action, stepResults, utils, external, actionConversionMap);
+        const convertBehavior = await convertor(action, stepResults, utils, external, actionConversionMap);
         if (convertBehavior === ConvertBehavior.SKIP_REMAINING_CONVERTORS) {
             return;
         } else if (convertBehavior === ConvertBehavior.SKIP_REMAINING_ACTIONS) {
@@ -22,10 +22,10 @@ export function convertAction<T>(
     return;    
 }
 
-export function convertScripts<T>(
+export async function convertScripts<T>(
         scripts: Script<T>[],
         external: Record<string, any>,
-        actionConversionMap: ActionConvertorList): Map<Script<T>, ExecutionStep[]> {
+        actionConversionMap: ActionConvertorList): Promise<Map<Script<T>, ExecutionStep[]>> {
     const scriptMap: Map<Script<T>, ExecutionStep[]> = new Map();
     const getSteps = (filter: ScriptFilter) => {
         const filteredScripts = filterScripts(scripts, filter);
@@ -33,7 +33,7 @@ export function convertScripts<T>(
         filteredScripts.forEach(script => steps.push(...(scriptMap.get(script)??[])));
         return steps;
     };
-    scripts.forEach(script => {
+    for (let script of scripts) {
         if (!scriptMap.has(script)) {
             scriptMap.set(script, []);
         }
@@ -41,23 +41,23 @@ export function convertScripts<T>(
         const { actions } = script;
         for (let i = 0; i < actions.length; i++) {
             const getRemainingActions = () => actions.slice(i + 1);
-            const convertBehavior = convertAction(actions[i], scriptSteps, {getSteps, getRemainingActions}, external, actionConversionMap);
+            const convertBehavior = await convertAction(actions[i], scriptSteps, {getSteps, getRemainingActions}, external, actionConversionMap);
             if (convertBehavior === ConvertBehavior.SKIP_REMAINING_ACTIONS) {
                 break;
             }
         }
-    });
+    }
     return scriptMap;
 }
 
-export function executeScript<T>(
+export async function executeScript<T>(
         scriptName: string,
         parameters: ExecutionParameters = {},
         scripts: Script<T>[],
         external: Record<string, any>,
-        actionConversionMap: ActionConvertorList): () => void {
+        actionConversionMap: ActionConvertorList): Promise<() => void> {
     const context: Context = createContext();
-    const scriptMap = convertScripts(scripts, external, actionConversionMap);
+    const scriptMap = await convertScripts(scripts, external, actionConversionMap);
     const script = scripts.find(({name}) => name === scriptName);
     const steps = script ? scriptMap.get(script) : [];
     execute(steps, parameters, context);
@@ -72,7 +72,7 @@ export function executeAction<T>(
         parameters: ExecutionParameters,
         context: Context,
         utils: Utils<T>,
-        external: Record<string, any> = DEFAULT_EXTERNALS,
+        external: Record<string, any>,
         actionConversionMap: ActionConvertorList): void {
     const results: ExecutionStep[] = [];
     convertAction(action, results, utils, external, actionConversionMap);

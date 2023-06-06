@@ -15,10 +15,4 @@ export interface Utils<T> {
     getRemainingActions: () => T[]; 
 }
 
-export type Convertor<T> = (action: T, results: ExecutionStep[], utils: Utils<T>, external: Record<string, any>, actionConversionMap: ActionConvertorList) => ConvertBehavior | void;
-
-export const DEFAULT_EXTERNALS = {
-    log: console.log,
-    setTimeout,
-    clearTimeout,
-};
+export type Convertor<T> = (action: T, results: ExecutionStep[], utils: Utils<T>, external: Record<string, any>, actionConversionMap: ActionConvertorList) => Promise<ConvertBehavior | void>;

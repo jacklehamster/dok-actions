@@ -22,12 +22,12 @@ function recycleParams(context: Context, params: ExecutionParameters): void {
     context.objectPool?.push(params);
 }
 
-export function convertParametersProperty<T>(
+export async function convertParametersProperty<T>(
         action: ScriptAction,
         results: ExecutionStep[],
         utils: Utils<T & ScriptAction>,
         external: Record<string, any>,
-        actionConversionMap: ActionConvertorList): ConvertBehavior | void {
+        actionConversionMap: ActionConvertorList): Promise<ConvertBehavior | void> {
     if (!action.parameters) {
         return;
     }
@@ -38,7 +38,7 @@ export function convertParametersProperty<T>(
         .map(([key, resolution]) => [key, calculateResolution(resolution)]);
 
     const subStepResults: ExecutionStep[] = [];
-    convertAction(subAction, subStepResults, utils, external, actionConversionMap);
+    await convertAction(subAction, subStepResults, utils, external, actionConversionMap);
 
     results.push((context, parameters) => {
         const paramValues: ExecutionParameters = newParams(context);
@@ -57,12 +57,12 @@ export function convertParametersProperty<T>(
     return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
 }
 
-export function convertHooksProperty<T>(
+export async function convertHooksProperty<T>(
         action: HookAction & T,
         results: ExecutionStep[],
         utils: Utils<T & HookAction>,
         external: Record<string, any>,
-        actionConversionMap: ActionConvertorList): ConvertBehavior|void {
+        actionConversionMap: ActionConvertorList): Promise<ConvertBehavior|void> {
     if (!action.hooks) {
         return;
     }
@@ -72,7 +72,7 @@ export function convertHooksProperty<T>(
     const hooksValueOf: ValueOf<string>[] = hooksResolution.map(hook => calculateString(hook));
 
     const subStepResults: ExecutionStep[] = [];
-    convertAction(subAction, subStepResults, utils, external, actionConversionMap);
+    await convertAction(subAction, subStepResults, utils, external, actionConversionMap);
 
     results.push((context, parameters) => {
         const paramValues: ExecutionParameters = newParams(context);

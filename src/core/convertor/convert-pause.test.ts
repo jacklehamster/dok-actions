@@ -17,12 +17,12 @@ describe('pause convertor', () => {
         pendingTimeouts.length = 0;
     });
 
-    it('should perform action with delay', () => {
+    it('should perform action with delay', async () => {
         getRemainingActions.mockReturnValue([{
             log: "test",
         }]);
         const results: ExecutionStep[] = [];
-        const behavior = convertDelayProperty({
+        const behavior = await convertDelayProperty({
                 delay: 123,
             },
             results,
@@ -38,13 +38,13 @@ describe('pause convertor', () => {
         expect(log).toBeCalledWith("test");
     });
 
-    it('should perform action with pause', () => {
+    it('should perform action with pause', async () => {
         const context = createContext();
         getRemainingActions.mockReturnValue([{
             log: "test2",
         }]);
         const results: ExecutionStep[] = [];
-        const behavior = convertPauseProperty({
+        const behavior = await convertPauseProperty({
                 pause: "{not completed}",
             },
             results,
@@ -59,13 +59,13 @@ describe('pause convertor', () => {
         expect(log).toBeCalledWith("test2");
     });
 
-    it ('should perform action lock', () => {
+    it ('should perform action lock', async () => {
         const context = createContext();
         getRemainingActions.mockReturnValue([{
             log: "test3",
         }]);
         const results: ExecutionStep[] = [];
-        const behavior = convertLockProperty({
+        const behavior = await convertLockProperty({
                 lock: 1,
             },
             results,

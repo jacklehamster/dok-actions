@@ -1,4 +1,3 @@
-import { DEFAULT_EXTERNALS } from "../convertor/Convertor";
 import { ActionConvertorList } from "../convertor/convert-action";
 import { ExecutionStep } from "../execution/ExecutionStep";
 import { Script, ScriptFilter, Tag } from "../scripts/Script";
@@ -6,15 +5,17 @@ export interface LoopBehavior {
     cleanupAfterLoop?: boolean;
 }
 export declare class ScriptProcessor<T, E = {}> {
-    scripts: Script<T>[];
-    scriptMap: Map<Script<T>, ExecutionStep[]>;
-    external: (E | {}) & typeof DEFAULT_EXTERNALS;
+    private scripts;
+    private scriptMap?;
+    private external;
+    private actionConversionMap;
     constructor(scripts: Script<T>[], external?: {}, actionConversionMap?: ActionConvertorList);
+    private fetchScripts;
     private createLoopCleanup;
-    getSteps(filter: ScriptFilter): ExecutionStep[];
-    runByName(name: string): () => void;
-    runByTags(tags: Tag[]): () => void;
+    getSteps(filter: ScriptFilter): Promise<ExecutionStep[]>;
+    runByName(name: string): Promise<() => void>;
+    runByTags(tags: Tag[]): Promise<() => void>;
     private loopWithFilter;
-    loopByName(name: string, behavior?: LoopBehavior): () => void;
-    loopByTags(tags: string[], behavior?: LoopBehavior): () => void;
+    loopByName(name: string, behavior?: LoopBehavior): Promise<() => void>;
+    loopByTags(tags: string[], behavior?: LoopBehavior): Promise<() => void>;
 }

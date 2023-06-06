@@ -11,12 +11,4 @@ export interface Utils<T> {
     getSteps: GetSteps;
     getRemainingActions: () => T[];
 }
-export declare type Convertor<T> = (action: T, results: ExecutionStep[], utils: Utils<T>, external: Record<string, any>, actionConversionMap: ActionConvertorList) => ConvertBehavior | void;
-export declare const DEFAULT_EXTERNALS: {
-    log: {
-        (...data: any[]): void;
-        (message?: any, ...optionalParams: any[]): void;
-    };
-    setTimeout: typeof setTimeout;
-    clearTimeout: typeof clearTimeout;
-};
+export declare type Convertor<T> = (action: T, results: ExecutionStep[], utils: Utils<T>, external: Record<string, any>, actionConversionMap: ActionConvertorList) => Promise<ConvertBehavior | void>;

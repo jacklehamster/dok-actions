@@ -2,15 +2,15 @@ import { LogAction } from "../actions/LogAction";
 import { ExecutionStep } from "../execution/ExecutionStep";
 import { Resolution } from "../resolutions/Resolution";
 import { calculateResolution } from "../resolutions/calculate";
-import { Utils } from "./Convertor";
+import { ConvertBehavior, Utils } from "./Convertor";
 import { ActionConvertorList } from "./convert-action";
 
-export function convertLogProperty<T>(
+export async function convertLogProperty<T>(
         action: LogAction,
         results: ExecutionStep[],
         _: Utils<T>,
         external: Record<string, any>,
-        __: ActionConvertorList) {
+        __: ActionConvertorList): Promise<ConvertBehavior|void> {
     if (action.log === undefined) {
         return;
     }

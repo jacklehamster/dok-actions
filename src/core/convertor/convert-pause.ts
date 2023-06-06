@@ -6,12 +6,12 @@ import { calculateNumber } from "../resolutions/calculateNumber";
 import { ConvertBehavior, Utils } from "./Convertor";
 import { ActionConvertorList, convertAction } from "./convert-action";
 
-export function convertDelayProperty<T>(
+export async function convertDelayProperty<T>(
         action: PauseAction,
         results: ExecutionStep[],
         utils: Utils<T & PauseAction>,
         external: Record<string, any>,
-        actionConversionMap: ActionConvertorList): ConvertBehavior | void {
+        actionConversionMap: ActionConvertorList): Promise<ConvertBehavior | void> {
     if (!action.delay) {
         return;
     }
@@ -20,10 +20,10 @@ export function convertDelayProperty<T>(
     const delayAmount = calculateNumber(delay);
     const postStepResults: ExecutionStep[] = [];
     const remainingActions = utils.getRemainingActions();
-    convertAction(subAction, postStepResults, utils, external, actionConversionMap);
-    remainingActions.forEach(action => {
-        convertAction(action, postStepResults, utils, external, actionConversionMap);
-    });
+    await convertAction(subAction, postStepResults, utils, external, actionConversionMap);
+    for (let action of remainingActions) {
+        await convertAction(action, postStepResults, utils, external, actionConversionMap);
+    }
     const performPostSteps = (context: Context, parameters: ExecutionParameters) => {
         execute(postStepResults, parameters, context);
     }
@@ -35,12 +35,12 @@ export function convertDelayProperty<T>(
     return ConvertBehavior.SKIP_REMAINING_ACTIONS;
 }
 
-export function convertPauseProperty<T>(
+export async function convertPauseProperty<T>(
         action: PauseAction,
         results: ExecutionStep[],
         utils: Utils<T & PauseAction>,
         external: Record<string, any>,
-        actionConversionMap: ActionConvertorList): ConvertBehavior | void {
+        actionConversionMap: ActionConvertorList): Promise<ConvertBehavior | void> {
     if (!action.pause) {
         return;
     }
@@ -49,10 +49,10 @@ export function convertPauseProperty<T>(
     const pauseResolution = calculateBoolean(pause);
     const postStepResults: ExecutionStep[] = [];
     const remainingActions = utils.getRemainingActions();
-    convertAction(subAction, postStepResults, utils, external, actionConversionMap);
-    remainingActions.forEach(action => {
-        convertAction(action, postStepResults, utils, external, actionConversionMap);
-    });
+    await convertAction(subAction, postStepResults, utils, external, actionConversionMap);
+    for (let action of remainingActions) {
+        await convertAction(action, postStepResults, utils, external, actionConversionMap);
+    }
 
     const step: ExecutionStep = (context, parameters) => {
         if (!pauseResolution.valueOf(context)) {
@@ -67,12 +67,12 @@ export function convertPauseProperty<T>(
     return ConvertBehavior.SKIP_REMAINING_ACTIONS;
 }
 
-export function convertLockProperty<T>(
+export async function convertLockProperty<T>(
         action: PauseAction,
         results: ExecutionStep[],
         utils: Utils<T & PauseAction>,
         external: Record<string, any>,
-        actionConversionMap: ActionConvertorList): ConvertBehavior | void {
+        actionConversionMap: ActionConvertorList): Promise<ConvertBehavior | void> {
     if (!action.lock && !action.unlock) {
         return;
     }
@@ -93,10 +93,10 @@ export function convertLockProperty<T>(
         const lockResolution = calculateBoolean(lock);
         const postStepResults: ExecutionStep[] = [];
         const remainingActions = utils.getRemainingActions();
-        convertAction(subAction, postStepResults, utils, external, actionConversionMap);
-        remainingActions.forEach(action => {
-            convertAction(action, postStepResults, utils, external, actionConversionMap);
-        });
+        await convertAction(subAction, postStepResults, utils, external, actionConversionMap);
+        for (let action of remainingActions) {
+            await convertAction(action, postStepResults, utils, external, actionConversionMap);
+        }
 
         results.push((context, parameters) => {
             if (!lockResolution.valueOf(context)) {

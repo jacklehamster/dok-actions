@@ -1,15 +1,17 @@
+import { LogAction } from "../actions/LogAction";
 import { ExecutionStep, execute } from "../execution/ExecutionStep";
 import { getDefaultConvertors } from "./default-convertors";
-import { convertLogProperty } from "./log-convertor";
+import { convertLoopProperty } from "./loop-convertor";
 
-describe('log convertor', () => {
+describe('loop convertor', () => {
     const log = jest.fn();
     const getSteps = jest.fn().mockReturnValue([]);
     const getRemainingActions = jest.fn().mockReturnValue([]);
-    it('convert log', async () => {
+    it('convert loop', async () => {
         const results: ExecutionStep[] = [];
-        await convertLogProperty({
-                log: "log-test",
+        await convertLoopProperty<LogAction>({
+                loop: 5,
+                log: "{index}",
             },
             results,
             {getSteps, getRemainingActions},
@@ -17,6 +19,8 @@ describe('log convertor', () => {
             getDefaultConvertors(),
         );
         execute(results);
-        expect(log).toBeCalledWith("log-test");
+        expect(log).toBeCalledTimes(5);
+        expect(log).toBeCalledWith(0);
+        expect(log).toBeCalledWith(4);
     });
 });

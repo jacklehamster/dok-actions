@@ -6,16 +6,16 @@ import { ExecutionParameters, ExecutionStep, execute } from "../execution/Execut
 import { convertAction, convertScripts, executeScript } from "./convert-action";
 import { Resolution } from "../resolutions/Resolution";
 import { calculateResolution } from "../resolutions/calculate";
-import { DEFAULT_EXTERNALS } from "./Convertor";
 import { DokAction } from "../actions/Action";
 import { getDefaultConvertors } from "./default-convertors";
+import { DEFAULT_EXTERNALS } from "./default-externals";
 
 describe('convertor', () => {
     const getSteps = jest.fn();
     const getRemainingActions = jest.fn();
     const context: Context = createContext();
 
-    it('converts script action', () => {
+    it('converts script action', async () => {
         const mockStep = jest.fn();
         const innerStep = (context: Context, params: ExecutionParameters) => mockStep(context, JSON.parse(JSON.stringify(params)));
 
@@ -27,7 +27,7 @@ describe('convertor', () => {
             parameters: {"x": "{1 + 2}"},
         };
         const steps: ExecutionStep[] = [];
-        convertAction(action, steps, {getSteps, getRemainingActions}, DEFAULT_EXTERNALS, getDefaultConvertors());
+        await convertAction(action, steps, {getSteps, getRemainingActions}, DEFAULT_EXTERNALS, getDefaultConvertors());
 
         expect(getSteps).toBeCalledWith({name: "myScript"});
         assert(steps.length);
@@ -37,7 +37,7 @@ describe('convertor', () => {
         expect(mockStep).toBeCalledWith(context, { x: 3 });
     });
 
-    it('converts script action without parameter override', () => {
+    it('converts script action without parameter override', async () => {
         const mockStep = jest.fn();
         const innerStep = (context: Context, params: ExecutionParameters) => mockStep(context, JSON.parse(JSON.stringify(params)));
 
@@ -48,7 +48,7 @@ describe('convertor', () => {
             script: "myScript",
         };
         const steps: ExecutionStep[] = [];
-        convertAction(action, steps, {getSteps, getRemainingActions}, DEFAULT_EXTERNALS, getDefaultConvertors())
+        await convertAction(action, steps, {getSteps, getRemainingActions}, DEFAULT_EXTERNALS, getDefaultConvertors())
 
         expect(getSteps).toBeCalledWith({name: "myScript"});
         assert(steps.length);
@@ -58,32 +58,32 @@ describe('convertor', () => {
         expect(mockStep).toBeCalledWith(context, { x: undefined });
     });
 
-    it('convert log action', () => {
+    it('convert log action', async () => {
         const log = jest.fn();
         const action: LogAction = {
             log: ["hello", "world"],
         };
         const steps: ExecutionStep[] = [];
-        convertAction(action, steps, {getSteps, getRemainingActions}, { log }, getDefaultConvertors());
+        await convertAction(action, steps, {getSteps, getRemainingActions}, { log }, getDefaultConvertors());
 
         assert(steps.length);
         execute(steps, {}, context);
         expect(log).toBeCalledWith("hello", "world");
     });
 
-    it('convert log action with resolution', () => {
+    it('convert log action with resolution', async () => {
         const log = jest.fn();
         const action: LogAction = {
             log: ["hello", "{1 + 3}"],
         };
         const steps: ExecutionStep[] = [];
-        convertAction(action, steps, {getSteps, getRemainingActions}, { log }, getDefaultConvertors());
+        await convertAction(action, steps, {getSteps, getRemainingActions}, { log }, getDefaultConvertors());
         assert(steps.length);
         execute(steps, {}, context);
         expect(log).toBeCalledWith("hello", 4);
     });
 
-    it('convert script', () => {
+    it('convert script', async () => {
         const log = jest.fn();
         const scripts = [
             {
@@ -108,7 +108,7 @@ describe('convertor', () => {
                 ]
             }
         ];
-        const scriptMap = convertScripts<DokAction>(scripts, {
+        const scriptMap = await convertScripts<DokAction>(scripts, {
             log,
         }, getDefaultConvertors());
 
@@ -117,9 +117,9 @@ describe('convertor', () => {
         expect(log).toBeCalledWith("hello", "world");
     });
 
-    it('execute script with loop', () => {
+    it('execute script with loop', async () => {
         const log = jest.fn();
-        executeScript("main", undefined, [
+        await executeScript("main", undefined, [
             {
                 name: "LogTest",
                 actions: [
@@ -147,9 +147,9 @@ describe('convertor', () => {
     });
 
 
-    it('execute script with condition', () => {
+    it('execute script with condition', async () => {
         const log = jest.fn();
-        executeScript("main", undefined, [
+        await executeScript("main", undefined, [
             {
                 name: "LogTest",
                 actions: [
@@ -189,9 +189,9 @@ describe('convertor', () => {
         expect(log).toBeCalledWith(2, "hello", "loopingtest");
     });
 
-    it('execute script nesting', () => {
+    it('execute script nesting', async () => {
         const log = jest.fn();
-        executeScript("main", undefined, [
+        await executeScript("main", undefined, [
             {
                 name: "LogTest",
                 actions: [
@@ -222,9 +222,9 @@ describe('convertor', () => {
         expect(log).toBeCalledWith("hello", "test", "sub2");
     });
     
-    it('convert action using a custom conversion map', () => {
+    it('convert action using a custom conversion map', async () => {
         const custom = jest.fn();
-        executeScript("main", undefined, [
+        await executeScript("main", undefined, [
             {
                 name: "CustomTest",
                 actions: [
@@ -253,7 +253,7 @@ describe('convertor', () => {
             },
         ], {}, [
             ...getDefaultConvertors(),
-            (action, results) => {
+            async (action, results) => {
                 if (!action.custom) {
                     return;
                 }

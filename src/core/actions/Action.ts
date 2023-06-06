@@ -8,6 +8,7 @@ import { HookAction } from "./HookAction";
 import { LogAction } from "./LogAction";
 import { LogicAction } from "./LogicAction";
 import { PauseAction } from "./PauseAction";
+import { ReferenceAction } from "./ReferenceAction";
 import { ScriptAction } from "./ScriptAction";
 
-export type DokAction<T = {}> = ScriptAction & LogAction & ActionsAction<T> & LogicAction & PauseAction & HookAction;
+export type DokAction<T = {}> = ScriptAction & LogAction & ActionsAction<T> & LogicAction & PauseAction & HookAction & ReferenceAction;

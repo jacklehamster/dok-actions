@@ -27,20 +27,20 @@ describe('ScriptProcesor', () => {
         cbs.shift()?.(time);
     }
 
-    it('run scripts by name', () => {
+    it('run scripts by name', async () => {
         const processor = new ScriptProcessor([{
             name: "main",
             actions: [
                 { mock: 123 },
             ],
         }], external, [
-            (action, results) => results.push((_) => mock(action.mock)),
+            async (action, results) => results.push((_) => mock(action.mock)),
         ]);
-        processor.runByName("main");
+        await processor.runByName("main");
         expect(mock).toBeCalledWith(123);
     });
 
-    it('run scripts by tags', () => {
+    it('run scripts by tags', async () => {
         const processor = new ScriptProcessor([{
             name: "main",
             actions: [
@@ -60,27 +60,27 @@ describe('ScriptProcesor', () => {
             ],
             tags: ["tagB", "tagA"],
         }], external, [
-            (action, results) => results.push((_) => mock(action.mock)),
+            async (action, results) => results.push((_) => mock(action.mock)),
         ]);
-        processor.runByTags(["tagB"]);
+        await processor.runByTags(["tagB"]);
         expect(mock).not.toBeCalledWith(123);
         expect(mock).toBeCalledWith(456);
         expect(mock).toBeCalledWith(789);
     });
 
-    it('loop scripts by name', () => {
+    it('loop scripts by name', async () => {
         const processor = new ScriptProcessor([{
             name: "main",
             actions: [
                 { mock: "{time}" },
             ],
         }], external, [
-            (action, results) => {
+            async (action, results) => {
                 const resolution = calculateNumber(action.mock);
                 results.push((context) => mock(resolution.valueOf(context)));
             },
         ]);
-        processor.loopByName("main");
+        await processor.loopByName("main");
         
         executeAnimationFrame(123);
         expect(mock).toBeCalledWith(123);
@@ -88,7 +88,7 @@ describe('ScriptProcesor', () => {
         expect(mock).toBeCalledWith(456);
     });
 
-    it('loop scripts by tags', () => {
+    it('loop scripts by tags', async () => {
         const processor = new ScriptProcessor([{
             name: "main",
             actions: [
@@ -102,12 +102,12 @@ describe('ScriptProcesor', () => {
             ],
             tags: ["tag2"],
         }], external, [
-            (action, results) => {
+            async (action, results) => {
                 const resolution = calculateNumber(action.mock);
                 results.push((context) => mock(resolution.valueOf(context)));
             },
         ]);
-        processor.loopByTags([]);
+        await processor.loopByTags([]);
         
         executeAnimationFrame(123);
         expect(mock).toBeCalledWith(1123);
@@ -115,7 +115,7 @@ describe('ScriptProcesor', () => {
         expect(mock).toBeCalledWith(1456);
     });
 
-    it('should get steps', () => {
+    it('should get steps', async () => {
         const processor = new ScriptProcessor([{
             name: "main",
             actions: [
@@ -133,12 +133,12 @@ describe('ScriptProcesor', () => {
                 { mock: 3},
             ],
         }], external, [
-            (action, results) => {
+            async (action, results) => {
                 const resolution = calculateNumber(action.mock);
                 results.push((context) => mock(resolution.valueOf(context)));
             },
         ]);
-        execute(processor.getSteps({ name: "redraw" }));
+        execute(await processor.getSteps({ name: "redraw" }));
         expect(mock).not.toBeCalled();
     });
 });

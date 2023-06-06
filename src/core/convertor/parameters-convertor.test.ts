@@ -1,8 +1,8 @@
 import { ScriptAction } from "../actions/ScriptAction";
 import { createContext } from "../context/Context";
 import { ExecutionStep, execute } from "../execution/ExecutionStep";
-import { DEFAULT_EXTERNALS } from "./Convertor";
 import { getDefaultConvertors } from "./default-convertors";
+import { DEFAULT_EXTERNALS } from "./default-externals";
 import { convertHooksProperty, convertParametersProperty } from "./parameters-convertor";
 
 describe('parameters convertor', () => {
@@ -12,9 +12,9 @@ describe('parameters convertor', () => {
     };
     const getSteps = jest.fn().mockReturnValue([scriptExecution]);
     const getRemainingActions = jest.fn();
-    it('convert parameters', () => {
+    it('convert parameters', async () => {
         const results: ExecutionStep[] = [];
-        convertParametersProperty({
+        await convertParametersProperty({
                 script: "script",
                 parameters: {
                     "param1": 123,
@@ -39,9 +39,9 @@ describe('parameters convertor', () => {
         });
     });
 
-    it('convert array parameters', () => {
+    it('convert array parameters', async () => {
         const results: ExecutionStep[] = [];
-        convertParametersProperty({
+        await convertParametersProperty({
                 script: "script",
                 parameters: {
                     "param4": [1, 2, 3, 4],
@@ -58,11 +58,11 @@ describe('parameters convertor', () => {
         });
     });
 
-    it('convert hooks', () => {
+    it('convert hooks', async () => {
         const context = createContext();
         const fun = jest.fn().mockReturnValue(69);
         const results: ExecutionStep[] = [];
-        convertHooksProperty<ScriptAction>({
+        await convertHooksProperty<ScriptAction>({
                 hooks: ["fun"],
                 script: "script",
                 parameters: {

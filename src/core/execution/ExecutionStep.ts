@@ -12,9 +12,10 @@ export function execute(steps?: ExecutionStep[], parameters: ExecutionParameters
         context.parameters = [];
     }
 
-    const changedParameters = context.parameters[context.parameters.length-1] !== parameters;
+    const params = context.parameters;
+    const changedParameters = params[params.length-1] !== parameters;
     if (changedParameters) {
-        context.parameters.push(parameters);
+        params.push(parameters);
     }
     for (let step of steps) {
         step(context, parameters);
@@ -22,6 +23,6 @@ export function execute(steps?: ExecutionStep[], parameters: ExecutionParameters
     context.postActionListener.forEach(listener => listener(context, parameters));
 
     if (changedParameters) {
-        context.parameters.pop();
+        params.pop();
     }
 }

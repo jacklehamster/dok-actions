@@ -6,9 +6,9 @@ describe('actions convertor', () => {
     const log = jest.fn();
     const getSteps = jest.fn().mockReturnValue([]);
     const getRemainingActions = jest.fn().mockReturnValue([]);
-    it('convert actions', () => {
+    it('convert actions', async () => {
         const results: ExecutionStep[] = [];
-        convertActionsProperty({
+        await convertActionsProperty({
                 actions: [
                     {
                         log: "log-test",
