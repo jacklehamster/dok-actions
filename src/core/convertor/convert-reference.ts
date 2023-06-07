@@ -9,7 +9,7 @@ async function fetchAction<T>(
         path: string,
         results: ExecutionStep[],
         utils: Utils<T & ReferenceAction>,
-        external: Record<string, any> | typeof DEFAULT_EXTERNALS,
+        external: Record<string, any> & typeof DEFAULT_EXTERNALS,
         actionConversionMap: ActionConvertorList): Promise<void> {
     const response = await external.fetch(path);
     const json = await response.json();
@@ -20,7 +20,7 @@ export async function convertReferenceProperty<T>(
         action: ReferenceAction,
         results: ExecutionStep[],
         utils: Utils<T & ReferenceAction>,
-        external: Record<string, any>,
+        external: Record<string, any> & typeof DEFAULT_EXTERNALS,
         actionConversionMap: ActionConvertorList): Promise<ConvertBehavior|void> {
     if (action.reference === undefined) {
         return;

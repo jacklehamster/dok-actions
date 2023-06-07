@@ -2,6 +2,7 @@ import { LogAction } from "../actions/LogAction";
 import { ExecutionStep, execute } from "../execution/ExecutionStep";
 import { convertReferenceProperty } from "./convert-reference";
 import { getDefaultConvertors } from "./default-convertors";
+import { DEFAULT_EXTERNALS } from "./default-externals";
 
 describe('reference convertor', () => {
     const log = jest.fn();
@@ -32,7 +33,7 @@ describe('reference convertor', () => {
             },
             results,
             {getSteps, getRemainingActions},
-            { log, fetch },
+            {...DEFAULT_EXTERNALS, log, fetch },
             getDefaultConvertors(),
         );
         execute(results);
