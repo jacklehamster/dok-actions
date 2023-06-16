@@ -80,7 +80,7 @@ describe('ScriptProcesor', () => {
                 results.push((context) => mock(resolution.valueOf(context)));
             },
         ]);
-        await processor.loopByName("main");
+        await processor.refreshByName("main");
         
         executeAnimationFrame(123);
         expect(mock).toBeCalledWith(123);
@@ -107,7 +107,7 @@ describe('ScriptProcesor', () => {
                 results.push((context) => mock(resolution.valueOf(context)));
             },
         ]);
-        await processor.loopByTags([]);
+        await processor.refreshByTags([]);
         
         executeAnimationFrame(123);
         expect(mock).toBeCalledWith(1123);

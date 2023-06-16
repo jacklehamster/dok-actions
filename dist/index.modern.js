@@ -314,13 +314,13 @@ function filterScripts(scripts, filter) {
   });
 }
 
-var executeScript = function executeScript(scriptName, parameters, scripts, external, actionConversionMap) {
+var executeScript = function executeScript(scriptName, parameters, scripts, external, actionConversionMap, processorHelper) {
   if (parameters === void 0) {
     parameters = {};
   }
   try {
     var context = createContext();
-    return Promise.resolve(convertScripts(scripts, external, actionConversionMap)).then(function (scriptMap) {
+    return Promise.resolve(convertScripts(scripts, external, actionConversionMap, processorHelper)).then(function (scriptMap) {
       var script = scripts.find(function (_ref) {
         var name = _ref.name;
         return name === scriptName;
@@ -338,7 +338,7 @@ var executeScript = function executeScript(scriptName, parameters, scripts, exte
     return Promise.reject(e);
   }
 };
-var convertScripts = function convertScripts(scripts, external, actionConversionMap) {
+var convertScripts = function convertScripts(scripts, external, actionConversionMap, processorHelper) {
   try {
     var scriptMap = new Map();
     var getSteps = function getSteps(filter) {
@@ -364,7 +364,9 @@ var convertScripts = function convertScripts(scripts, external, actionConversion
         };
         return Promise.resolve(convertAction(actions[i], scriptSteps, {
           getSteps: getSteps,
-          getRemainingActions: getRemainingActions
+          getRemainingActions: getRemainingActions,
+          refreshSteps: processorHelper.refreshSteps,
+          stopRefresh: processorHelper.stopRefresh
         }, external, actionConversionMap)).then(function (convertBehavior) {
           if (convertBehavior === ConvertBehavior.SKIP_REMAINING_ACTIONS) {
             _interrupt = true;
@@ -963,6 +965,38 @@ var convertParametersProperty = function convertParametersProperty(action, resul
   }
 };
 
+var _excluded$4 = ["refresh"];
+var convertRefreshProperty = function convertRefreshProperty(action, stepResults, utils, external, actionConversionMap) {
+  try {
+    if (!action.refresh) {
+      return Promise.resolve();
+    }
+    var refresh = action.refresh,
+      subAction = _objectWithoutPropertiesLoose(action, _excluded$4);
+    var subStepResults = [];
+    var processId = calculateString(refresh.processId, "");
+    var stop = calculateBoolean(refresh.stop);
+    var cleanupAfterRefresh = calculateBoolean(refresh.cleanupAfterRefresh);
+    var frameRate = calculateNumber(refresh.frameRate, 60);
+    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
+      stepResults.push(function (context, parameters) {
+        if (stop.valueOf(context)) {
+          utils.stopRefresh(processId.valueOf(context));
+        } else {
+          utils.refreshSteps(subStepResults, {
+            cleanupAfterRefresh: cleanupAfterRefresh.valueOf(context),
+            frameRate: frameRate.valueOf(context),
+            parameters: parameters
+          }, processId.valueOf(context));
+        }
+      });
+      return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+
 var convertScriptProperty = function convertScriptProperty(action, results, _ref, _, __) {
   var getSteps = _ref.getSteps;
   try {
@@ -984,7 +1018,7 @@ var convertScriptProperty = function convertScriptProperty(action, results, _ref
 };
 
 function getDefaultConvertors() {
-  return [convertHooksProperty, convertParametersProperty, convertLoopProperty, convertConditionProperty, convertDelayProperty, convertPauseProperty, convertLockProperty, convertLogProperty, convertScriptProperty, convertActionsProperty];
+  return [convertHooksProperty, convertParametersProperty, convertRefreshProperty, convertLoopProperty, convertConditionProperty, convertDelayProperty, convertPauseProperty, convertLockProperty, convertLogProperty, convertScriptProperty, convertActionsProperty];
 }
 
 var ScriptProcessor = /*#__PURE__*/function () {
@@ -995,21 +1029,34 @@ var ScriptProcessor = /*#__PURE__*/function () {
     if (actionConversionMap === void 0) {
       actionConversionMap = getDefaultConvertors();
     }
+    this.refreshCleanups = {};
     this.scripts = scripts;
     this.actionConversionMap = actionConversionMap;
     this.external = _extends({}, DEFAULT_EXTERNALS, external);
   }
   var _proto = ScriptProcessor.prototype;
+  _proto.clear = function clear() {
+    var _this = this;
+    Object.values(this.refreshCleanups).forEach(function (cleanup) {
+      cleanup();
+    });
+    Object.keys(this.refreshCleanups).forEach(function (key) {
+      delete _this.refreshCleanups[key];
+    });
+  };
   _proto.fetchScripts = function fetchScripts() {
     try {
       var _temp2 = function _temp2() {
-        return _this.scriptMap;
+        return _this2.scriptMap;
       };
-      var _this = this;
+      var _this2 = this;
       var _temp = function () {
-        if (!_this.scriptMap) {
-          return Promise.resolve(convertScripts(_this.scripts, _this.external, _this.actionConversionMap)).then(function (_convertScripts) {
-            _this.scriptMap = _convertScripts;
+        if (!_this2.scriptMap) {
+          return Promise.resolve(convertScripts(_this2.scripts, _this2.external, _this2.actionConversionMap, {
+            refreshSteps: _this2.refreshSteps,
+            stopRefresh: _this2.stopRefresh
+          })).then(function (_convertScripts) {
+            _this2.scriptMap = _convertScripts;
           });
         }
       }();
@@ -1018,9 +1065,9 @@ var ScriptProcessor = /*#__PURE__*/function () {
       return Promise.reject(e);
     }
   };
-  _proto.createLoopCleanup = function createLoopCleanup(behavior, context) {
+  _proto.createRefreshCleanup = function createRefreshCleanup(behavior, context) {
     var cleanupActions = context.cleanupActions;
-    return behavior.cleanupAfterLoop && cleanupActions ? function () {
+    return behavior.cleanupAfterRefresh && cleanupActions ? function () {
       for (var _iterator = _createForOfIteratorHelperLoose(cleanupActions), _step; !(_step = _iterator()).done;) {
         var cleanup = _step.value;
         cleanup();
@@ -1030,9 +1077,9 @@ var ScriptProcessor = /*#__PURE__*/function () {
   };
   _proto.getSteps = function getSteps(filter) {
     try {
-      var _this2 = this;
-      return Promise.resolve(_this2.fetchScripts()).then(function (scriptMap) {
-        var scripts = filterScripts(_this2.scripts, filter);
+      var _this3 = this;
+      return Promise.resolve(_this3.fetchScripts()).then(function (scriptMap) {
+        var scripts = filterScripts(_this3.scripts, filter);
         var steps = [];
         scripts.forEach(function (script) {
           var _scriptMap$get;
@@ -1048,12 +1095,12 @@ var ScriptProcessor = /*#__PURE__*/function () {
   };
   _proto.runByName = function runByName(name) {
     try {
-      var _this3 = this;
+      var _this4 = this;
       var context = createContext();
-      return Promise.resolve(_this3.getSteps({
+      return Promise.resolve(_this4.getSteps({
         name: name
-      })).then(function (_this3$getSteps) {
-        execute(_this3$getSteps, undefined, context);
+      })).then(function (_this4$getSteps) {
+        execute(_this4$getSteps, undefined, context);
         return function () {
           var _context$cleanupActio;
           return (_context$cleanupActio = context.cleanupActions) === null || _context$cleanupActio === void 0 ? void 0 : _context$cleanupActio.forEach(function (action) {
@@ -1067,12 +1114,12 @@ var ScriptProcessor = /*#__PURE__*/function () {
   };
   _proto.runByTags = function runByTags(tags) {
     try {
-      var _this4 = this;
+      var _this5 = this;
       var context = createContext();
-      return Promise.resolve(_this4.getSteps({
+      return Promise.resolve(_this5.getSteps({
         tags: tags
-      })).then(function (_this4$getSteps) {
-        execute(_this4$getSteps, undefined, context);
+      })).then(function (_this5$getSteps) {
+        execute(_this5$getSteps, undefined, context);
         return function () {
           var _context$cleanupActio2;
           return (_context$cleanupActio2 = context.cleanupActions) === null || _context$cleanupActio2 === void 0 ? void 0 : _context$cleanupActio2.forEach(function (action) {
@@ -1084,54 +1131,86 @@ var ScriptProcessor = /*#__PURE__*/function () {
       return Promise.reject(e);
     }
   };
-  _proto.loopWithFilter = function loopWithFilter(filter, behavior) {
-    if (behavior === void 0) {
-      behavior = {};
-    }
-    try {
-      var _this5 = this;
-      var context = createContext();
-      var parameters = {
-        time: 0
-      };
-      return Promise.resolve(_this5.getSteps(filter)).then(function (steps) {
-        var loopCleanup = _this5.createLoopCleanup(behavior, context);
-        var loop = function loop(time) {
-          parameters.time = time;
-          execute(steps, parameters, context);
-          loopCleanup();
-          animationFrameId = requestAnimationFrame(loop);
-        };
-        var animationFrameId = requestAnimationFrame(loop);
-        return function () {
-          loopCleanup();
-          cancelAnimationFrame(animationFrameId);
-        };
-      });
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  };
-  _proto.loopByName = function loopByName(name, behavior) {
+  _proto.refreshWithFilter = function refreshWithFilter(filter, behavior) {
     if (behavior === void 0) {
       behavior = {};
     }
     try {
       var _this6 = this;
-      return Promise.resolve(_this6.loopWithFilter({
+      var _refreshSteps = _this6.refreshSteps;
+      return Promise.resolve(_this6.getSteps(filter)).then(function (_this6$getSteps) {
+        return _refreshSteps.call(_this6, _this6$getSteps, behavior);
+      });
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  };
+  _proto.stopRefresh = function stopRefresh(processId) {
+    var _this$refreshCleanups, _this$refreshCleanups2;
+    (_this$refreshCleanups = (_this$refreshCleanups2 = this.refreshCleanups)[processId]) === null || _this$refreshCleanups === void 0 ? void 0 : _this$refreshCleanups.call(_this$refreshCleanups2);
+    delete this.refreshCleanups[processId];
+  };
+  _proto.refreshSteps = function refreshSteps(steps, behavior, processId) {
+    if (behavior === void 0) {
+      behavior = {};
+    }
+    try {
+      var _behavior$frameRate;
+      var _this7 = this;
+      var context = createContext();
+      var parameters = _extends({}, behavior.parameters, {
+        time: 0,
+        frame: 0
+      });
+      var refreshCleanup = _this7.createRefreshCleanup(behavior, context);
+      var frameRate = (_behavior$frameRate = behavior.frameRate) != null ? _behavior$frameRate : 60;
+      var frameMs = 1000 / frameRate;
+      var lastFrameTime = 0;
+      var frame = 0;
+      var loop = function loop(time) {
+        if (time - lastFrameTime >= frameMs) {
+          parameters.time = time;
+          parameters.frame = frame;
+          execute(steps, parameters, context);
+          refreshCleanup();
+          frame++;
+          lastFrameTime = time;
+        }
+        animationFrameId = requestAnimationFrame(loop);
+      };
+      var animationFrameId = requestAnimationFrame(loop);
+      var cleanup = function cleanup() {
+        refreshCleanup();
+        cancelAnimationFrame(animationFrameId);
+      };
+      if (processId !== null && processId !== void 0 && processId.length) {
+        _this7.refreshCleanups[processId] = cleanup;
+      }
+      return Promise.resolve(cleanup);
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  };
+  _proto.refreshByName = function refreshByName(name, behavior) {
+    if (behavior === void 0) {
+      behavior = {};
+    }
+    try {
+      var _this8 = this;
+      return Promise.resolve(_this8.refreshWithFilter({
         name: name
       }, behavior));
     } catch (e) {
       return Promise.reject(e);
     }
   };
-  _proto.loopByTags = function loopByTags(tags, behavior) {
+  _proto.refreshByTags = function refreshByTags(tags, behavior) {
     if (behavior === void 0) {
       behavior = {};
     }
     try {
-      var _this7 = this;
-      return Promise.resolve(_this7.loopWithFilter({
+      var _this9 = this;
+      return Promise.resolve(_this9.refreshWithFilter({
         tags: tags
       }, behavior));
     } catch (e) {

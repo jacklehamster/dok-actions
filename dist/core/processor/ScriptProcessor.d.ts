@@ -1,21 +1,31 @@
 import { ActionConvertorList } from "../convertor/convert-action";
-import { ExecutionStep } from "../execution/ExecutionStep";
+import { ExecutionParameters, ExecutionStep } from "../execution/ExecutionStep";
 import { Script, ScriptFilter, Tag } from "../scripts/Script";
-export interface LoopBehavior {
-    cleanupAfterLoop?: boolean;
+export interface RefreshBehavior {
+    frameRate?: number;
+    cleanupAfterRefresh?: boolean;
+    parameters?: ExecutionParameters;
+}
+export interface ScriptProcessorHelper {
+    refreshSteps(steps: ExecutionStep[], behavior?: RefreshBehavior, processId?: string): Promise<() => void>;
+    stopRefresh(processId: string): void;
 }
 export declare class ScriptProcessor<T, E = {}> {
     private scripts;
     private scriptMap?;
     private external;
     private actionConversionMap;
+    private refreshCleanups;
     constructor(scripts: Script<T>[], external?: {}, actionConversionMap?: ActionConvertorList);
+    clear(): void;
     private fetchScripts;
-    private createLoopCleanup;
+    private createRefreshCleanup;
     getSteps(filter: ScriptFilter): Promise<ExecutionStep[]>;
     runByName(name: string): Promise<() => void>;
     runByTags(tags: Tag[]): Promise<() => void>;
-    private loopWithFilter;
-    loopByName(name: string, behavior?: LoopBehavior): Promise<() => void>;
-    loopByTags(tags: string[], behavior?: LoopBehavior): Promise<() => void>;
+    private refreshWithFilter;
+    private stopRefresh;
+    private refreshSteps;
+    refreshByName(name: string, behavior?: RefreshBehavior): Promise<() => void>;
+    refreshByTags(tags: string[], behavior?: RefreshBehavior): Promise<() => void>;
 }

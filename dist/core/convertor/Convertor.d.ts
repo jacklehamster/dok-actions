@@ -1,4 +1,5 @@
 import { ExecutionStep } from "../execution/ExecutionStep";
+import { RefreshBehavior } from "../processor/ScriptProcessor";
 import { ScriptFilter } from "../scripts/Script";
 import { ActionConvertorList } from "./convert-action";
 export declare type GetSteps = (filter: ScriptFilter) => ExecutionStep[];
@@ -8,6 +9,8 @@ export declare enum ConvertBehavior {
     SKIP_REMAINING_ACTIONS = 2
 }
 export interface Utils<T> {
+    refreshSteps(steps: ExecutionStep[], loopBehavior?: RefreshBehavior, processId?: string): void;
+    stopRefresh(processId?: string): void;
     getSteps: GetSteps;
     getRemainingActions: () => T[];
 }

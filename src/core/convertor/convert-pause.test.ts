@@ -9,6 +9,8 @@ describe('pause convertor', () => {
     const getSteps = jest.fn();
     const log = jest.fn();
     const getRemainingActions = jest.fn();
+    const refreshSteps = jest.fn();
+    const stopRefresh = jest.fn();
     const setTimeout = jest.fn().mockImplementation((fn, _, param1, param2) => pendingTimeouts.push(() => fn(param1, param2)));
     const pendingTimeouts: (() => void)[] = [];
 
@@ -26,7 +28,7 @@ describe('pause convertor', () => {
                 delay: 123,
             },
             results,
-            {getSteps, getRemainingActions},
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
             {mock, setTimeout, log},
             getDefaultConvertors(),
         );
@@ -48,7 +50,7 @@ describe('pause convertor', () => {
                 pause: "{not completed}",
             },
             results,
-            {getSteps, getRemainingActions},
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
             {mock, setTimeout, log},
             getDefaultConvertors(),
         );
@@ -69,7 +71,7 @@ describe('pause convertor', () => {
                 lock: 1,
             },
             results,
-            {getSteps, getRemainingActions},
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
             {mock, setTimeout, log},
             getDefaultConvertors(),
         );
@@ -82,7 +84,7 @@ describe('pause convertor', () => {
                 unlock: 1,
             },
             results2,
-            {getSteps, getRemainingActions},
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
             {mock, setTimeout, log},
             getDefaultConvertors(),
         );

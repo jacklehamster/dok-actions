@@ -1,5 +1,6 @@
 import { Context, createContext } from "../context/Context";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
+import { ScriptProcessorHelper } from "../processor/ScriptProcessor";
 import { Script, ScriptFilter, filterScripts } from "../scripts/Script";
 import { ConvertBehavior, Convertor, Utils } from "./Convertor";
 
@@ -25,7 +26,8 @@ export async function convertAction<T>(
 export async function convertScripts<T>(
         scripts: Script<T>[],
         external: Record<string, any>,
-        actionConversionMap: ActionConvertorList): Promise<Map<Script<T>, ExecutionStep[]>> {
+        actionConversionMap: ActionConvertorList,
+        processorHelper: ScriptProcessorHelper): Promise<Map<Script<T>, ExecutionStep[]>> {
     const scriptMap: Map<Script<T>, ExecutionStep[]> = new Map();
     const getSteps = (filter: ScriptFilter) => {
         const filteredScripts = filterScripts(scripts, filter);
@@ -41,7 +43,9 @@ export async function convertScripts<T>(
         const { actions } = script;
         for (let i = 0; i < actions.length; i++) {
             const getRemainingActions = () => actions.slice(i + 1);
-            const convertBehavior = await convertAction(actions[i], scriptSteps, {getSteps, getRemainingActions}, external, actionConversionMap);
+            const convertBehavior = await convertAction(actions[i], scriptSteps, {
+                getSteps, getRemainingActions, refreshSteps: processorHelper.refreshSteps, stopRefresh: processorHelper.stopRefresh,
+            }, external, actionConversionMap);
             if (convertBehavior === ConvertBehavior.SKIP_REMAINING_ACTIONS) {
                 break;
             }
@@ -55,9 +59,10 @@ export async function executeScript<T>(
         parameters: ExecutionParameters = {},
         scripts: Script<T>[],
         external: Record<string, any>,
-        actionConversionMap: ActionConvertorList): Promise<() => void> {
+        actionConversionMap: ActionConvertorList,
+        processorHelper: ScriptProcessorHelper): Promise<() => void> {
     const context: Context = createContext();
-    const scriptMap = await convertScripts(scripts, external, actionConversionMap);
+    const scriptMap = await convertScripts(scripts, external, actionConversionMap, processorHelper);
     const script = scripts.find(({name}) => name === scriptName);
     const steps = script ? scriptMap.get(script) : [];
     execute(steps, parameters, context);

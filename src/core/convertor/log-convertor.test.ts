@@ -6,13 +6,15 @@ describe('log convertor', () => {
     const log = jest.fn();
     const getSteps = jest.fn().mockReturnValue([]);
     const getRemainingActions = jest.fn().mockReturnValue([]);
+    const refreshSteps = jest.fn();
+    const stopRefresh = jest.fn();
     it('convert log', async () => {
         const results: ExecutionStep[] = [];
         await convertLogProperty({
                 log: "log-test",
             },
             results,
-            {getSteps, getRemainingActions},
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
             { log },
             getDefaultConvertors(),
         );

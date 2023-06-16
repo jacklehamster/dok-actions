@@ -14,6 +14,8 @@ describe('convertor', () => {
     const getSteps = jest.fn();
     const getRemainingActions = jest.fn();
     const context: Context = createContext();
+    const refreshSteps = jest.fn();
+    const stopRefresh = jest.fn();
 
     it('converts script action', async () => {
         const mockStep = jest.fn();
@@ -27,7 +29,7 @@ describe('convertor', () => {
             parameters: {"x": "{1 + 2}"},
         };
         const steps: ExecutionStep[] = [];
-        await convertAction(action, steps, {getSteps, getRemainingActions}, DEFAULT_EXTERNALS, getDefaultConvertors());
+        await convertAction(action, steps, {getSteps, getRemainingActions, refreshSteps, stopRefresh}, DEFAULT_EXTERNALS, getDefaultConvertors());
 
         expect(getSteps).toBeCalledWith({name: "myScript"});
         assert(steps.length);
@@ -48,7 +50,7 @@ describe('convertor', () => {
             script: "myScript",
         };
         const steps: ExecutionStep[] = [];
-        await convertAction(action, steps, {getSteps, getRemainingActions}, DEFAULT_EXTERNALS, getDefaultConvertors())
+        await convertAction(action, steps, {getSteps, getRemainingActions, refreshSteps, stopRefresh}, DEFAULT_EXTERNALS, getDefaultConvertors())
 
         expect(getSteps).toBeCalledWith({name: "myScript"});
         assert(steps.length);
@@ -64,7 +66,7 @@ describe('convertor', () => {
             log: ["hello", "world"],
         };
         const steps: ExecutionStep[] = [];
-        await convertAction(action, steps, {getSteps, getRemainingActions}, { log }, getDefaultConvertors());
+        await convertAction(action, steps, {getSteps, getRemainingActions, refreshSteps, stopRefresh}, { log }, getDefaultConvertors());
 
         assert(steps.length);
         execute(steps, {}, context);
@@ -77,7 +79,7 @@ describe('convertor', () => {
             log: ["hello", "{1 + 3}"],
         };
         const steps: ExecutionStep[] = [];
-        await convertAction(action, steps, {getSteps, getRemainingActions}, { log }, getDefaultConvertors());
+        await convertAction(action, steps, {getSteps, getRemainingActions, refreshSteps, stopRefresh}, { log }, getDefaultConvertors());
         assert(steps.length);
         execute(steps, {}, context);
         expect(log).toBeCalledWith("hello", 4);
@@ -110,7 +112,7 @@ describe('convertor', () => {
         ];
         const scriptMap = await convertScripts<DokAction>(scripts, {
             log,
-        }, getDefaultConvertors());
+        }, getDefaultConvertors(), {refreshSteps, stopRefresh});
 
         scriptMap.get(scripts.find(({name}) => name === "ScriptTest")!)!.forEach(step => step(context, {}));
         expect(log).toBeCalledWith("hello", "test");
@@ -138,7 +140,7 @@ describe('convertor', () => {
                     },
                 ],
             },
-        ], {log}, getDefaultConvertors());
+        ], {log}, getDefaultConvertors(), {refreshSteps, stopRefresh});
         expect(log).toBeCalledWith(0, "hello", "test");
         expect(log).toBeCalledWith(1, "hello", "test");
         expect(log).toBeCalledWith(2, "hello", "test");
@@ -181,7 +183,7 @@ describe('convertor', () => {
                     }
                 ],
             },
-        ], {log}, getDefaultConvertors());
+        ], {log}, getDefaultConvertors(), {refreshSteps, stopRefresh});
         expect(log).toBeCalledWith(0, "hello", "test");
         expect(log).not.toBeCalledWith(0, "hello", "test2");
         expect(log).not.toBeCalledWith(0, "hello", "loopingtest");
@@ -218,7 +220,7 @@ describe('convertor', () => {
                     },
                 ],
             },
-        ], {log}, getDefaultConvertors());
+        ], {log}, getDefaultConvertors(), {refreshSteps, stopRefresh});
         expect(log).toBeCalledWith("hello", "test", "sub2");
     });
     
@@ -261,7 +263,7 @@ describe('convertor', () => {
                 const resolutions = messages.map(m => calculateResolution(m));
                 results.push((context) => custom(...resolutions.map(r => r?.valueOf(context))));
             },
-        ]);
+        ], {refreshSteps, stopRefresh});
         expect(custom).toBeCalledWith("hello", "test", "sub2");        
     });
 });

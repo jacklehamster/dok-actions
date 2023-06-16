@@ -12,6 +12,9 @@ describe('parameters convertor', () => {
     };
     const getSteps = jest.fn().mockReturnValue([scriptExecution]);
     const getRemainingActions = jest.fn();
+    const refreshSteps = jest.fn();
+    const stopRefresh = jest.fn();
+
     it('convert parameters', async () => {
         const results: ExecutionStep[] = [];
         await convertParametersProperty({
@@ -25,7 +28,7 @@ describe('parameters convertor', () => {
                 },
             },
             results,
-            {getSteps, getRemainingActions},
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
             DEFAULT_EXTERNALS,
             getDefaultConvertors(),
         );
@@ -48,7 +51,7 @@ describe('parameters convertor', () => {
                 },
             },
             results,
-            {getSteps, getRemainingActions},
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
             DEFAULT_EXTERNALS,
             getDefaultConvertors(),
         );
@@ -70,7 +73,7 @@ describe('parameters convertor', () => {
                 }
             },
             results,
-            {getSteps, getRemainingActions},
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
             {...DEFAULT_EXTERNALS, fun},
             getDefaultConvertors(),
         );
