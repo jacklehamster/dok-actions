@@ -7,7 +7,7 @@ export interface RefreshBehavior {
     parameters?: ExecutionParameters;
 }
 export interface ScriptProcessorHelper {
-    refreshSteps(steps: ExecutionStep[], behavior?: RefreshBehavior, processId?: string): Promise<() => void>;
+    refreshSteps(steps: ExecutionStep[], behavior?: RefreshBehavior, processId?: string): () => void;
     stopRefresh(processId: string): void;
 }
 export declare class ScriptProcessor<T, E = {}> {

@@ -9,7 +9,7 @@ export declare enum ConvertBehavior {
     SKIP_REMAINING_ACTIONS = 2
 }
 export interface Utils<T> {
-    refreshSteps(steps: ExecutionStep[], loopBehavior?: RefreshBehavior, processId?: string): void;
+    refreshSteps(steps: ExecutionStep[], loopBehavior?: RefreshBehavior, processId?: string): () => void;
     stopRefresh(processId?: string): void;
     getSteps: GetSteps;
     getRemainingActions: () => T[];

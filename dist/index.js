@@ -982,11 +982,12 @@ var convertRefreshProperty = function convertRefreshProperty(action, stepResults
         if (stop.valueOf(context)) {
           utils.stopRefresh(processId.valueOf(context));
         } else {
-          utils.refreshSteps(subStepResults, {
+          var cleanup = utils.refreshSteps(subStepResults, {
             cleanupAfterRefresh: cleanupAfterRefresh.valueOf(context),
             frameRate: frameRate.valueOf(context),
             parameters: parameters
           }, processId.valueOf(context));
+          context.cleanupActions.push(cleanup);
         }
       });
       return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
@@ -1150,71 +1151,56 @@ var ScriptProcessor = /*#__PURE__*/function () {
     delete this.refreshCleanups[processId];
   };
   _proto.refreshSteps = function refreshSteps(steps, behavior, processId) {
+    var _behavior$frameRate;
     if (behavior === void 0) {
       behavior = {};
     }
-    try {
-      var _behavior$frameRate;
-      var _this7 = this;
-      var context = createContext();
-      var parameters = _extends({}, behavior.parameters, {
-        time: 0,
-        frame: 0
-      });
-      var refreshCleanup = _this7.createRefreshCleanup(behavior, context);
-      var frameRate = (_behavior$frameRate = behavior.frameRate) != null ? _behavior$frameRate : 60;
-      var frameMs = 1000 / frameRate;
-      var lastFrameTime = 0;
-      var frame = 0;
-      var loop = function loop(time) {
-        if (time - lastFrameTime >= frameMs) {
-          parameters.time = time;
-          parameters.frame = frame;
-          execute(steps, parameters, context);
-          refreshCleanup();
-          frame++;
-          lastFrameTime = time;
-        }
-        animationFrameId = requestAnimationFrame(loop);
-      };
-      var animationFrameId = requestAnimationFrame(loop);
-      var cleanup = function cleanup() {
+    var context = createContext();
+    var parameters = _extends({}, behavior.parameters, {
+      time: 0,
+      frame: 0
+    });
+    var refreshCleanup = this.createRefreshCleanup(behavior, context);
+    var frameRate = (_behavior$frameRate = behavior.frameRate) != null ? _behavior$frameRate : 60;
+    var frameMs = 1000 / frameRate;
+    var lastFrameTime = 0;
+    var frame = 0;
+    var loop = function loop(time) {
+      if (time - lastFrameTime >= frameMs) {
+        parameters.time = time;
+        parameters.frame = frame;
+        execute(steps, parameters, context);
         refreshCleanup();
-        cancelAnimationFrame(animationFrameId);
-      };
-      if (processId !== null && processId !== void 0 && processId.length) {
-        _this7.refreshCleanups[processId] = cleanup;
+        frame++;
+        lastFrameTime = time;
       }
-      return Promise.resolve(cleanup);
-    } catch (e) {
-      return Promise.reject(e);
+      animationFrameId = requestAnimationFrame(loop);
+    };
+    var animationFrameId = requestAnimationFrame(loop);
+    var cleanup = function cleanup() {
+      refreshCleanup();
+      cancelAnimationFrame(animationFrameId);
+    };
+    if (processId !== null && processId !== void 0 && processId.length) {
+      this.refreshCleanups[processId] = cleanup;
     }
+    return cleanup;
   };
   _proto.refreshByName = function refreshByName(name, behavior) {
     if (behavior === void 0) {
       behavior = {};
     }
-    try {
-      var _this8 = this;
-      return Promise.resolve(_this8.refreshWithFilter({
-        name: name
-      }, behavior));
-    } catch (e) {
-      return Promise.reject(e);
-    }
+    return this.refreshWithFilter({
+      name: name
+    }, behavior);
   };
   _proto.refreshByTags = function refreshByTags(tags, behavior) {
     if (behavior === void 0) {
       behavior = {};
     }
-    try {
-      var _this9 = this;
-      return Promise.resolve(_this9.refreshWithFilter({
-        tags: tags
-      }, behavior));
-    } catch (e) {
-      return Promise.reject(e);
-    }
+    return this.refreshWithFilter({
+      tags: tags
+    }, behavior);
   };
   return ScriptProcessor;
 }();

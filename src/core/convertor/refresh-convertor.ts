@@ -27,11 +27,12 @@ export async function convertRefreshProperty<T>(
         if (stop.valueOf(context)) {
             utils.stopRefresh(processId.valueOf(context));
         } else {
-            utils.refreshSteps(subStepResults, {
+            const cleanup = utils.refreshSteps(subStepResults, {
                 cleanupAfterRefresh: cleanupAfterRefresh.valueOf(context),
                 frameRate: frameRate.valueOf(context),
                 parameters,
-            }, processId.valueOf(context));    
+            }, processId.valueOf(context));
+            context.cleanupActions.push(cleanup);
         }
     });
     return ConvertBehavior.SKIP_REMAINING_CONVERTORS;

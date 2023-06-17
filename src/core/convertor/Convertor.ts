@@ -12,7 +12,7 @@ export enum ConvertBehavior {
 }
 
 export interface Utils<T> {
-    refreshSteps(steps: ExecutionStep[], loopBehavior?: RefreshBehavior, processId?: string): void;
+    refreshSteps(steps: ExecutionStep[], loopBehavior?: RefreshBehavior, processId?: string): () => void;
     stopRefresh(processId?: string): void;
     getSteps: GetSteps;
     getRemainingActions: () => T[];

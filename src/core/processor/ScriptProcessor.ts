@@ -12,7 +12,7 @@ export interface RefreshBehavior {
 }
 
 export interface ScriptProcessorHelper {
-    refreshSteps(steps: ExecutionStep[], behavior?: RefreshBehavior, processId?: string): Promise<() => void>;
+    refreshSteps(steps: ExecutionStep[], behavior?: RefreshBehavior, processId?: string): () => void;
     stopRefresh(processId: string): void;
 }
 
@@ -87,7 +87,7 @@ export class ScriptProcessor<T, E = {}> {
         delete this.refreshCleanups[processId];
     }
     
-    private async refreshSteps(steps: ExecutionStep[], behavior: RefreshBehavior = {}, processId?: string) {
+    private refreshSteps(steps: ExecutionStep[], behavior: RefreshBehavior = {}, processId?: string) {
         const context: Context = createContext();
         const parameters: ExecutionParameters = { ...behavior.parameters, time: 0, frame: 0 };
         const refreshCleanup = this.createRefreshCleanup(behavior, context);
@@ -118,11 +118,11 @@ export class ScriptProcessor<T, E = {}> {
         return cleanup;
     }
     
-    async refreshByName(name: string, behavior: RefreshBehavior = {}) {
-        return await this.refreshWithFilter({ name }, behavior);
+    refreshByName(name: string, behavior: RefreshBehavior = {}) {
+        return this.refreshWithFilter({ name }, behavior);
     }
 
-    async refreshByTags(tags: string[], behavior: RefreshBehavior = {}) {
-        return await this.refreshWithFilter({ tags }, behavior);
+    refreshByTags(tags: string[], behavior: RefreshBehavior = {}) {
+        return this.refreshWithFilter({ tags }, behavior);
     }
 }
