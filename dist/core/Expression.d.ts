@@ -1,3 +1,0 @@
-interface Expression {
-    type: "expression";
-}
