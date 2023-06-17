@@ -26,7 +26,7 @@ describe('convertor', () => {
         ]);
         const action: ScriptAction = {
             script: "myScript",
-            parameters: {"x": "{1 + 2}"},
+            parameters: {"x": "~{1 + 2}"},
         };
         const steps: ExecutionStep[] = [];
         await convertAction(action, steps, {getSteps, getRemainingActions, refreshSteps, stopRefresh}, DEFAULT_EXTERNALS, getDefaultConvertors());
@@ -76,7 +76,7 @@ describe('convertor', () => {
     it('convert log action with resolution', async () => {
         const log = jest.fn();
         const action: LogAction = {
-            log: ["hello", "{1 + 3}"],
+            log: ["hello", "~{1 + 3}"],
         };
         const steps: ExecutionStep[] = [];
         await convertAction(action, steps, {getSteps, getRemainingActions, refreshSteps, stopRefresh}, { log }, getDefaultConvertors());
@@ -92,7 +92,7 @@ describe('convertor', () => {
                 name: "LogTest",
                 actions: [
                     {
-                        log: ["hello", "{name}"],    
+                        log: ["hello", "~{name}"],    
                     }
                 ],
             },
@@ -126,7 +126,7 @@ describe('convertor', () => {
                 name: "LogTest",
                 actions: [
                     {
-                        log: ["{index}", "hello", "{name}"],    
+                        log: ["~{index}", "hello", "~{name}"],    
                     },
                 ],
             },
@@ -135,7 +135,7 @@ describe('convertor', () => {
                 actions: [
                     {
                         script: "LogTest",
-                        loop: "{3 + 2}",
+                        loop: "~{3 + 2}",
                         parameters: {name : "test"}
                     },
                 ],
@@ -156,7 +156,7 @@ describe('convertor', () => {
                 name: "LogTest",
                 actions: [
                     {
-                        log: ["{index}", "hello", "{name}"],    
+                        log: ["~{index}", "hello", "~{name}"],
                     },
                 ],
             },
@@ -167,19 +167,19 @@ describe('convertor', () => {
                         loop: 1,
                         script: "LogTest",
                         parameters: {name : "test"},
-                        condition: "{equalText(name, 'test')}",
+                        condition: "~{equalText(name, 'test')}",
                     },
                     {
                         loop: 1,
                         script: "LogTest",
                         parameters: {name : "test2"},
-                        condition: "{equalText(name, 'test')}",
+                        condition: "~{equalText(name, 'test')}",
                     },
                     {
                         loop: 3,
                         script: "LogTest",
                         parameters: {name : "loopingtest"},
-                        condition: "{index == 2}"
+                        condition: "~{index == 2}"
                     }
                 ],
             },
@@ -198,7 +198,7 @@ describe('convertor', () => {
                 name: "LogTest",
                 actions: [
                     {
-                        log: ["hello", "{name}", "{name2}"],    
+                        log: ["hello", "~{name}", "~{name2}"],    
                     },
                 ],
             },
@@ -231,7 +231,7 @@ describe('convertor', () => {
                 name: "CustomTest",
                 actions: [
                     {
-                        custom: ["hello", "{name}", "{name2}"],    
+                        custom: ["hello", "~{name}", "~{name2}"],    
                     },
                 ],
             },

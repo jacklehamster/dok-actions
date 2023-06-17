@@ -72,7 +72,7 @@ describe('ScriptProcesor', () => {
         const processor = new ScriptProcessor([{
             name: "main",
             actions: [
-                { mock: "{time}" },
+                { mock: "~{time}" },
             ],
         }], external, [
             async (action, results) => {
@@ -92,13 +92,13 @@ describe('ScriptProcesor', () => {
         const processor = new ScriptProcessor([{
             name: "main",
             actions: [
-                { mock: "{time}" },
+                { mock: "~{time}" },
             ],
             tags: ["tag2"],
         }, {
             name: "main2",
             actions: [
-                { mock: "{1000 + time}" },
+                { mock: "~{1000 + time}" },
             ],
             tags: ["tag2"],
         }], external, [

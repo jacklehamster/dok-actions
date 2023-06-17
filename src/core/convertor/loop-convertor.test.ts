@@ -13,7 +13,7 @@ describe('loop convertor', () => {
         const results: ExecutionStep[] = [];
         await convertLoopProperty<LogAction>({
                 loop: 5,
-                log: "{index}",
+                log: "~{index}",
             },
             results,
             {getSteps, getRemainingActions, refreshSteps, stopRefresh},

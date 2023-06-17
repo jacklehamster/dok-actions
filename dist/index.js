@@ -408,6 +408,8 @@ function executeAction(action, parameters, context, utils, external, actionConve
   execute(results, parameters, context);
 }
 
+var FORMULA_SEPERATORS = ["~{", "}"];
+
 function hasFormula(resolution) {
   if (isFormula(resolution)) {
     return true;
@@ -430,8 +432,22 @@ function isFormula(value) {
     return false;
   }
   var formula = typeof value === "string" ? value : value.formula;
-  return (formula === null || formula === void 0 ? void 0 : formula.charAt(0)) === "{" && (formula === null || formula === void 0 ? void 0 : formula.charAt(formula.length - 1)) === "}";
+  var prefix = FORMULA_SEPERATORS[0],
+    suffix = FORMULA_SEPERATORS[1];
+  return (formula === null || formula === void 0 ? void 0 : formula.indexOf(prefix)) === 0 && (formula === null || formula === void 0 ? void 0 : formula.indexOf(suffix)) === formula.length - suffix.length;
 }
+function getInnerFormula(value) {
+  var formula = typeof value === "string" ? value : value.formula;
+  var prefix = FORMULA_SEPERATORS[0],
+    suffix = FORMULA_SEPERATORS[1];
+  var innerFormula = formula.substring(prefix.length, formula.length - suffix.length);
+  return innerFormula;
+}
+var IDENTIFIER_REGEX = /^([^\x00-\x7F]|[A-Za-z_])([^\x00-\x7F]|\w)+$/;
+function isSimpleInnerFormula(innerFormula) {
+  return IDENTIFIER_REGEX.test(innerFormula);
+}
+
 function calculateEvaluator(evaluator, context, formula, defaultValue) {
   var _context$parameters;
   var scope = context === null || context === void 0 ? void 0 : (_context$parameters = context.parameters) === null || _context$parameters === void 0 ? void 0 : _context$parameters[context.parameters.length - 1];
@@ -445,11 +461,19 @@ function calculateEvaluator(evaluator, context, formula, defaultValue) {
 }
 function getFormulaEvaluator(value) {
   if (!isFormula(value)) {
-    throw new Error("Formula: " + value + " must start and end with brackets.");
+    throw new Error("Formula: " + value + " must match the format: \"" + FORMULA_SEPERATORS[0] + "formula" + FORMULA_SEPERATORS[1] + "\".");
   }
-  var formula = typeof value === "string" ? value : value.formula;
-  var mathEvaluator = math.parse(formula.substring(1, formula.length - 1)).compile();
-  return mathEvaluator;
+  var innerFormula = getInnerFormula(value);
+  var mathEvaluator = math.parse(innerFormula).compile();
+  if (isSimpleInnerFormula(innerFormula)) {
+    return {
+      evaluate: function evaluate(scope) {
+        var _scope$innerFormula;
+        return (_scope$innerFormula = scope[innerFormula]) != null ? _scope$innerFormula : mathEvaluator.evaluate(scope);
+      }
+    };
+  }
+  return math.parse(innerFormula).compile();
 }
 
 function calculateArray(value) {
@@ -539,7 +563,7 @@ function calculateResolution(value) {
   if (typeof value === "number" || typeof value === "boolean") {
     return value;
   }
-  if (typeof value === "string" && (value.charAt(0) !== "{" || value.charAt(value.length - 1) !== "}")) {
+  if (typeof value === "string" && !isFormula(value)) {
     return value;
   }
   if (Array.isArray(value)) {
@@ -1206,6 +1230,7 @@ var ScriptProcessor = /*#__PURE__*/function () {
 }();
 
 exports.DEFAULT_EXTERNALS = DEFAULT_EXTERNALS;
+exports.FORMULA_SEPERATORS = FORMULA_SEPERATORS;
 exports.ScriptProcessor = ScriptProcessor;
 exports.calculateArray = calculateArray;
 exports.calculateBoolean = calculateBoolean;
@@ -1223,6 +1248,4 @@ exports.executeScript = executeScript;
 exports.filterScripts = filterScripts;
 exports.getDefaultConvertors = getDefaultConvertors;
 exports.getFormulaEvaluator = getFormulaEvaluator;
-exports.hasFormula = hasFormula;
-exports.isFormula = isFormula;
 //# sourceMappingURL=index.js.map

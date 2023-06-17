@@ -47,7 +47,7 @@ describe('pause convertor', () => {
         }]);
         const results: ExecutionStep[] = [];
         const behavior = await convertPauseProperty({
-                pause: "{not completed}",
+                pause: "~{not completed}",
             },
             results,
             {getSteps, getRemainingActions, refreshSteps, stopRefresh},

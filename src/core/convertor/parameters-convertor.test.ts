@@ -24,7 +24,7 @@ describe('parameters convertor', () => {
                     "param2": true,
                     "param3": "test",
                     "param4": [1, 2, 3, 4],
-                    "param5": "{1 + 3}",
+                    "param5": "~{1 + 3}",
                 },
             },
             results,
@@ -69,7 +69,7 @@ describe('parameters convertor', () => {
                 hooks: ["fun"],
                 script: "script",
                 parameters: {
-                    "test": "{fun()}",
+                    "test": "~{fun()}",
                 }
             },
             results,

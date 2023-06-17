@@ -2,9 +2,10 @@ import { Context } from "../context/Context";
 import { ValueOf } from "../types/ValueOf";
 import { Resolution } from "./Resolution";
 import { calculateArray } from "./calculateArray";
-import { calculateEvaluator, getFormulaEvaluator } from "./calculateEvaluator";
+import { calculateEvaluator, getFormulaEvaluator } from "./formula/formula-evaluator";
 import { SupportedTypes } from "./SupportedTypes";
 import { calculateMap } from "./calculateMap";
+import { isFormula } from "./formula/formula-utils";
 
 export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> | undefined {
     if (value === undefined) {
@@ -22,7 +23,7 @@ export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> 
     if (typeof(value) === "number" || typeof(value) === "boolean") {
         return value;
     }
-    if (typeof(value) === "string" && (value.charAt(0) !== "{" || value.charAt(value.length-1) !== "}")) {
+    if (typeof(value) === "string" && !isFormula(value)) {
         return value;
     }
     if (Array.isArray(value)) {

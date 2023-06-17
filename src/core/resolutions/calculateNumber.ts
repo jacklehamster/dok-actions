@@ -1,6 +1,6 @@
 import { ValueOf } from "../types/ValueOf";
 import { Context } from "../context/Context";
-import { calculateEvaluator, getFormulaEvaluator } from "./calculateEvaluator";
+import { calculateEvaluator, getFormulaEvaluator } from "./formula/formula-evaluator";
 import { NumberResolution } from "./NumberResolution";
 
 

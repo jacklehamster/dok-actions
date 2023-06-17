@@ -2,7 +2,7 @@ import { Context } from "../context/Context";
 import { TypedArray } from "../types/TypedArray";
 import { ValueOf } from "../types/ValueOf";
 import { calculateNumber } from "./calculateNumber";
-import { calculateEvaluator, getFormulaEvaluator } from "./calculateEvaluator";
+import { calculateEvaluator, getFormulaEvaluator } from "./formula/formula-evaluator";
 import { TypedArrayResolution } from "./TypedArrayResolution";
 
 export interface TypedArrayConstructor {

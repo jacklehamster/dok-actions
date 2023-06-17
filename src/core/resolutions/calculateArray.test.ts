@@ -7,10 +7,10 @@ describe('calculateArray', () => {
     });
 
     it('should calculate array resolution', () => {
-        expect(calculateArray([5,"{5 + 1}","{5 + x}","test","{y}"])!.valueOf(context)).toEqual([5,6,15,"test","test"]);
+        expect(calculateArray([5,"~{5 + 1}","~{5 + x}","test","~{y}"])!.valueOf(context)).toEqual([5,6,15,"test","test"]);
     });
 
     it('should calculate nested array resolution', () => {
-        expect(calculateArray([5,["{5 + 1}","{5 + x}"]])!.valueOf(context)).toEqual([5,[6,15]]);
+        expect(calculateArray([5,["~{5 + 1}","~{5 + x}"]])!.valueOf(context)).toEqual([5,[6,15]]);
     });
 });

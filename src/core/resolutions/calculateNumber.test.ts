@@ -8,7 +8,7 @@ describe('calculateNumber', () => {
 
     it('should calculate number resolution', () => {
         expect(calculateNumber(5).valueOf(context)).toEqual(5);
-        expect(calculateNumber("{5 + 1}").valueOf(context)).toEqual(6);
-        expect(calculateNumber("{5 + x}").valueOf(context)).toEqual(15);
+        expect(calculateNumber("~{5 + 1}").valueOf(context)).toEqual(6);
+        expect(calculateNumber("~{5 + x}").valueOf(context)).toEqual(15);
     })
 });
