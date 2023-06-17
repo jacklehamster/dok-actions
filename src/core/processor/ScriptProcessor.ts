@@ -41,8 +41,8 @@ export class ScriptProcessor<T, E = {}> {
     private async fetchScripts(): Promise<Map<Script<T>, ExecutionStep[]>> {
         if (!this.scriptMap) {
             this.scriptMap = await convertScripts(this.scripts, this.external, this.actionConversionMap, {
-                refreshSteps: this.refreshSteps,
-                stopRefresh: this.stopRefresh,
+                refreshSteps: this.refreshSteps.bind(this),
+                stopRefresh: this.stopRefresh.bind(this),
             });
         }
         return this.scriptMap!;

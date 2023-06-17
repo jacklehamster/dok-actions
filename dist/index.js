@@ -1052,8 +1052,8 @@ var ScriptProcessor = /*#__PURE__*/function () {
       var _temp = function () {
         if (!_this2.scriptMap) {
           return Promise.resolve(convertScripts(_this2.scripts, _this2.external, _this2.actionConversionMap, {
-            refreshSteps: _this2.refreshSteps,
-            stopRefresh: _this2.stopRefresh
+            refreshSteps: _this2.refreshSteps.bind(_this2),
+            stopRefresh: _this2.stopRefresh.bind(_this2)
           })).then(function (_convertScripts) {
             _this2.scriptMap = _convertScripts;
           });
