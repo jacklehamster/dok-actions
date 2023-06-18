@@ -93,10 +93,10 @@ export class ScriptProcessor<T, E = {}> {
         const refreshCleanup = this.createRefreshCleanup(behavior, context);
         const frameRate = behavior.frameRate ?? 60;
         const frameMs = 1000 / frameRate;
-        let lastFrameTime = 0;
+        let lastFrameTime = Number.MIN_SAFE_INTEGER;
         let frame = 0;
         const loop = (time: number) => {
-            if (time - lastFrameTime >= frameMs) {
+            if (time >= lastFrameTime + frameMs) {
                 parameters.time = time;
                 parameters.frame = frame;
                 execute(steps, parameters, context);

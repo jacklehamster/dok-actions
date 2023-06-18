@@ -1241,10 +1241,10 @@ var ScriptProcessor = /*#__PURE__*/function () {
     var refreshCleanup = this.createRefreshCleanup(behavior, context);
     var frameRate = (_behavior$frameRate = behavior.frameRate) != null ? _behavior$frameRate : 60;
     var frameMs = 1000 / frameRate;
-    var lastFrameTime = 0;
+    var lastFrameTime = Number.MIN_SAFE_INTEGER;
     var frame = 0;
     var loop = function loop(time) {
-      if (time - lastFrameTime >= frameMs) {
+      if (time >= lastFrameTime + frameMs) {
         parameters.time = time;
         parameters.frame = frame;
         execute(steps, parameters, context);
