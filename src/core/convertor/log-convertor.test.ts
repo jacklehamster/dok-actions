@@ -1,5 +1,4 @@
 import { ExecutionStep, execute } from "../execution/ExecutionStep";
-import { getDefaultConvertors } from "./default-convertors";
 import { convertLogProperty } from "./log-convertor";
 
 describe('log convertor', () => {
@@ -16,7 +15,6 @@ describe('log convertor', () => {
             results,
             {getSteps, getRemainingActions, refreshSteps, stopRefresh},
             { log },
-            getDefaultConvertors(),
         );
         execute(results);
         expect(log).toBeCalledWith("log-test");

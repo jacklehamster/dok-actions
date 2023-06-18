@@ -142,3 +142,45 @@ describe('ScriptProcesor', () => {
         expect(mock).not.toBeCalled();
     });
 });
+
+describe("script execution", () => {
+   const log = jest.fn();
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it("execute nested loop", async () => {
+        const processor = new ScriptProcessor([
+            {
+                name: "test",
+                actions: [
+                    {
+                        loop: 3,
+                        set: {variable:"i", value:"~{index}"},
+                        actions: [
+                            {
+                                loop: 4,
+                                set: {variable:"j", value:"~{index}"},
+                                log: "~{i * 10 + j}",
+                            },
+                        ],
+                    },
+                ],
+            },
+        ], {log});
+        await processor.runByName("test");
+        expect(log).toBeCalledWith(0);
+        expect(log).toBeCalledWith(1);
+        expect(log).toBeCalledWith(2);
+        expect(log).toBeCalledWith(3);
+        expect(log).toBeCalledWith(10);
+        expect(log).toBeCalledWith(11);
+        expect(log).toBeCalledWith(12);
+        expect(log).toBeCalledWith(13);
+        expect(log).toBeCalledWith(20);
+        expect(log).toBeCalledWith(21);
+        expect(log).toBeCalledWith(22);
+        expect(log).toBeCalledWith(23);
+        expect(log).not.toBeCalledWith(4);
+    });
+});

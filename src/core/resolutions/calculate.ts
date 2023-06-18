@@ -34,8 +34,8 @@ export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> 
     }
     const evaluator = getFormulaEvaluator(value);
     return {
-        valueOf(context?: Context): string | number | undefined {
-            return calculateEvaluator<string | number | undefined>(evaluator, context, value, undefined);
+        valueOf(context?: Context): SupportedTypes {
+            return calculateEvaluator<SupportedTypes>(evaluator, context, value, undefined);
         }
     };
 }

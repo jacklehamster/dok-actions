@@ -2,6 +2,7 @@ import { convertActionsProperty } from "./actions-convertor";
 import { convertConditionProperty } from "./condition-convertor";
 import { ActionConvertorList } from "./convert-action";
 import { convertDelayProperty, convertLockProperty, convertPauseProperty } from "./convert-pause";
+import { convertSetProperty } from "./convert-set";
 import { convertLogProperty } from "./log-convertor";
 import { convertLoopProperty } from "./loop-convertor";
 import { convertHooksProperty, convertParametersProperty } from "./parameters-convertor";
@@ -18,6 +19,7 @@ export function getDefaultConvertors(): ActionConvertorList {
         convertDelayProperty,
         convertPauseProperty,
         convertLockProperty,
+        convertSetProperty,
         convertLogProperty,
         convertScriptProperty,
         convertActionsProperty,

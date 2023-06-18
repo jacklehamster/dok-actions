@@ -864,7 +864,52 @@ var convertDelayProperty = function convertDelayProperty(action, results, utils,
   }
 };
 
-var convertLogProperty = function convertLogProperty(action, results, _, external, __) {
+var convertSetProperty = function convertSetProperty(action, results) {
+  try {
+    var _action$set$access$ma, _action$set$access;
+    if (!action.set) {
+      return Promise.resolve();
+    }
+    var variable = calculateString(action.set.variable);
+    var access = [variable].concat((_action$set$access$ma = (_action$set$access = action.set.access) === null || _action$set$access === void 0 ? void 0 : _action$set$access.map(function (a) {
+      return calculateResolution(a);
+    })) != null ? _action$set$access$ma : []);
+    var value = calculateResolution(action.set.value);
+    results.push(function (context, parameters) {
+      var root = parameters;
+      for (var i = 0; i < access.length; i++) {
+        var _access$i;
+        if (!root) {
+          console.warn("Invalid access");
+          return;
+        }
+        var key = (_access$i = access[i]) === null || _access$i === void 0 ? void 0 : _access$i.valueOf(context);
+        if (Array.isArray(root)) {
+          if (typeof key === "number") {
+            if (i === access.length - 1) {
+              root[key] = value === null || value === void 0 ? void 0 : value.valueOf(context);
+            } else {
+              root = root[key];
+            }
+          } else {
+            console.warn("Invalid key for array: ", key);
+          }
+        } else if (typeof root === "object") {
+          if (i === access.length - 1) {
+            root[key + ""] = value === null || value === void 0 ? void 0 : value.valueOf(context);
+          } else {
+            root = root[key + ""];
+          }
+        }
+      }
+    });
+    return Promise.resolve();
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+
+var convertLogProperty = function convertLogProperty(action, results, _, external) {
   try {
     if (action.log === undefined) {
       return Promise.resolve();
@@ -1050,7 +1095,7 @@ var convertScriptProperty = function convertScriptProperty(action, results, _ref
 };
 
 function getDefaultConvertors() {
-  return [convertHooksProperty, convertParametersProperty, convertRefreshProperty, convertLoopProperty, convertConditionProperty, convertDelayProperty, convertPauseProperty, convertLockProperty, convertLogProperty, convertScriptProperty, convertActionsProperty];
+  return [convertHooksProperty, convertParametersProperty, convertRefreshProperty, convertLoopProperty, convertConditionProperty, convertDelayProperty, convertPauseProperty, convertLockProperty, convertSetProperty, convertLogProperty, convertScriptProperty, convertActionsProperty];
 }
 
 var ScriptProcessor = /*#__PURE__*/function () {

@@ -3,14 +3,12 @@ import { ExecutionStep } from "../execution/ExecutionStep";
 import { Resolution } from "../resolutions/Resolution";
 import { calculateResolution } from "../resolutions/calculate";
 import { ConvertBehavior, Utils } from "./Convertor";
-import { ActionConvertorList } from "./convert-action";
 
 export async function convertLogProperty<T>(
         action: LogAction,
         results: ExecutionStep[],
         _: Utils<T>,
-        external: Record<string, any>,
-        __: ActionConvertorList): Promise<ConvertBehavior|void> {
+        external: Record<string, any>): Promise<ConvertBehavior|void> {
     if (action.log === undefined) {
         return;
     }
