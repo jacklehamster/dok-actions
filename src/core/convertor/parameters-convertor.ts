@@ -11,11 +11,11 @@ import { StringResolution } from "../resolutions/StringResolution";
 import { calculateString } from "../resolutions/calculateString";
 import { HookAction } from "../actions/HookAction";
 
-function newParams(context: Context): ExecutionParameters {
+export function newParams(context: Context): ExecutionParameters {
     return context.objectPool?.pop() ?? {};
 }
 
-function recycleParams(context: Context, params: ExecutionParameters): void {
+export function recycleParams(context: Context, params: ExecutionParameters): void {
     for (let k in params) {
         delete params[k];
     }

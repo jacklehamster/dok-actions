@@ -993,17 +993,6 @@ var convertHooksProperty = function convertHooksProperty(action, results, utils,
     return Promise.reject(e);
   }
 };
-function newParams(context) {
-  var _context$objectPool$p, _context$objectPool;
-  return (_context$objectPool$p = (_context$objectPool = context.objectPool) === null || _context$objectPool === void 0 ? void 0 : _context$objectPool.pop()) != null ? _context$objectPool$p : {};
-}
-function recycleParams(context, params) {
-  var _context$objectPool2;
-  for (var k in params) {
-    delete params[k];
-  }
-  (_context$objectPool2 = context.objectPool) === null || _context$objectPool2 === void 0 ? void 0 : _context$objectPool2.push(params);
-}
 var convertParametersProperty = function convertParametersProperty(action, results, utils, external, actionConversionMap) {
   try {
     if (!action.parameters) {
@@ -1039,6 +1028,17 @@ var convertParametersProperty = function convertParametersProperty(action, resul
     return Promise.reject(e);
   }
 };
+function newParams(context) {
+  var _context$objectPool$p, _context$objectPool;
+  return (_context$objectPool$p = (_context$objectPool = context.objectPool) === null || _context$objectPool === void 0 ? void 0 : _context$objectPool.pop()) != null ? _context$objectPool$p : {};
+}
+function recycleParams(context, params) {
+  var _context$objectPool2;
+  for (var k in params) {
+    delete params[k];
+  }
+  (_context$objectPool2 = context.objectPool) === null || _context$objectPool2 === void 0 ? void 0 : _context$objectPool2.push(params);
+}
 
 var _excluded$4 = ["refresh"];
 var convertRefreshProperty = function convertRefreshProperty(action, stepResults, utils, external, actionConversionMap) {
