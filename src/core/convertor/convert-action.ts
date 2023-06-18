@@ -29,16 +29,14 @@ export async function convertScripts<T>(
         actionConversionMap: ActionConvertorList,
         processorHelper: ScriptProcessorHelper): Promise<Map<Script<T>, ExecutionStep[]>> {
     const scriptMap: Map<Script<T>, ExecutionStep[]> = new Map();
+    scripts.forEach(script => scriptMap.set(script, []));
     const getSteps = (filter: ScriptFilter) => {
         const filteredScripts = filterScripts(scripts, filter);
         const steps: ExecutionStep[] = [];
-        filteredScripts.forEach(script => steps.push(...(scriptMap.get(script)??[])));
+        filteredScripts.forEach(script => steps.push(...(scriptMap.get(script)!)));
         return steps;
     };
     for (let script of scripts) {
-        if (!scriptMap.has(script)) {
-            scriptMap.set(script, []);
-        }
         const scriptSteps = scriptMap.get(script) ?? [];
         const { actions } = script;
         for (let i = 0; i < actions.length; i++) {
@@ -72,14 +70,14 @@ export async function executeScript<T>(
     };
 }
 
-export function executeAction<T>(
+export async function executeAction<T>(
         action: T,
         parameters: ExecutionParameters,
         context: Context,
         utils: Utils<T>,
-        external: Record<string, any>,
-        actionConversionMap: ActionConvertorList): void {
+        actionConversionMap: ActionConvertorList): Promise<void> {
     const results: ExecutionStep[] = [];
-    convertAction(action, results, utils, external, actionConversionMap);
-    execute(results, parameters, context);
+    if (ConvertBehavior.SKIP_REMAINING_ACTIONS !== await convertAction(action, results, utils, context.external, actionConversionMap)) {
+        execute(results, parameters, context);
+    }
 }

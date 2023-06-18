@@ -314,6 +314,19 @@ function filterScripts(scripts, filter) {
   });
 }
 
+var executeAction = function executeAction(action, parameters, context, utils, actionConversionMap) {
+  try {
+    var results = [];
+    var _ConvertBehavior$SKIP = ConvertBehavior.SKIP_REMAINING_ACTIONS;
+    return Promise.resolve(convertAction(action, results, utils, context.external, actionConversionMap)).then(function (_convertAction) {
+      if (_ConvertBehavior$SKIP !== _convertAction) {
+        execute(results, parameters, context);
+      }
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
 var executeScript = function executeScript(scriptName, parameters, scripts, external, actionConversionMap, processorHelper) {
   if (parameters === void 0) {
     parameters = {};
@@ -341,22 +354,21 @@ var executeScript = function executeScript(scriptName, parameters, scripts, exte
 var convertScripts = function convertScripts(scripts, external, actionConversionMap, processorHelper) {
   try {
     var scriptMap = new Map();
+    scripts.forEach(function (script) {
+      return scriptMap.set(script, []);
+    });
     var getSteps = function getSteps(filter) {
       var filteredScripts = filterScripts(scripts, filter);
       var steps = [];
       filteredScripts.forEach(function (script) {
-        var _scriptMap$get;
-        return steps.push.apply(steps, (_scriptMap$get = scriptMap.get(script)) != null ? _scriptMap$get : []);
+        return steps.push.apply(steps, scriptMap.get(script));
       });
       return steps;
     };
     var _temp2 = _forOf(scripts, function (script) {
-      var _scriptMap$get2;
+      var _scriptMap$get;
       var _interrupt = false;
-      if (!scriptMap.has(script)) {
-        scriptMap.set(script, []);
-      }
-      var scriptSteps = (_scriptMap$get2 = scriptMap.get(script)) != null ? _scriptMap$get2 : [];
+      var scriptSteps = (_scriptMap$get = scriptMap.get(script)) != null ? _scriptMap$get : [];
       var actions = script.actions;
       var _temp = _forTo(actions, function (i) {
         var getRemainingActions = function getRemainingActions() {
@@ -403,11 +415,6 @@ var convertAction = function convertAction(action, stepResults, utils, external,
     return Promise.reject(e);
   }
 };
-function executeAction(action, parameters, context, utils, external, actionConversionMap) {
-  var results = [];
-  convertAction(action, results, utils, external, actionConversionMap);
-  execute(results, parameters, context);
-}
 
 var FORMULA_SEPERATORS = ["~{", "}"];
 
