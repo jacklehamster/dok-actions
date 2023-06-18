@@ -6,21 +6,10 @@ import { ExecutionParameters, ExecutionStep, execute } from "../execution/Execut
 import { ActionConvertorList, convertAction } from "./convert-action";
 import { SupportedTypes } from "../resolutions/SupportedTypes";
 import { ScriptAction } from "../actions/ScriptAction";
-import { Context } from "../context/Context";
 import { StringResolution } from "../resolutions/StringResolution";
 import { calculateString } from "../resolutions/calculateString";
 import { HookAction } from "../actions/HookAction";
-
-export function newParams(context: Context): ExecutionParameters {
-    return context.objectPool?.pop() ?? {};
-}
-
-export function recycleParams(context: Context, params: ExecutionParameters): void {
-    for (let k in params) {
-        delete params[k];
-    }
-    context.objectPool?.push(params);
-}
+import { newParams, recycleParams } from "./parameter-utils";
 
 export async function convertParametersProperty<T>(
         action: ScriptAction,

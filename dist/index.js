@@ -415,6 +415,18 @@ var convertAction = function convertAction(action, stepResults, utils, external,
   }
 };
 
+function newParams(context) {
+  var _context$objectPool$p, _context$objectPool;
+  return (_context$objectPool$p = (_context$objectPool = context.objectPool) === null || _context$objectPool === void 0 ? void 0 : _context$objectPool.pop()) != null ? _context$objectPool$p : {};
+}
+function recycleParams(context, params) {
+  var _context$objectPool2;
+  for (var k in params) {
+    delete params[k];
+  }
+  (_context$objectPool2 = context.objectPool) === null || _context$objectPool2 === void 0 ? void 0 : _context$objectPool2.push(params);
+}
+
 var FORMULA_SEPERATORS = ["~{", "}"];
 
 function hasFormula(resolution) {
@@ -1028,17 +1040,6 @@ var convertParametersProperty = function convertParametersProperty(action, resul
     return Promise.reject(e);
   }
 };
-function newParams(context) {
-  var _context$objectPool$p, _context$objectPool;
-  return (_context$objectPool$p = (_context$objectPool = context.objectPool) === null || _context$objectPool === void 0 ? void 0 : _context$objectPool.pop()) != null ? _context$objectPool$p : {};
-}
-function recycleParams(context, params) {
-  var _context$objectPool2;
-  for (var k in params) {
-    delete params[k];
-  }
-  (_context$objectPool2 = context.objectPool) === null || _context$objectPool2 === void 0 ? void 0 : _context$objectPool2.push(params);
-}
 
 var _excluded$4 = ["refresh"];
 var convertRefreshProperty = function convertRefreshProperty(action, stepResults, utils, external, actionConversionMap) {
@@ -1300,4 +1301,10 @@ exports.executeScript = executeScript;
 exports.filterScripts = filterScripts;
 exports.getDefaultConvertors = getDefaultConvertors;
 exports.getFormulaEvaluator = getFormulaEvaluator;
+exports.getInnerFormula = getInnerFormula;
+exports.hasFormula = hasFormula;
+exports.isFormula = isFormula;
+exports.isSimpleInnerFormula = isSimpleInnerFormula;
+exports.newParams = newParams;
+exports.recycleParams = recycleParams;
 //# sourceMappingURL=index.js.map
