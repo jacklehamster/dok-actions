@@ -30,10 +30,7 @@ export async function convertParametersProperty<T>(
     await convertAction(subAction, subStepResults, utils, external, actionConversionMap);
 
     results.push((context, parameters) => {
-        const paramValues: ExecutionParameters = newParams(context);
-        for (let k in parameters) {
-            paramValues[k] = parameters[k];
-        }
+        const paramValues: ExecutionParameters = newParams(context, parameters);
         for (let entry of paramEntries) {
             const key: string = entry[0];
             paramValues[key] = entry[1]?.valueOf(context);
@@ -64,10 +61,7 @@ export async function convertHooksProperty<T>(
     await convertAction(subAction, subStepResults, utils, external, actionConversionMap);
 
     results.push((context, parameters) => {
-        const paramValues: ExecutionParameters = newParams(context);
-        for (let k in parameters) {
-            paramValues[k] = parameters[k];
-        }
+        const paramValues: ExecutionParameters = newParams(context, parameters);
         for (let hook of hooksValueOf) {
             const h = hook.valueOf(context);
             const x = external[h];

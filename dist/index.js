@@ -415,9 +415,13 @@ var convertAction = function convertAction(action, stepResults, utils, external,
   }
 };
 
-function newParams(context) {
+function newParams(context, parameters) {
   var _context$objectPool$p, _context$objectPool;
-  return (_context$objectPool$p = (_context$objectPool = context.objectPool) === null || _context$objectPool === void 0 ? void 0 : _context$objectPool.pop()) != null ? _context$objectPool$p : {};
+  var params = (_context$objectPool$p = (_context$objectPool = context.objectPool) === null || _context$objectPool === void 0 ? void 0 : _context$objectPool.pop()) != null ? _context$objectPool$p : {};
+  for (var k in parameters) {
+    params[k] = parameters[k];
+  }
+  return params;
 }
 function recycleParams(context, params) {
   var _context$objectPool2;
@@ -984,10 +988,7 @@ var convertHooksProperty = function convertHooksProperty(action, results, utils,
     var subStepResults = [];
     return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
       results.push(function (context, parameters) {
-        var paramValues = newParams(context);
-        for (var k in parameters) {
-          paramValues[k] = parameters[k];
-        }
+        var paramValues = newParams(context, parameters);
         for (var _iterator2 = _createForOfIteratorHelperLoose(hooksValueOf), _step2; !(_step2 = _iterator2()).done;) {
           var hook = _step2.value;
           var h = hook.valueOf(context);
@@ -1021,10 +1022,7 @@ var convertParametersProperty = function convertParametersProperty(action, resul
     var subStepResults = [];
     return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
       results.push(function (context, parameters) {
-        var paramValues = newParams(context);
-        for (var k in parameters) {
-          paramValues[k] = parameters[k];
-        }
+        var paramValues = newParams(context, parameters);
         for (var _iterator = _createForOfIteratorHelperLoose(paramEntries), _step; !(_step = _iterator()).done;) {
           var _entry$;
           var entry = _step.value;
