@@ -11,5 +11,6 @@ import { PauseAction } from "./PauseAction";
 import { ReferenceAction } from "./ReferenceAction";
 import { RefreshAction } from "./RefreshAction";
 import { ScriptAction } from "./ScriptAction";
+import { SetAction } from "./SetAction";
 
-export type DokAction<T = {}> = ScriptAction & LogAction & ActionsAction<T> & LogicAction & PauseAction & HookAction & ReferenceAction & RefreshAction;
+export type DokAction<T = {}> = ScriptAction & LogAction & ActionsAction<T> & LogicAction & PauseAction & HookAction & ReferenceAction & RefreshAction & SetAction;

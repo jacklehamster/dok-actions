@@ -6,4 +6,5 @@ import { PauseAction } from "./PauseAction";
 import { ReferenceAction } from "./ReferenceAction";
 import { RefreshAction } from "./RefreshAction";
 import { ScriptAction } from "./ScriptAction";
-export declare type DokAction<T = {}> = ScriptAction & LogAction & ActionsAction<T> & LogicAction & PauseAction & HookAction & ReferenceAction & RefreshAction;
+import { SetAction } from "./SetAction";
+export declare type DokAction<T = {}> = ScriptAction & LogAction & ActionsAction<T> & LogicAction & PauseAction & HookAction & ReferenceAction & RefreshAction & SetAction;
