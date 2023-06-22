@@ -57,8 +57,12 @@ export async function convertHooksProperty<T>(
     const hooksResolution: StringResolution[] = hooks;
     const hooksValueOf: ValueOf<string>[] = hooksResolution.map(hook => calculateString(hook));
 
-    const subStepResults: ExecutionStep[] = [];
-    await convertAction(subAction, subStepResults, utils, external, actionConversionMap);
+    const postStepResults: ExecutionStep[] = [];
+    const remainingActions = utils.getRemainingActions();
+    await convertAction(subAction, postStepResults, utils, external, actionConversionMap);
+    for (let action of remainingActions) {
+        await convertAction(action, postStepResults, utils, external, actionConversionMap);
+    }
 
     results.push((context, parameters) => {
         const paramValues: ExecutionParameters = newParams(context, parameters);
@@ -67,12 +71,14 @@ export async function convertHooksProperty<T>(
             const x = external[h];
             if (x) {
                 paramValues[h] = x;
+            } else {
+                console.warn("Does not exist", x);
             }
         }
 
-        execute(subStepResults, paramValues, context);
+        execute(postStepResults, paramValues, context);
 
         recycleParams(context, paramValues);
     });
-    return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+    return ConvertBehavior.SKIP_REMAINING_ACTIONS;
 }

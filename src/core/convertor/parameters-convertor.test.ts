@@ -11,7 +11,7 @@ describe('parameters convertor', () => {
         mock(JSON.parse(JSON.stringify(context.parameters![context.parameters!.length - 1])));
     };
     const getSteps = jest.fn().mockReturnValue([scriptExecution]);
-    const getRemainingActions = jest.fn();
+    const getRemainingActions = jest.fn().mockReturnValue([]);
     const refreshSteps = jest.fn();
     const stopRefresh = jest.fn();
 

@@ -986,22 +986,31 @@ var convertHooksProperty = function convertHooksProperty(action, results, utils,
     var hooksValueOf = hooksResolution.map(function (hook) {
       return calculateString(hook);
     });
-    var subStepResults = [];
-    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
-      results.push(function (context, parameters) {
-        var paramValues = newParams(context, parameters);
-        for (var _iterator2 = _createForOfIteratorHelperLoose(hooksValueOf), _step2; !(_step2 = _iterator2()).done;) {
-          var hook = _step2.value;
-          var h = hook.valueOf(context);
-          var x = external[h];
-          if (x) {
-            paramValues[h] = x;
+    var postStepResults = [];
+    var remainingActions = utils.getRemainingActions();
+    return Promise.resolve(convertAction(subAction, postStepResults, utils, external, actionConversionMap)).then(function () {
+      function _temp2() {
+        results.push(function (context, parameters) {
+          var paramValues = newParams(context, parameters);
+          for (var _iterator2 = _createForOfIteratorHelperLoose(hooksValueOf), _step2; !(_step2 = _iterator2()).done;) {
+            var hook = _step2.value;
+            var h = hook.valueOf(context);
+            var x = external[h];
+            if (x) {
+              paramValues[h] = x;
+            } else {
+              console.warn("Does not exist", x);
+            }
           }
-        }
-        execute(subStepResults, paramValues, context);
-        recycleParams(context, paramValues);
+          execute(postStepResults, paramValues, context);
+          recycleParams(context, paramValues);
+        });
+        return ConvertBehavior.SKIP_REMAINING_ACTIONS;
+      }
+      var _temp = _forOf(remainingActions, function (action) {
+        return Promise.resolve(convertAction(action, postStepResults, utils, external, actionConversionMap)).then(function () {});
       });
-      return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+      return _temp && _temp.then ? _temp.then(_temp2) : _temp2(_temp);
     });
   } catch (e) {
     return Promise.reject(e);
