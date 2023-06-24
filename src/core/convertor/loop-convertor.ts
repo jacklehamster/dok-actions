@@ -20,8 +20,8 @@ export async function convertLoopProperty<T>(
     const loopResolution = calculateNumber(loop, 0);
     const subStepResults: ExecutionStep[] = [];
     await convertAction<LogicAction>(subAction, subStepResults, utils, external, actionConversionMap);
-    stepResults.push((context, parameters) => {
-        const numLoops = loopResolution.valueOf(context);
+    stepResults.push((parameters, context) => {
+        const numLoops = loopResolution.valueOf(parameters);
         for (let i = 0; i < numLoops; i++) {
             parameters.index = i;
             execute(subStepResults, parameters, context);

@@ -1,4 +1,3 @@
-import { Context } from "../context/Context";
 import { ValueOf } from "../types/ValueOf";
 import { Resolution } from "./Resolution";
 import { calculateArray } from "./calculateArray";
@@ -6,6 +5,7 @@ import { calculateEvaluator, getFormulaEvaluator } from "./formula/formula-evalu
 import { SupportedTypes } from "./SupportedTypes";
 import { calculateMap } from "./calculateMap";
 import { isFormula } from "./formula/formula-utils";
+import { ExecutionParameters } from "../execution/ExecutionStep";
 
 export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> | undefined {
     if (value === undefined) {
@@ -34,8 +34,8 @@ export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> 
     }
     const evaluator = getFormulaEvaluator(value);
     return {
-        valueOf(context?: Context): SupportedTypes {
-            return calculateEvaluator<SupportedTypes>(evaluator, context, value, undefined);
+        valueOf(parameters: ExecutionParameters = {}): SupportedTypes {
+            return calculateEvaluator<SupportedTypes>(evaluator, parameters, value, undefined);
         }
     };
 }

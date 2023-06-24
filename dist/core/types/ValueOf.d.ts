@@ -1,4 +1,4 @@
-import { Context } from "../context/Context";
+import { ExecutionParameters } from "../execution/ExecutionStep";
 export declare type ValueOf<T> = {
-    valueOf(context?: Context): T;
+    valueOf(parameters?: ExecutionParameters): T;
 };

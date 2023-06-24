@@ -1,14 +1,12 @@
-import { Context, createContext } from "../context/Context";
+import { ExecutionParameters } from "../execution/ExecutionStep";
 import { calculateString } from "./calculateString";
 
 describe('calculateString', () => {
-    const context: Context = createContext({
-        parameters: [{x: "test"}],
-    });
+    const parameters: ExecutionParameters = {x: "test"};
 
     it('should calculate number resolution', () => {
-        expect(calculateString("test").valueOf(context)).toEqual("test");
-        expect(calculateString("~{concat(\"test\", \"ing\")}").valueOf(context)).toEqual("testing");
-        expect(calculateString("~{x}").valueOf(context)).toEqual("test");
+        expect(calculateString("test").valueOf(parameters)).toEqual("test");
+        expect(calculateString("~{concat(\"test\", \"ing\")}").valueOf(parameters)).toEqual("testing");
+        expect(calculateString("~{x}").valueOf(parameters)).toEqual("test");
     })
 });

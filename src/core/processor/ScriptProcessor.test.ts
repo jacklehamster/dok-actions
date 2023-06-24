@@ -77,7 +77,7 @@ describe('ScriptProcesor', () => {
         }], external, [
             async (action, results) => {
                 const resolution = calculateNumber(action.mock);
-                results.push((context) => mock(resolution.valueOf(context)));
+                results.push((parameters) => mock(resolution.valueOf(parameters)));
             },
         ]);
         await processor.refreshByName("main");
@@ -104,7 +104,7 @@ describe('ScriptProcesor', () => {
         }], external, [
             async (action, results) => {
                 const resolution = calculateNumber(action.mock);
-                results.push((context) => mock(resolution.valueOf(context)));
+                results.push((parameters) => mock(resolution.valueOf(parameters)));
             },
         ]);
         await processor.refreshByTags([]);
@@ -131,7 +131,7 @@ describe('ScriptProcesor', () => {
         }], external, [
             async (action, results) => {
                 const resolution = calculateNumber(action.mock);
-                results.push((context) => mock(resolution.valueOf(context)));
+                results.push((parameters) => mock(resolution.valueOf(parameters)));
             },
         ]);
         await processor.refreshByTags([], {
@@ -166,7 +166,7 @@ describe('ScriptProcesor', () => {
         }], external, [
             async (action, results) => {
                 const resolution = calculateNumber(action.mock);
-                results.push((context) => mock(resolution.valueOf(context)));
+                results.push((parameters) => mock(resolution.valueOf(parameters)));
             },
         ]);
         execute(await processor.getSteps({ name: "redraw" }));

@@ -13,6 +13,6 @@ export async function convertScriptProperty<T>(
         return;
     }
     const steps = getSteps({ name: action.script, tags: action.scriptTags });
-    results.push((context, parameters) => execute(steps, parameters, context));
+    results.push((parameters, context) => execute(steps, parameters, context));
 }
 

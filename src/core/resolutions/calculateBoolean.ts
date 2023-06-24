@@ -1,8 +1,8 @@
 import { ValueOf } from "../types/ValueOf";
-import { Context } from "../context/Context";
 import { calculateEvaluator, getFormulaEvaluator } from "./formula/formula-evaluator";
 import { NumberResolution } from "./NumberResolution";
 import { BooleanResolution } from "./BooleanResolution";
+import { ExecutionParameters } from "../execution/ExecutionStep";
 
 export function calculateBoolean(value: BooleanResolution | NumberResolution, defaultValue = false): ValueOf<boolean> {
     if (typeof(value) === "boolean" || typeof(value) === "number") {
@@ -17,8 +17,8 @@ export function calculateBoolean(value: BooleanResolution | NumberResolution, de
     }
     const evaluator = getFormulaEvaluator(value);
     return {
-        valueOf(context?: Context): boolean {
-            return !!calculateEvaluator<boolean | number>(evaluator, context, value, defaultValue);
+        valueOf(parameters: ExecutionParameters): boolean {
+            return !!calculateEvaluator<boolean | number>(evaluator, parameters, value, defaultValue);
         }
     };
 }

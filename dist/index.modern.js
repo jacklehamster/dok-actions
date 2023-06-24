@@ -275,10 +275,15 @@ function execute(steps, parameters, context) {
   }
   for (var _iterator = _createForOfIteratorHelperLoose(steps), _step; !(_step = _iterator()).done;) {
     var step = _step.value;
-    step(context, parameters);
+    step(parameters, context);
   }
   context.postActionListener.forEach(function (listener) {
-    return listener(context, parameters);
+    for (var i in parameters) {
+      listener.parameters[i] = parameters[i];
+    }
+    listener.steps.forEach(function (step) {
+      return step(listener.parameters, context);
+    });
   });
   if (changedParameters) {
     params.pop();
@@ -416,7 +421,7 @@ var convertAction = function convertAction(action, stepResults, utils, external,
   }
 };
 
-function newParams(context, parameters) {
+function newParams(parameters, context) {
   var _context$objectPool$p, _context$objectPool;
   var params = (_context$objectPool$p = (_context$objectPool = context.objectPool) === null || _context$objectPool === void 0 ? void 0 : _context$objectPool.pop()) != null ? _context$objectPool$p : {};
   for (var k in parameters) {
@@ -424,7 +429,7 @@ function newParams(context, parameters) {
   }
   return params;
 }
-function recycleParams(context, params) {
+function recycleParams(params, context) {
   var _context$objectPool2;
   for (var k in params) {
     delete params[k];
@@ -472,9 +477,11 @@ function isSimpleInnerFormula(innerFormula) {
   return IDENTIFIER_REGEX.test(innerFormula);
 }
 
-function calculateEvaluator(evaluator, context, formula, defaultValue) {
-  var _context$parameters;
-  var scope = context === null || context === void 0 ? void 0 : (_context$parameters = context.parameters) === null || _context$parameters === void 0 ? void 0 : _context$parameters[context.parameters.length - 1];
+function calculateEvaluator(evaluator, parameters, formula, defaultValue) {
+  if (parameters === void 0) {
+    parameters = {};
+  }
+  var scope = parameters;
   try {
     var _evaluator$evaluate;
     return (_evaluator$evaluate = evaluator.evaluate(scope != null ? scope : {})) != null ? _evaluator$evaluate : defaultValue;
@@ -519,8 +526,8 @@ function calculateArray(value) {
     var formula = value;
     var _evaluator = getFormulaEvaluator(formula);
     return {
-      valueOf: function valueOf(context) {
-        return calculateEvaluator(_evaluator, context, formula, undefined);
+      valueOf: function valueOf(parameters) {
+        return calculateEvaluator(_evaluator, parameters, formula, undefined);
       }
     };
   }
@@ -529,9 +536,9 @@ function calculateArray(value) {
     return calculateResolution(resolution);
   });
   return {
-    valueOf: function valueOf(context) {
+    valueOf: function valueOf(parameters) {
       var value = evaluator.map(function (evalItem) {
-        return evalItem === null || evalItem === void 0 ? void 0 : evalItem.valueOf(context);
+        return evalItem === null || evalItem === void 0 ? void 0 : evalItem.valueOf(parameters);
       });
       return value;
     }
@@ -551,8 +558,8 @@ function calculateMap(value) {
     var formula = value;
     var evaluator = getFormulaEvaluator(formula);
     return {
-      valueOf: function valueOf(context) {
-        return calculateEvaluator(evaluator, context, formula, undefined);
+      valueOf: function valueOf(parameters) {
+        return calculateEvaluator(evaluator, parameters, formula, undefined);
       }
     };
   }
@@ -563,11 +570,11 @@ function calculateMap(value) {
     return [key, calculateResolution(resolution)];
   });
   return {
-    valueOf: function valueOf(context) {
+    valueOf: function valueOf(parameters) {
       return Object.fromEntries(evaluatorEntries.map(function (_ref2) {
         var key = _ref2[0],
           evalItem = _ref2[1];
-        return [key, evalItem === null || evalItem === void 0 ? void 0 : evalItem.valueOf(context)];
+        return [key, evalItem === null || evalItem === void 0 ? void 0 : evalItem.valueOf(parameters)];
       }));
     }
   };
@@ -598,8 +605,11 @@ function calculateResolution(value) {
   }
   var evaluator = getFormulaEvaluator(value);
   return {
-    valueOf: function valueOf(context) {
-      return calculateEvaluator(evaluator, context, value, undefined);
+    valueOf: function valueOf(parameters) {
+      if (parameters === void 0) {
+        parameters = {};
+      }
+      return calculateEvaluator(evaluator, parameters, value, undefined);
     }
   };
 }
@@ -620,8 +630,8 @@ function calculateNumber(value, defaultValue) {
   }
   var evaluator = getFormulaEvaluator(value);
   return {
-    valueOf: function valueOf(context) {
-      return calculateEvaluator(evaluator, context, value, defaultValue);
+    valueOf: function valueOf(parameters) {
+      return calculateEvaluator(evaluator, parameters, value, defaultValue);
     }
   };
 }
@@ -642,8 +652,8 @@ function calculateString(value, defaultValue) {
   }
   var evaluator = getFormulaEvaluator(value);
   return {
-    valueOf: function valueOf(context) {
-      return calculateEvaluator(evaluator, context, value, defaultValue);
+    valueOf: function valueOf(parameters) {
+      return calculateEvaluator(evaluator, parameters, value, defaultValue);
     }
   };
 }
@@ -664,8 +674,8 @@ function calculateBoolean(value, defaultValue) {
   }
   var evaluator = getFormulaEvaluator(value);
   return {
-    valueOf: function valueOf(context) {
-      return !!calculateEvaluator(evaluator, context, value, defaultValue);
+    valueOf: function valueOf(parameters) {
+      return !!calculateEvaluator(evaluator, parameters, value, defaultValue);
     }
   };
 }
@@ -683,9 +693,9 @@ function calculateTypedArray(value, ArrayConstructor) {
       return calculateNumber(value, 0);
     });
     return {
-      valueOf: function valueOf(context) {
+      valueOf: function valueOf(parameters) {
         for (var i = 0; i < compiledArray.length; i++) {
-          array[i] = compiledArray[i].valueOf(context);
+          array[i] = compiledArray[i].valueOf(parameters);
         }
         return array;
       }
@@ -695,8 +705,8 @@ function calculateTypedArray(value, ArrayConstructor) {
   var evaluator = getFormulaEvaluator(formula);
   var bufferArray;
   return {
-    valueOf: function valueOf(context) {
-      var value = calculateEvaluator(evaluator, context, formula, undefined);
+    valueOf: function valueOf(parameters) {
+      var value = calculateEvaluator(evaluator, parameters, formula, undefined);
       if (!value) {
         return undefined;
       }
@@ -750,8 +760,8 @@ var convertConditionProperty = function convertConditionProperty(action, results
     var conditionResolution = calculateBoolean(condition);
     var subStepResults = [];
     return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
-      results.push(function (context, parameters) {
-        if (conditionResolution.valueOf(context)) {
+      results.push(function (parameters, context) {
+        if (conditionResolution.valueOf(parameters)) {
           execute(subStepResults, parameters, context);
         }
       });
@@ -775,8 +785,8 @@ var convertLockProperty = function convertLockProperty(action, results, utils, e
       subAction = _objectWithoutPropertiesLoose(action, _excluded3);
     if (unlock) {
       var unlockResolution = calculateBoolean(unlock);
-      results.push(function (context) {
-        if (unlockResolution.valueOf(context)) {
+      results.push(function (parameters, context) {
+        if (unlockResolution.valueOf(parameters)) {
           context.locked = false;
         }
       });
@@ -788,18 +798,25 @@ var convertLockProperty = function convertLockProperty(action, results, utils, e
         var remainingActions = utils.getRemainingActions();
         return Promise.resolve(convertAction(subAction, postStepResults, utils, external, actionConversionMap)).then(function () {
           function _temp6() {
-            results.push(function (context, parameters) {
-              if (!lockResolution.valueOf(context)) {
+            results.push(function (parameters, context) {
+              if (!lockResolution.valueOf(parameters)) {
                 execute(postStepResults, parameters, context);
               } else {
                 context.locked = true;
-                var step = function step(context, parameters) {
+                var step = function step(parameters, context) {
+                  for (var i in parameters) {
+                    postExecution.parameters[i] = parameters[i];
+                  }
                   if (!context.locked) {
-                    context.postActionListener["delete"](step);
+                    context.postActionListener["delete"](postExecution);
                     execute(postStepResults, parameters, context);
                   }
                 };
-                context.postActionListener.add(step);
+                var postExecution = {
+                  steps: [step],
+                  parameters: parameters
+                };
+                context.postActionListener.add(postExecution);
               }
             });
             return ConvertBehavior.SKIP_REMAINING_ACTIONS;
@@ -827,13 +844,20 @@ var convertPauseProperty = function convertPauseProperty(action, results, utils,
     var remainingActions = utils.getRemainingActions();
     return Promise.resolve(convertAction(subAction, postStepResults, utils, external, actionConversionMap)).then(function () {
       function _temp4() {
-        var step = function step(context, parameters) {
-          if (!pauseResolution.valueOf(context)) {
-            context.postActionListener["delete"](step);
-            execute(postStepResults, parameters, context);
-          } else if (!context.postActionListener.has(step)) {
-            context.postActionListener.add(step);
+        var step = function step(parameters, context) {
+          for (var i in parameters) {
+            postExecution.parameters[i] = parameters[i];
           }
+          if (!pauseResolution.valueOf(postExecution.parameters)) {
+            context.postActionListener["delete"](postExecution);
+            execute(postStepResults, postExecution.parameters, context);
+          } else if (!context.postActionListener.has(postExecution)) {
+            context.postActionListener.add(postExecution);
+          }
+        };
+        var postExecution = {
+          steps: [step],
+          parameters: {}
         };
         results.push(step);
         return ConvertBehavior.SKIP_REMAINING_ACTIONS;
@@ -862,8 +886,8 @@ var convertDelayProperty = function convertDelayProperty(action, results, utils,
         var performPostSteps = function performPostSteps(context, parameters) {
           execute(postStepResults, parameters, context);
         };
-        results.push(function (context, parameters) {
-          var timeout = external.setTimeout(performPostSteps, delayAmount.valueOf(context), context, parameters);
+        results.push(function (parameters, context) {
+          var timeout = external.setTimeout(performPostSteps, delayAmount.valueOf(parameters), context, parameters);
           context.cleanupActions.push(function () {
             return clearTimeout(timeout);
           });
@@ -891,7 +915,7 @@ var convertSetProperty = function convertSetProperty(action, results) {
       return calculateResolution(a);
     })) != null ? _action$set$access$ma : []);
     var value = calculateResolution(action.set.value);
-    results.push(function (context, parameters) {
+    results.push(function (parameters) {
       var root = parameters;
       for (var i = 0; i < access.length; i++) {
         var _access$i;
@@ -899,11 +923,11 @@ var convertSetProperty = function convertSetProperty(action, results) {
           console.warn("Invalid access");
           return;
         }
-        var key = (_access$i = access[i]) === null || _access$i === void 0 ? void 0 : _access$i.valueOf(context);
+        var key = (_access$i = access[i]) === null || _access$i === void 0 ? void 0 : _access$i.valueOf(parameters);
         if (Array.isArray(root)) {
           if (typeof key === "number") {
             if (i === access.length - 1) {
-              root[key] = value === null || value === void 0 ? void 0 : value.valueOf(context);
+              root[key] = value === null || value === void 0 ? void 0 : value.valueOf(parameters);
             } else {
               root = root[key];
             }
@@ -912,7 +936,7 @@ var convertSetProperty = function convertSetProperty(action, results) {
           }
         } else if (typeof root === "object") {
           if (i === access.length - 1) {
-            root[key + ""] = value === null || value === void 0 ? void 0 : value.valueOf(context);
+            root[key + ""] = value === null || value === void 0 ? void 0 : value.valueOf(parameters);
           } else {
             root = root[key + ""];
           }
@@ -934,9 +958,9 @@ var convertLogProperty = function convertLogProperty(action, results, _, externa
     var resolutions = messages.map(function (m) {
       return calculateResolution(m);
     });
-    results.push(function (context) {
+    results.push(function (parameters) {
       return external.log.apply(external, resolutions.map(function (r) {
-        return r === null || r === void 0 ? void 0 : r.valueOf(context);
+        return r === null || r === void 0 ? void 0 : r.valueOf(parameters);
       }));
     });
     return Promise.resolve();
@@ -959,8 +983,8 @@ var convertLoopProperty = function convertLoopProperty(action, stepResults, util
     var loopResolution = calculateNumber(loop, 0);
     var subStepResults = [];
     return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
-      stepResults.push(function (context, parameters) {
-        var numLoops = loopResolution.valueOf(context);
+      stepResults.push(function (parameters, context) {
+        var numLoops = loopResolution.valueOf(parameters);
         for (var i = 0; i < numLoops; i++) {
           parameters.index = i;
           execute(subStepResults, parameters, context);
@@ -990,11 +1014,11 @@ var convertHooksProperty = function convertHooksProperty(action, results, utils,
     var remainingActions = utils.getRemainingActions();
     return Promise.resolve(convertAction(subAction, postStepResults, utils, external, actionConversionMap)).then(function () {
       function _temp2() {
-        results.push(function (context, parameters) {
-          var paramValues = newParams(context, parameters);
+        results.push(function (parameters, context) {
+          var paramValues = newParams(parameters, context);
           for (var _iterator2 = _createForOfIteratorHelperLoose(hooksValueOf), _step2; !(_step2 = _iterator2()).done;) {
             var hook = _step2.value;
-            var h = hook.valueOf(context);
+            var h = hook.valueOf(parameters);
             var x = external[h];
             if (x) {
               paramValues[h] = x;
@@ -1003,7 +1027,7 @@ var convertHooksProperty = function convertHooksProperty(action, results, utils,
             }
           }
           execute(postStepResults, paramValues, context);
-          recycleParams(context, paramValues);
+          recycleParams(paramValues, context);
         });
         return ConvertBehavior.SKIP_REMAINING_ACTIONS;
       }
@@ -1031,16 +1055,16 @@ var convertParametersProperty = function convertParametersProperty(action, resul
     });
     var subStepResults = [];
     return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
-      results.push(function (context, parameters) {
-        var paramValues = newParams(context, parameters);
+      results.push(function (parameters, context) {
+        var paramValues = newParams(parameters, context);
         for (var _iterator = _createForOfIteratorHelperLoose(paramEntries), _step; !(_step = _iterator()).done;) {
           var _entry$;
           var entry = _step.value;
           var key = entry[0];
-          paramValues[key] = (_entry$ = entry[1]) === null || _entry$ === void 0 ? void 0 : _entry$.valueOf(context);
+          paramValues[key] = (_entry$ = entry[1]) === null || _entry$ === void 0 ? void 0 : _entry$.valueOf(parameters);
         }
         execute(subStepResults, paramValues, context);
-        recycleParams(context, paramValues);
+        recycleParams(paramValues, context);
       });
       return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
     });
@@ -1063,15 +1087,15 @@ var convertRefreshProperty = function convertRefreshProperty(action, stepResults
     var cleanupAfterRefresh = calculateBoolean(refresh.cleanupAfterRefresh);
     var frameRate = calculateNumber(refresh.frameRate, 60);
     return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
-      stepResults.push(function (context, parameters) {
-        if (stop.valueOf(context)) {
-          utils.stopRefresh(processId.valueOf(context));
+      stepResults.push(function (parameters, context) {
+        if (stop.valueOf(parameters)) {
+          utils.stopRefresh(processId.valueOf(parameters));
         } else {
           var cleanup = utils.refreshSteps(subStepResults, {
-            cleanupAfterRefresh: cleanupAfterRefresh.valueOf(context),
-            frameRate: frameRate.valueOf(context),
+            cleanupAfterRefresh: cleanupAfterRefresh.valueOf(parameters),
+            frameRate: frameRate.valueOf(parameters),
             parameters: parameters
-          }, processId.valueOf(context));
+          }, processId.valueOf(parameters));
           context.cleanupActions.push(cleanup);
         }
       });
@@ -1093,7 +1117,7 @@ var convertScriptProperty = function convertScriptProperty(action, results, _ref
       name: action.script,
       tags: action.scriptTags
     });
-    results.push(function (context, parameters) {
+    results.push(function (parameters, context) {
       return execute(steps, parameters, context);
     });
     return Promise.resolve();

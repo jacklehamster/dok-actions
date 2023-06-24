@@ -19,7 +19,7 @@ describe('convertor', () => {
 
     it('converts script action', async () => {
         const mockStep = jest.fn();
-        const innerStep = (context: Context, params: ExecutionParameters) => mockStep(context, JSON.parse(JSON.stringify(params)));
+        const innerStep = (params: ExecutionParameters, context: Context) => mockStep(context, JSON.parse(JSON.stringify(params)));
 
         getSteps.mockReturnValue([
             innerStep,
@@ -41,7 +41,7 @@ describe('convertor', () => {
 
     it('converts script action without parameter override', async () => {
         const mockStep = jest.fn();
-        const innerStep = (context: Context, params: ExecutionParameters) => mockStep(context, JSON.parse(JSON.stringify(params)));
+        const innerStep = (params: ExecutionParameters, context: Context) => mockStep(context, JSON.parse(JSON.stringify(params)));
 
         getSteps.mockReturnValue([
             innerStep,
@@ -114,7 +114,7 @@ describe('convertor', () => {
             log,
         }, getDefaultConvertors(), {refreshSteps, stopRefresh});
 
-        scriptMap.get(scripts.find(({name}) => name === "ScriptTest")!)!.forEach(step => step(context, {}));
+        scriptMap.get(scripts.find(({name}) => name === "ScriptTest")!)!.forEach(step => step({}, context));
         expect(log).toBeCalledWith("hello", "test");
         expect(log).toBeCalledWith("hello", "world");
     });
@@ -261,7 +261,7 @@ describe('convertor', () => {
                 }
                 const messages: Resolution[] = Array.isArray(action.custom) ? action.custom : [action.custom];
                 const resolutions = messages.map(m => calculateResolution(m));
-                results.push((context) => custom(...resolutions.map(r => r?.valueOf(context))));
+                results.push((parameters) => custom(...resolutions.map(r => r?.valueOf(parameters))));
             },
         ], {refreshSteps, stopRefresh});
         expect(custom).toBeCalledWith("hello", "test", "sub2");        

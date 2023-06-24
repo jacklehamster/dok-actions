@@ -2,7 +2,7 @@ import { Context, createContext } from "../context/Context";
 import { SupportedTypes } from "../resolutions/SupportedTypes";
 
 export type ExecutionParameters = Record<string, SupportedTypes>;
-export type ExecutionStep = (context: Context, parameters: ExecutionParameters) => void;
+export type ExecutionStep = (parameters: ExecutionParameters, context: Context) => void;
 
 export function execute(steps?: ExecutionStep[], parameters: ExecutionParameters = {}, context: Context = createContext()) {
     if (!steps?.length) {
@@ -18,9 +18,14 @@ export function execute(steps?: ExecutionStep[], parameters: ExecutionParameters
         params.push(parameters);
     }
     for (let step of steps) {
-        step(context, parameters);
+        step(parameters, context);
     }
-    context.postActionListener.forEach(listener => listener(context, parameters));
+    context.postActionListener.forEach(listener => {
+        for (let i in parameters) {
+            listener.parameters[i] = parameters[i];
+        }
+        listener.steps.forEach(step => step(listener.parameters, context));
+    });
 
     if (changedParameters) {
         params.pop();

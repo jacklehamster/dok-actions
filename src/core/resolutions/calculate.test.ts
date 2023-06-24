@@ -1,4 +1,3 @@
-import { Context, createContext } from "../context/Context";
 import { calculateResolution } from "./calculate";
 
 describe('calculate', () => {
@@ -9,44 +8,29 @@ describe('calculate', () => {
         });
 
         it('should calculate Number resolution with context', () => {
-            const context: Context = createContext({
-                parameters: [{x: 30}],
-            });
             const value = calculateResolution("~{5 + x}");
-            expect(value!.valueOf(context)).toEqual(35);
+            expect(value!.valueOf({x: 30})).toEqual(35);
         });
 
         it('should calculate String resolution', () => {
-            const context: Context = createContext({
-                parameters: [{x: "testing"}],
-            });
             const value = calculateResolution("~{x}");
-            expect(value!.valueOf(context)).toEqual("testing");            
+            expect(value!.valueOf({x: "testing"})).toEqual("testing");            
         });
 
         it('should calculate TypedArray resolution', () => {
-            const context: Context = createContext({
-                parameters: [{x: new Float32Array([1, 2, 3])}],
-            });
             const value = calculateResolution("~{x}");
-            expect(value!.valueOf(context)).toEqual(new Float32Array([1, 2, 3]));            
+            expect(value!.valueOf({x: new Float32Array([1, 2, 3])})).toEqual(new Float32Array([1, 2, 3]));            
         });
 
         it('should calculate array resolution', () => {
-            const context: Context = createContext({
-                parameters: [{x: [1, 2, 3]}],
-            });
             const value = calculateResolution("~{x}");
-            expect(value!.valueOf(context)).toEqual([1, 2, 3]);
+            expect(value!.valueOf({x: [1, 2, 3]})).toEqual([1, 2, 3]);
         });
         
 
         it('should calculate object resolution', () => {
-            const context: Context = createContext({
-                parameters: [{x: {a: 123}}],
-            });
             const value = calculateResolution("~{x}");
-            expect(value!.valueOf(context)).toEqual({a: 123});
+            expect(value!.valueOf({x: {a: 123}})).toEqual({a: 123});
         });
     });
 })

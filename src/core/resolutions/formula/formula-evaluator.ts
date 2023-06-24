@@ -1,10 +1,10 @@
 import * as math from "mathjs";
-import { Context } from "../../context/Context";
 import { Expression, FORMULA_SEPERATORS, Formula } from "./Formula";
 import { getInnerFormula, isFormula, isSimpleInnerFormula } from "./formula-utils";
+import { ExecutionParameters } from "../../execution/ExecutionStep";
 
-export function calculateEvaluator<T>(evaluator: math.EvalFunction, context: Context | undefined, formula: Formula | Expression, defaultValue: T): T {
-    const scope = context?.parameters?.[context.parameters.length - 1];
+export function calculateEvaluator<T>(evaluator: math.EvalFunction, parameters: ExecutionParameters = {}, formula: Formula | Expression, defaultValue: T): T {
+    const scope = parameters;
     try {
         return evaluator.evaluate(scope ?? {}) ?? defaultValue;
     } catch (e) {

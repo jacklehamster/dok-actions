@@ -14,18 +14,18 @@ export async function convertSetProperty(
     const access = [variable, ...(action.set.access?.map(a => calculateResolution(a)) ?? [])];
     const value = calculateResolution(action.set.value);
 
-    results.push((context, parameters)=> {
+    results.push((parameters)=> {
         let root: any = parameters;
         for (let i = 0; i < access.length; i++) {
             if (!root) {
                 console.warn("Invalid access");
                 return;
             }
-            const key = access[i]?.valueOf(context);
+            const key = access[i]?.valueOf(parameters);
             if (Array.isArray(root)) {
                 if (typeof key === "number") {
                     if (i === access.length - 1) {
-                        root[key] = value?.valueOf(context);
+                        root[key] = value?.valueOf(parameters);
                     } else {
                         root = root[key];
                     }
@@ -34,7 +34,7 @@ export async function convertSetProperty(
                 }
             } else if (typeof(root) === "object") {
                 if (i === access.length - 1) {
-                    root[key + ""] = value?.valueOf(context);
+                    root[key + ""] = value?.valueOf(parameters);
                 } else {
                     root = root[key + ""];
                 }

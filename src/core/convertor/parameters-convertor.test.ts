@@ -7,8 +7,8 @@ import { convertHooksProperty, convertParametersProperty } from "./parameters-co
 
 describe('parameters convertor', () => {
     const mock = jest.fn();
-    const scriptExecution: ExecutionStep = (context) => {
-        mock(JSON.parse(JSON.stringify(context.parameters![context.parameters!.length - 1])));
+    const scriptExecution: ExecutionStep = (parameters) => {
+        mock(JSON.parse(JSON.stringify(parameters)));
     };
     const getSteps = jest.fn().mockReturnValue([scriptExecution]);
     const getRemainingActions = jest.fn().mockReturnValue([]);

@@ -1,4 +1,3 @@
-import { Context } from "../context/Context";
 import { ValueOf } from "../types/ValueOf";
 import { ArrayResolution } from "./ArrayResolution";
 import { calculateResolution } from "./calculate";
@@ -7,6 +6,7 @@ import { Expression, Formula } from "./formula/Formula";
 import { Resolution } from "./Resolution";
 import { SupportedTypes } from "./SupportedTypes";
 import { hasFormula, isFormula } from "./formula/formula-utils";
+import { ExecutionParameters } from "../execution/ExecutionStep";
 
 export function calculateArray(value: ArrayResolution): ValueOf<SupportedTypes> | undefined {
     //  check if we have any resolution to perform
@@ -24,8 +24,8 @@ export function calculateArray(value: ArrayResolution): ValueOf<SupportedTypes> 
         const formula = value as (Formula|Expression);
         const evaluator = getFormulaEvaluator(formula);
         return {
-            valueOf(context?: Context): SupportedTypes[] | undefined {
-                return calculateEvaluator<SupportedTypes[] | undefined>(evaluator, context, formula, undefined);
+            valueOf(parameters: ExecutionParameters): SupportedTypes[] | undefined {
+                return calculateEvaluator<SupportedTypes[] | undefined>(evaluator, parameters, formula, undefined);
             }
         };
     }
@@ -34,8 +34,8 @@ export function calculateArray(value: ArrayResolution): ValueOf<SupportedTypes> 
     const evaluator = array.map(resolution => calculateResolution(resolution));
 
     return {
-        valueOf(context?: Context): SupportedTypes {
-            const value = evaluator.map(evalItem => evalItem?.valueOf(context));
+        valueOf(parameters: ExecutionParameters): SupportedTypes {
+            const value = evaluator.map(evalItem => evalItem?.valueOf(parameters));
             return value;
         }
     };

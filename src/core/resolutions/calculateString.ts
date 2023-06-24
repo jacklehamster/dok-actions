@@ -1,4 +1,4 @@
-import { Context } from "../context/Context";
+import { ExecutionParameters } from "../execution/ExecutionStep";
 import { ValueOf } from "../types/ValueOf";
 import { StringResolution } from "./StringResolution";
 import { calculateEvaluator, getFormulaEvaluator } from "./formula/formula-evaluator";
@@ -17,8 +17,8 @@ export function calculateString<T extends string = string>(value: StringResoluti
     }
     const evaluator = getFormulaEvaluator(value);
     return {
-        valueOf(context?: Context): T|"" {
-            return calculateEvaluator<T|"">(evaluator, context, value, defaultValue);
+        valueOf(parameters: ExecutionParameters): T|"" {
+            return calculateEvaluator<T|"">(evaluator, parameters, value, defaultValue);
         }
     };
 

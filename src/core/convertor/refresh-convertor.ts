@@ -23,15 +23,15 @@ export async function convertRefreshProperty<T>(
     const frameRate = calculateNumber(refresh.frameRate, 60);
     await convertAction<RefreshAction>(subAction, subStepResults, utils, external, actionConversionMap);
 
-    stepResults.push((context, parameters) => {
-        if (stop.valueOf(context)) {
-            utils.stopRefresh(processId.valueOf(context));
+    stepResults.push((parameters, context) => {
+        if (stop.valueOf(parameters)) {
+            utils.stopRefresh(processId.valueOf(parameters));
         } else {
             const cleanup = utils.refreshSteps(subStepResults, {
-                cleanupAfterRefresh: cleanupAfterRefresh.valueOf(context),
-                frameRate: frameRate.valueOf(context),
+                cleanupAfterRefresh: cleanupAfterRefresh.valueOf(parameters),
+                frameRate: frameRate.valueOf(parameters),
                 parameters,
-            }, processId.valueOf(context));
+            }, processId.valueOf(parameters));
             context.cleanupActions.push(cleanup);
         }
     });

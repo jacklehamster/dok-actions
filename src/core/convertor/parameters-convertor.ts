@@ -29,16 +29,16 @@ export async function convertParametersProperty<T>(
     const subStepResults: ExecutionStep[] = [];
     await convertAction(subAction, subStepResults, utils, external, actionConversionMap);
 
-    results.push((context, parameters) => {
-        const paramValues: ExecutionParameters = newParams(context, parameters);
+    results.push((parameters, context) => {
+        const paramValues: ExecutionParameters = newParams(parameters, context);
         for (let entry of paramEntries) {
             const key: string = entry[0];
-            paramValues[key] = entry[1]?.valueOf(context);
+            paramValues[key] = entry[1]?.valueOf(parameters);
         }
 
         execute(subStepResults, paramValues, context);
 
-        recycleParams(context, paramValues);
+        recycleParams(paramValues, context);
     });
     return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
 }
@@ -64,10 +64,10 @@ export async function convertHooksProperty<T>(
         await convertAction(action, postStepResults, utils, external, actionConversionMap);
     }
 
-    results.push((context, parameters) => {
-        const paramValues: ExecutionParameters = newParams(context, parameters);
+    results.push((parameters, context) => {
+        const paramValues: ExecutionParameters = newParams(parameters, context);
         for (let hook of hooksValueOf) {
-            const h = hook.valueOf(context);
+            const h = hook.valueOf(parameters);
             const x = external[h];
             if (x) {
                 paramValues[h] = x;
@@ -78,7 +78,7 @@ export async function convertHooksProperty<T>(
 
         execute(postStepResults, paramValues, context);
 
-        recycleParams(context, paramValues);
+        recycleParams(paramValues, context);
     });
     return ConvertBehavior.SKIP_REMAINING_ACTIONS;
 }

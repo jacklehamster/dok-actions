@@ -1,5 +1,5 @@
 import { PauseAction } from "../actions/PauseAction";
-import { Context } from "../context/Context";
+import { Context, ExecutionWithParams } from "../context/Context";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
 import { calculateBoolean } from "../resolutions/calculateBoolean";
 import { calculateNumber } from "../resolutions/calculateNumber";
@@ -28,8 +28,8 @@ export async function convertDelayProperty<T>(
         execute(postStepResults, parameters, context);
     }
 
-    results.push((context, parameters) => {
-        const timeout = external.setTimeout(performPostSteps, delayAmount.valueOf(context), context, parameters);
+    results.push((parameters, context) => {
+        const timeout = external.setTimeout(performPostSteps, delayAmount.valueOf(parameters), context, parameters);
         context.cleanupActions.push(() => clearTimeout(timeout));
     });
     return ConvertBehavior.SKIP_REMAINING_ACTIONS;
@@ -54,13 +54,21 @@ export async function convertPauseProperty<T>(
         await convertAction(action, postStepResults, utils, external, actionConversionMap);
     }
 
-    const step: ExecutionStep = (context, parameters) => {
-        if (!pauseResolution.valueOf(context)) {
-            context.postActionListener.delete(step);
-            execute(postStepResults, parameters, context);
-        } else if (!context.postActionListener.has(step)) {
-            context.postActionListener.add(step);
+    const step: ExecutionStep = (parameters, context) => {
+        for (let i in parameters) {
+            postExecution.parameters[i] = parameters[i];
         }
+        if (!pauseResolution.valueOf(postExecution.parameters)) {
+            context.postActionListener.delete(postExecution);
+            execute(postStepResults, postExecution.parameters, context);
+        } else if (!context.postActionListener.has(postExecution)) {
+            context.postActionListener.add(postExecution);
+        }
+    };
+
+    const postExecution: ExecutionWithParams = {
+        steps: [step],
+        parameters: {},
     };
 
     results.push(step);
@@ -82,8 +90,8 @@ export async function convertLockProperty<T>(
 
     if (unlock) {
         const unlockResolution = calculateBoolean(unlock);
-        results.push((context) => {
-            if (unlockResolution.valueOf(context)) {
+        results.push((parameters, context) => {
+            if (unlockResolution.valueOf(parameters)) {
                 context.locked = false;
             }
         });
@@ -98,18 +106,26 @@ export async function convertLockProperty<T>(
             await convertAction(action, postStepResults, utils, external, actionConversionMap);
         }
 
-        results.push((context, parameters) => {
-            if (!lockResolution.valueOf(context)) {
+        results.push((parameters, context) => {
+            if (!lockResolution.valueOf(parameters)) {
                 execute(postStepResults, parameters, context);
             } else {
                 context.locked = true;
-                const step: ExecutionStep = (context, parameters) => {
+                const step: ExecutionStep = (parameters, context) => {
+                    for (let i in parameters) {
+                        postExecution.parameters[i] = parameters[i];
+                    }
                     if (!context.locked) {
-                        context.postActionListener.delete(step);
+                        context.postActionListener.delete(postExecution);
                         execute(postStepResults, parameters, context);    
                     }
                 };
-                context.postActionListener.add(step);
+                const postExecution: ExecutionWithParams = {
+                    steps: [step],
+                    parameters,
+                };
+        
+                context.postActionListener.add(postExecution);
             }
         });
         return ConvertBehavior.SKIP_REMAINING_ACTIONS;

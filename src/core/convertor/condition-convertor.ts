@@ -20,8 +20,8 @@ export async function convertConditionProperty<T>(
     const conditionResolution = calculateBoolean(condition);
     const subStepResults: ExecutionStep[] = [];
     await convertAction(subAction, subStepResults, utils, external, actionConversionMap);
-    results.push((context, parameters) => {
-        if (conditionResolution.valueOf(context)) {
+    results.push((parameters, context) => {
+        if (conditionResolution.valueOf(parameters)) {
             execute(subStepResults, parameters, context);
         }
     });

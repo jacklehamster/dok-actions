@@ -9,18 +9,18 @@ describe('ExecutionStep', () => {
             jest.fn(),
         ];
         execute(steps, {}, context);
-        expect(steps[0]).toBeCalledWith(context, {});
-        expect(steps[1]).toBeCalledWith(context, {});
+        expect(steps[0]).toBeCalledWith({}, context);
+        expect(steps[1]).toBeCalledWith({}, context);
     });
     it('execute with parameters', () => {
         const steps:ExecutionStep[] = [
             jest.fn(),
         ];
         execute(steps, {test: 123, test2: "test2", test3: [1, 2, 3]}, context);
-        expect(steps[0]).toBeCalledWith(context, {
+        expect(steps[0]).toBeCalledWith({
             test: 123,
             test2: "test2",
             test3: [1, 2, 3],
-        });
+        }, context);
     });
 });

@@ -1,4 +1,4 @@
-import { Context } from "../context/Context";
+import { ExecutionParameters } from "../execution/ExecutionStep";
 import { TypedArray } from "../types/TypedArray";
 import { ValueOf } from "../types/ValueOf";
 import { calculateNumber } from "./calculateNumber";
@@ -20,9 +20,9 @@ export function calculateTypedArray(value: TypedArrayResolution, ArrayConstructo
         const array = new ArrayConstructor(value.length);
         const compiledArray = value.map(value => calculateNumber(value, 0));
         return {
-            valueOf(context?: Context): TypedArray {
+            valueOf(parameters: ExecutionParameters): TypedArray {
                 for (let i = 0; i < compiledArray.length; i++) {
-                    array[i] = compiledArray[i].valueOf(context);
+                    array[i] = compiledArray[i].valueOf(parameters);
                 }
                 return array;
             }
@@ -32,8 +32,8 @@ export function calculateTypedArray(value: TypedArrayResolution, ArrayConstructo
     const evaluator = getFormulaEvaluator(formula);
     let bufferArray: TypedArray;
     return {
-        valueOf(context?: Context): TypedArray | undefined {
-            const value = calculateEvaluator<TypedArray | number[] | undefined>(evaluator, context, formula, undefined);
+        valueOf(parameters: ExecutionParameters): TypedArray | undefined {
+            const value = calculateEvaluator<TypedArray | number[] | undefined>(evaluator, parameters, formula, undefined);
             if (!value) {
                 return undefined;
             }
