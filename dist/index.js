@@ -1191,7 +1191,24 @@ var ScriptProcessor = /*#__PURE__*/function () {
         var steps = [];
         scripts.forEach(function (script) {
           var _scriptMap$get;
-          return (_scriptMap$get = scriptMap.get(script)) === null || _scriptMap$get === void 0 ? void 0 : _scriptMap$get.forEach(function (step) {
+          if (script.defaultParameters) {
+            var entries = Object.entries(script.defaultParameters).map(function (_ref) {
+              var key = _ref[0],
+                value = _ref[1];
+              return [key, calculateResolution(value)];
+            });
+            steps.push(function (params) {
+              for (var _iterator2 = _createForOfIteratorHelperLoose(entries), _step2; !(_step2 = _iterator2()).done;) {
+                var _step2$value = _step2.value,
+                  key = _step2$value[0],
+                  value = _step2$value[1];
+                if (params[key] === undefined) {
+                  params[key] = value === null || value === void 0 ? void 0 : value.valueOf(params);
+                }
+              }
+            });
+          }
+          (_scriptMap$get = scriptMap.get(script)) === null || _scriptMap$get === void 0 ? void 0 : _scriptMap$get.forEach(function (step) {
             return steps.push(step);
           });
         });
@@ -1201,14 +1218,14 @@ var ScriptProcessor = /*#__PURE__*/function () {
       return Promise.reject(e);
     }
   };
-  _proto.runByName = function runByName(name) {
+  _proto.runByName = function runByName(name, parameters) {
     try {
       var _this4 = this;
       var context = createContext();
       return Promise.resolve(_this4.getSteps({
         name: name
       })).then(function (_this4$getSteps) {
-        execute(_this4$getSteps, undefined, context);
+        execute(_this4$getSteps, parameters, context);
         return function () {
           var _context$cleanupActio;
           return (_context$cleanupActio = context.cleanupActions) === null || _context$cleanupActio === void 0 ? void 0 : _context$cleanupActio.forEach(function (action) {
@@ -1220,14 +1237,14 @@ var ScriptProcessor = /*#__PURE__*/function () {
       return Promise.reject(e);
     }
   };
-  _proto.runByTags = function runByTags(tags) {
+  _proto.runByTags = function runByTags(tags, parameters) {
     try {
       var _this5 = this;
       var context = createContext();
       return Promise.resolve(_this5.getSteps({
         tags: tags
       })).then(function (_this5$getSteps) {
-        execute(_this5$getSteps, undefined, context);
+        execute(_this5$getSteps, parameters, context);
         return function () {
           var _context$cleanupActio2;
           return (_context$cleanupActio2 = context.cleanupActions) === null || _context$cleanupActio2 === void 0 ? void 0 : _context$cleanupActio2.forEach(function (action) {

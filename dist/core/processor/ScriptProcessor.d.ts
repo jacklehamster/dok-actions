@@ -21,8 +21,8 @@ export declare class ScriptProcessor<T, E = {}> {
     private fetchScripts;
     private createRefreshCleanup;
     getSteps(filter: ScriptFilter): Promise<ExecutionStep[]>;
-    runByName(name: string): Promise<() => void>;
-    runByTags(tags: Tag[]): Promise<() => void>;
+    runByName(name: string, parameters?: ExecutionParameters): Promise<() => void>;
+    runByTags(tags: Tag[], parameters?: ExecutionParameters): Promise<() => void>;
     private refreshWithFilter;
     private stopRefresh;
     private refreshSteps;

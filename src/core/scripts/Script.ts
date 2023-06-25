@@ -5,7 +5,7 @@ export type Tag = string|[string, string|number|boolean];
 
 export interface Script<T> {
     name?: string;
-    parameters?: (string|[string, Resolution])[];
+    defaultParameters?: Record<string, Resolution>;
     actions: (T & DokAction<T>)[];
     tags?: Tag[];
 }

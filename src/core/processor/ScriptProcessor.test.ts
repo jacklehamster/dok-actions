@@ -172,6 +172,41 @@ describe('ScriptProcesor', () => {
         execute(await processor.getSteps({ name: "redraw" }));
         expect(mock).not.toBeCalled();
     });
+
+    it('run scripts with default parameters', async () => {
+        const processor = new ScriptProcessor([{
+            name: "main",
+            defaultParameters: {a: 123},
+            actions: [
+                { mock: "~{a}" },
+            ],
+        }], external, [
+            async (action, results) => {
+                const resolution = calculateNumber(action.mock);
+                results.push((parameters) => mock(resolution.valueOf(parameters)));
+            },
+        ]);
+        await processor.runByName("main");
+        expect(mock).toBeCalledWith(123);
+    });
+
+
+    it('run scripts with default parameters overwritten', async () => {
+        const processor = new ScriptProcessor([{
+            name: "main",
+            defaultParameters: {a: 123},
+            actions: [
+                { mock: "~{a}" },
+            ],
+        }], external, [
+            async (action, results) => {
+                const resolution = calculateNumber(action.mock);
+                results.push((parameters) => mock(resolution.valueOf(parameters)));
+            },
+        ]);
+        await processor.runByName("main", {a: 456});
+        expect(mock).toBeCalledWith(456);
+    });
 });
 
 describe("script execution", () => {
