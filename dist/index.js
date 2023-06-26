@@ -996,7 +996,7 @@ var convertLoopProperty = function convertLoopProperty(action, stepResults, util
   }
 };
 
-var _excluded$3 = ["parameters"],
+var _excluded$3 = ["parameters", "defaultParameters"],
   _excluded2$1 = ["hooks"];
 var convertHooksProperty = function convertHooksProperty(action, results, utils, external, actionConversionMap) {
   try {
@@ -1015,8 +1015,8 @@ var convertHooksProperty = function convertHooksProperty(action, results, utils,
       function _temp2() {
         results.push(function (parameters, context) {
           var paramValues = newParams(parameters, context);
-          for (var _iterator2 = _createForOfIteratorHelperLoose(hooksValueOf), _step2; !(_step2 = _iterator2()).done;) {
-            var hook = _step2.value;
+          for (var _iterator3 = _createForOfIteratorHelperLoose(hooksValueOf), _step3; !(_step3 = _iterator3()).done;) {
+            var hook = _step3.value;
             var h = hook.valueOf(parameters);
             var x = external[h];
             if (x) {
@@ -1041,15 +1041,20 @@ var convertHooksProperty = function convertHooksProperty(action, results, utils,
 };
 var convertParametersProperty = function convertParametersProperty(action, results, utils, external, actionConversionMap) {
   try {
-    if (!action.parameters) {
+    if (!action.parameters && !action.defaultParameters) {
       return Promise.resolve();
     }
     var parameters = action.parameters,
+      defaultParameters = action.defaultParameters,
       subAction = _objectWithoutPropertiesLoose(action, _excluded$3);
-    var paramResolutions = parameters;
-    var paramEntries = Object.entries(paramResolutions).map(function (_ref) {
+    var paramEntries = Object.entries(parameters != null ? parameters : {}).map(function (_ref) {
       var key = _ref[0],
         resolution = _ref[1];
+      return [key, calculateResolution(resolution)];
+    });
+    var defaultParamEntries = Object.entries(defaultParameters != null ? defaultParameters : {}).map(function (_ref2) {
+      var key = _ref2[0],
+        resolution = _ref2[1];
       return [key, calculateResolution(resolution)];
     });
     var subStepResults = [];
@@ -1061,6 +1066,14 @@ var convertParametersProperty = function convertParametersProperty(action, resul
           var entry = _step.value;
           var key = entry[0];
           paramValues[key] = (_entry$ = entry[1]) === null || _entry$ === void 0 ? void 0 : _entry$.valueOf(parameters);
+        }
+        for (var _iterator2 = _createForOfIteratorHelperLoose(defaultParamEntries), _step2; !(_step2 = _iterator2()).done;) {
+          var _entry = _step2.value;
+          var _key = _entry[0];
+          if (paramValues[_key] === undefined) {
+            var _entry$2;
+            paramValues[_key] = (_entry$2 = _entry[1]) === null || _entry$2 === void 0 ? void 0 : _entry$2.valueOf(parameters);
+          }
         }
         execute(subStepResults, paramValues, context);
         recycleParams(paramValues, context);
@@ -1191,24 +1204,7 @@ var ScriptProcessor = /*#__PURE__*/function () {
         var steps = [];
         scripts.forEach(function (script) {
           var _scriptMap$get;
-          if (script.defaultParameters) {
-            var entries = Object.entries(script.defaultParameters).map(function (_ref) {
-              var key = _ref[0],
-                value = _ref[1];
-              return [key, calculateResolution(value)];
-            });
-            steps.push(function (params) {
-              for (var _iterator2 = _createForOfIteratorHelperLoose(entries), _step2; !(_step2 = _iterator2()).done;) {
-                var _step2$value = _step2.value,
-                  key = _step2$value[0],
-                  value = _step2$value[1];
-                if (params[key] === undefined) {
-                  params[key] = value === null || value === void 0 ? void 0 : value.valueOf(params);
-                }
-              }
-            });
-          }
-          (_scriptMap$get = scriptMap.get(script)) === null || _scriptMap$get === void 0 ? void 0 : _scriptMap$get.forEach(function (step) {
+          return (_scriptMap$get = scriptMap.get(script)) === null || _scriptMap$get === void 0 ? void 0 : _scriptMap$get.forEach(function (step) {
             return steps.push(step);
           });
         });

@@ -42,6 +42,32 @@ describe('parameters convertor', () => {
         });
     });
 
+    it('convert parameters with defaults', async () => {
+        const results: ExecutionStep[] = [];
+        await convertParametersProperty({
+                script: "script",
+                defaultParameters: {
+                    param1: 100,
+                    param2: 102,
+                    param3: "test",
+                },
+                parameters: {
+                    "param3": "test2",
+                },
+            },
+            results,
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
+            DEFAULT_EXTERNALS,
+            getDefaultConvertors(),
+        );
+        execute(results, {param2: 0});
+        expect(mock).toBeCalledWith({
+            param1: 100,
+            param2: 0,
+            param3: "test2",
+        });
+    });
+
     it('convert array parameters', async () => {
         const results: ExecutionStep[] = [];
         await convertParametersProperty({

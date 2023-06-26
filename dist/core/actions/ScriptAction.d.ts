@@ -4,4 +4,5 @@ export interface ScriptAction {
     script?: string;
     scriptTags?: Tag[];
     parameters?: Record<string, Resolution>;
+    defaultParameters?: Record<string, Resolution>;
 }

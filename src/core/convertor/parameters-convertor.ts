@@ -1,5 +1,4 @@
 import { ConvertBehavior, Utils } from "./Convertor";
-import { Resolution } from "../resolutions/Resolution";
 import { calculateResolution } from "../resolutions/calculate";
 import { ValueOf } from "../types/ValueOf";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
@@ -17,15 +16,17 @@ export async function convertParametersProperty<T>(
         utils: Utils<T & ScriptAction>,
         external: Record<string, any>,
         actionConversionMap: ActionConvertorList): Promise<ConvertBehavior | void> {
-    if (!action.parameters) {
+    if (!action.parameters && !action.defaultParameters) {
         return;
     }
-    const { parameters, ...subAction } = action;
+    const { parameters, defaultParameters, ...subAction } = action;
 
-    const paramResolutions: Record<string, Resolution> = parameters;
-    const paramEntries: [string, ValueOf<SupportedTypes> | undefined][] = Object.entries(paramResolutions)
+    const paramEntries: [string, ValueOf<SupportedTypes> | undefined][] = Object.entries(parameters ?? {})
         .map(([key, resolution]) => [key, calculateResolution(resolution)]);
 
+    const defaultParamEntries: [string, ValueOf<SupportedTypes> | undefined][] = Object.entries(defaultParameters ?? {})
+        .map(([key, resolution]) => [key, calculateResolution(resolution)]);
+    
     const subStepResults: ExecutionStep[] = [];
     await convertAction(subAction, subStepResults, utils, external, actionConversionMap);
 
@@ -34,6 +35,13 @@ export async function convertParametersProperty<T>(
         for (let entry of paramEntries) {
             const key: string = entry[0];
             paramValues[key] = entry[1]?.valueOf(parameters);
+        }
+
+        for (let entry of defaultParamEntries) {
+            const key: string = entry[0];
+            if (paramValues[key] === undefined) {
+                paramValues[key] = entry[1]?.valueOf(parameters);
+            }
         }
 
         execute(subStepResults, paramValues, context);

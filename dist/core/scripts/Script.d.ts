@@ -1,9 +1,7 @@
 import { DokAction } from "../actions/Action";
-import { Resolution } from "../resolutions/Resolution";
 export declare type Tag = string | [string, string | number | boolean];
 export interface Script<T> {
     name?: string;
-    defaultParameters?: Record<string, Resolution>;
     actions: (T & DokAction<T>)[];
     tags?: Tag[];
 }

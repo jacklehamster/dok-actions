@@ -3,11 +3,7 @@ import { ActionConvertorList, convertScripts } from "../convertor/convert-action
 import { getDefaultConvertors } from "../convertor/default-convertors";
 import { DEFAULT_EXTERNALS } from "../convertor/default-externals";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
-import { Resolution } from "../resolutions/Resolution";
-import { SupportedTypes } from "../resolutions/SupportedTypes";
-import { calculateResolution } from "../resolutions/calculate";
 import { Script, ScriptFilter, Tag, filterScripts } from "../scripts/Script";
-import { ValueOf } from "../types/ValueOf";
 
 export interface RefreshBehavior {
     frameRate?: number;
@@ -66,21 +62,7 @@ export class ScriptProcessor<T, E = {}> {
         const scriptMap = await this.fetchScripts();
         const scripts = filterScripts(this.scripts, filter);
         const steps: ExecutionStep[] = [];
-        scripts.forEach(script => {
-            //  apply default parameters
-            if (script.defaultParameters) {
-                const entries: [string, ValueOf<SupportedTypes> | undefined][] = Object.entries<Resolution>(script.defaultParameters)
-                    .map(([key, value]) => [key, calculateResolution(value)]);
-                steps.push((params) => {
-                    for (const [key, value] of entries) {
-                        if (params[key] === undefined) {
-                            params[key] = value?.valueOf(params);
-                        }
-                    }
-                });
-            }
-            scriptMap.get(script)?.forEach(step => steps.push(step));
-        });
+        scripts.forEach(script => scriptMap.get(script)?.forEach(step => steps.push(step)));
         return steps;
     }
 
