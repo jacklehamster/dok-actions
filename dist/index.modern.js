@@ -927,6 +927,7 @@ var convertSetProperty = function convertSetProperty(action, results) {
         if (Array.isArray(root)) {
           if (typeof key === "number") {
             if (i === access.length - 1) {
+              parameters.value = root[key];
               root[key] = value === null || value === void 0 ? void 0 : value.valueOf(parameters);
             } else {
               root = root[key];
@@ -936,6 +937,7 @@ var convertSetProperty = function convertSetProperty(action, results) {
           }
         } else if (typeof root === "object") {
           if (i === access.length - 1) {
+            parameters.value = root[key + ""];
             root[key + ""] = value === null || value === void 0 ? void 0 : value.valueOf(parameters);
           } else {
             root = root[key + ""];

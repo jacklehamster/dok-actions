@@ -25,6 +25,7 @@ export async function convertSetProperty(
             if (Array.isArray(root)) {
                 if (typeof key === "number") {
                     if (i === access.length - 1) {
+                        parameters.value = root[key];
                         root[key] = value?.valueOf(parameters);
                     } else {
                         root = root[key];
@@ -34,6 +35,7 @@ export async function convertSetProperty(
                 }
             } else if (typeof(root) === "object") {
                 if (i === access.length - 1) {
+                    parameters.value = root[key + ""];
                     root[key + ""] = value?.valueOf(parameters);
                 } else {
                     root = root[key + ""];
