@@ -1,7 +1,7 @@
 {
    "$schema": "https://raw.githubusercontent.com/SchemaStore/schemastore/master/src/schemas/json/package.json",
    "name": "dok-actions",
-   "version": "1.1.31",
+   "version": "1.1.32",
    "description": "Made with create-react-library",
    "author": "jacklehamster",
    "license": "MIT",
