@@ -21,10 +21,10 @@ export async function convertParametersProperty<T>(
     }
     const { parameters, defaultParameters, ...subAction } = action;
 
-    const paramEntries: [string, ValueOf<SupportedTypes> | undefined][] = Object.entries(parameters ?? {})
+    const paramEntries: [string, ValueOf<SupportedTypes> | undefined | null][] = Object.entries(parameters ?? {})
         .map(([key, resolution]) => [key, calculateResolution(resolution)]);
 
-    const defaultParamEntries: [string, ValueOf<SupportedTypes> | undefined][] = Object.entries(defaultParameters ?? {})
+    const defaultParamEntries: [string, ValueOf<SupportedTypes> | undefined | null][] = Object.entries(defaultParameters ?? {})
         .map(([key, resolution]) => [key, calculateResolution(resolution)]);
     
     const subStepResults: ExecutionStep[] = [];

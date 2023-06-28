@@ -7,11 +7,11 @@ import { calculateMap } from "./calculateMap";
 import { isFormula } from "./formula/formula-utils";
 import { ExecutionParameters } from "../execution/ExecutionStep";
 
-export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> | undefined {
-    if (value === undefined) {
+export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> | undefined | null {
+    if (!value) {
         return {
             valueOf() {
-                return undefined;
+                return value;
             }
         };
     }

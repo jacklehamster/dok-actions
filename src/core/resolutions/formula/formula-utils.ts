@@ -8,8 +8,8 @@ export function hasFormula(resolution: Resolution): boolean {
     if (Array.isArray(resolution)) {
         return resolution.some(item => hasFormula(item));
     }
-    if (typeof (resolution) === "object") {
-        return hasFormula(Object.values(resolution));
+    if (resolution && typeof (resolution) === "object") {
+        return hasFormula(Object.values(resolution)) || hasFormula(Object.keys(resolution));
     }
     return false;
 }

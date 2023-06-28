@@ -1,4 +1,4 @@
-import { isFormula } from "./formula-utils";
+import { hasFormula, isFormula } from "./formula-utils";
 
 describe('formula-utils', () => {
     it('check is formula', () => {
@@ -6,5 +6,12 @@ describe('formula-utils', () => {
         expect(isFormula("~formula")).toBeFalsy();
         expect(isFormula("{formula}")).toBeFalsy();
         expect(isFormula("~{func(value)}")).toBeTruthy();
+    });
+
+    it('check has formula', () => {
+        expect(hasFormula(null)).toBeFalsy();
+        expect(hasFormula({})).toBeFalsy();
+        expect(hasFormula({"test": "~{123}"})).toBeTruthy();
+        expect(hasFormula({"~{key}": 123})).toBeTruthy();
     });
 });

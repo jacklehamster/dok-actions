@@ -8,7 +8,7 @@ export function calculateEvaluator<T>(evaluator: math.EvalFunction, parameters: 
     try {
         return evaluator.evaluate(scope ?? {}) ?? defaultValue;
     } catch (e) {
-        console.error("Error: " + e + " on formula: " + formula + ", scope: ", scope);
+        console.error("Error: " + e + " on formula: " + formula + ", scope: ", JSON.parse(JSON.stringify(scope)));
     }
     return defaultValue;
 }
@@ -26,6 +26,6 @@ export function getFormulaEvaluator(value: Formula | Expression): math.EvalFunct
             },
         };
     }
-    return math.parse(innerFormula).compile();
+    return mathEvaluator;
 }
 

@@ -448,8 +448,8 @@ function hasFormula(resolution) {
       return hasFormula(item);
     });
   }
-  if (typeof resolution === "object") {
-    return hasFormula(Object.values(resolution));
+  if (resolution && typeof resolution === "object") {
+    return hasFormula(Object.values(resolution)) || hasFormula(Object.keys(resolution));
   }
   return false;
 }
@@ -486,7 +486,7 @@ function calculateEvaluator(evaluator, parameters, formula, defaultValue) {
     var _evaluator$evaluate;
     return (_evaluator$evaluate = evaluator.evaluate(scope != null ? scope : {})) != null ? _evaluator$evaluate : defaultValue;
   } catch (e) {
-    console.error("Error: " + e + " on formula: " + formula + ", scope: ", scope);
+    console.error("Error: " + e + " on formula: " + formula + ", scope: ", JSON.parse(JSON.stringify(scope)));
   }
   return defaultValue;
 }
@@ -504,7 +504,7 @@ function getFormulaEvaluator(value) {
       }
     };
   }
-  return parse(innerFormula).compile();
+  return mathEvaluator;
 }
 
 function calculateArray(value) {
@@ -581,10 +581,10 @@ function calculateMap(value) {
 }
 
 function calculateResolution(value) {
-  if (value === undefined) {
+  if (!value) {
     return {
       valueOf: function valueOf() {
-        return undefined;
+        return value;
       }
     };
   }
