@@ -976,7 +976,6 @@ function keepLooping(parameters, context, loops, steps, depth) {
     depth = 0;
   }
   if (depth >= loops.length) {
-    console.log(parameters);
     execute(steps, parameters, context);
     return;
   }
