@@ -6,6 +6,7 @@ import { LogicAction } from "../actions/LogicAction";
 import { Context } from "../context/Context";
 import { ValueOf } from "../types/ValueOf";
 import { newParams, recycleParams } from "./parameter-utils";
+import { calculateBoolean } from "../resolutions/calculateBoolean";
 
 function keepLooping(parameters: ExecutionParameters, context: Context, loops: ValueOf<number>[], steps: ExecutionStep[], depth: number = 0) {
     if (depth >= loops.length) {
@@ -46,3 +47,28 @@ export async function convertLoopProperty<T>(
     stepResults.push((parameters, context) =>  keepLooping(parameters, context, loopResolution, subStepResults));
     return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
 }
+
+export async function convertWhileProperty<T>(
+        action: T & LogicAction,
+        stepResults: ExecutionStep[],
+        utils: Utils<T & LogicAction>,
+        external: Record<string, any>,
+        actionConversionMap: ActionConvertorList): Promise<ConvertBehavior | void> {
+    if (action.whileCondition === undefined) {
+        return;
+    }
+    if (!action.whileCondition) {
+        return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+    }
+    const { whileCondition, ...subAction } = action;
+    const whileResolution = calculateBoolean(whileCondition);
+    const subStepResults: ExecutionStep[] = [];
+    await convertAction<LogicAction>(subAction, subStepResults, utils, external, actionConversionMap);
+    stepResults.push((parameters, context) =>  {
+        while(whileResolution.valueOf(parameters)) {
+            execute(subStepResults, parameters, context);
+        }
+    });
+    return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+}
+

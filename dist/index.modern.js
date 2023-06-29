@@ -972,6 +972,24 @@ var convertLogProperty = function convertLogProperty(action, results, _, externa
 };
 
 var _excluded$2 = ["loop"];
+function keepLooping(parameters, context, loops, steps, depth) {
+  if (depth === void 0) {
+    depth = 0;
+  }
+  if (depth >= loops.length) {
+    console.log(parameters);
+    execute(steps, parameters, context);
+    return;
+  }
+  var length = loops[depth].valueOf(parameters);
+  var p = newParams(parameters, context);
+  var letter = String.fromCharCode('i'.charCodeAt(0) + depth);
+  for (var i = 0; i < length; i++) {
+    p.index = p[letter] = i;
+    keepLooping(p, context, loops, steps, depth + 1);
+  }
+  recycleParams(p, context);
+}
 var convertLoopProperty = function convertLoopProperty(action, stepResults, utils, external, actionConversionMap) {
   try {
     if (action.loop === undefined) {
@@ -982,15 +1000,17 @@ var convertLoopProperty = function convertLoopProperty(action, stepResults, util
     }
     var loop = action.loop,
       subAction = _objectWithoutPropertiesLoose(action, _excluded$2);
-    var loopResolution = calculateNumber(loop, 0);
+    var loops = Array.isArray(loop) ? loop : [loop];
+    if (!loops.length) {
+      return Promise.resolve(ConvertBehavior.SKIP_REMAINING_CONVERTORS);
+    }
+    var loopResolution = loops.map(function (loop) {
+      return calculateNumber(loop, 0);
+    });
     var subStepResults = [];
     return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
       stepResults.push(function (parameters, context) {
-        var numLoops = loopResolution.valueOf(parameters);
-        for (var i = 0; i < numLoops; i++) {
-          parameters.index = i;
-          execute(subStepResults, parameters, context);
-        }
+        return keepLooping(parameters, context, loopResolution, subStepResults);
       });
       return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
     });

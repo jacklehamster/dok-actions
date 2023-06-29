@@ -1,7 +1,9 @@
+import { ActionsAction } from "../actions/ActionsAction";
 import { LogAction } from "../actions/LogAction";
+import { SetAction } from "../actions/SetAction";
 import { ExecutionStep, execute } from "../execution/ExecutionStep";
 import { getDefaultConvertors } from "./default-convertors";
-import { convertLoopProperty } from "./loop-convertor";
+import { convertLoopProperty, convertWhileProperty } from "./loop-convertor";
 
 describe('loop convertor', () => {
     const log = jest.fn();
@@ -51,4 +53,35 @@ describe('loop convertor', () => {
         expect(log).toBeCalledWith(2);
         expect(log).toBeCalledWith(102);
     });
+
+    it('converts while loop', async () => {
+        const results: ExecutionStep[] = [];
+        await convertWhileProperty<ActionsAction<LogAction & SetAction>>({
+                whileCondition: "~{index < 5}",
+                actions: [
+                    {
+                        log: "~{index}",
+                    },    
+                    {
+                        set: {
+                            variable: "index",
+                            value: "~{value + 1}"
+                        },
+                    },
+                ],
+            },
+            results,
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
+            { log },
+            getDefaultConvertors(),
+        );
+        execute(results, {index: 0});
+        expect(log).toBeCalledTimes(5);
+        expect(log).toBeCalledWith(0);
+        expect(log).toBeCalledWith(1);
+        expect(log).toBeCalledWith(2);
+        expect(log).toBeCalledWith(3);
+        expect(log).toBeCalledWith(4);
+    });
+
 });
