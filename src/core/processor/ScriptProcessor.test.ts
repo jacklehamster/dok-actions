@@ -187,12 +187,12 @@ describe("script execution", () => {
                 actions: [
                     {
                         loop: 3,
-                        set: {variable:"i", value:"~{index}"},
+                        set: {variable:"a", value:"~{index}"},
                         actions: [
                             {
                                 loop: 4,
-                                set: {variable:"j", value:"~{index}"},
-                                log: "~{i * 10 + j}",
+                                set: {variable:"b", value:"~{index}"},
+                                log: "~{a * 10 + b}",
                             },
                         ],
                     },
