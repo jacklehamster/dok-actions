@@ -10,7 +10,6 @@ import { calculateBoolean } from "../resolutions/calculateBoolean";
 
 function keepLooping(parameters: ExecutionParameters, context: Context, loops: ValueOf<number>[], steps: ExecutionStep[], depth: number = 0) {
     if (depth >= loops.length) {
-        console.log(parameters);
         execute(steps, parameters, context);
         return;
     }
