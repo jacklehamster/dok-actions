@@ -22,15 +22,27 @@ export function isFormula(value: Formula | Expression | any) {
         return false;
     }
     const formula = typeof(value) === "string" ? value : value.formula;
-    const [prefix, suffix] = FORMULA_SEPERATORS;
-    return formula?.indexOf(prefix) === 0 && formula?.indexOf(suffix) === formula.length - suffix.length;
+    const [startCharacter, prefix, suffix] = FORMULA_SEPERATORS.map(char => formula?.indexOf(char));
+    return startCharacter === 0 && prefix > startCharacter && suffix > prefix;
 }
 
-export function getInnerFormula(value: Formula | Expression | any) {
-    const formula = typeof(value) === "string" ? value : value.formula;
-    const [prefix, suffix] = FORMULA_SEPERATORS;
-    const innerFormula = formula.substring(prefix.length, formula.length - suffix.length);
-    return innerFormula;
+interface FormulaChunk {
+    formula: Formula;
+    textSuffix: string;
+}
+
+export function getInnerFormulas(value: Formula | Expression | any): FormulaChunk[] {
+    const formula: string = typeof(value) === "string" ? value : value.formula;
+    const [startCharacter, prefix, suffix] = FORMULA_SEPERATORS;
+
+    //  parse formulas out. Formulas have format like this: ~{formula}text{formula}.
+    return formula.substring(startCharacter.length).split(prefix).map((chunk, index) => {
+        if (index === 0) {
+            return { textSuffix: chunk, formula: "" };
+        }
+        const [formula, textSuffix] = chunk.split(suffix);
+        return { formula, textSuffix };
+    }).filter(({ textSuffix, formula}) => textSuffix.length || formula.length);
 }
 
 const IDENTIFIER_REGEX = /^([^\x00-\x7F]|[A-Za-z_])([^\x00-\x7F]|\w)+$/;

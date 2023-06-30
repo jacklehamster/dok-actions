@@ -1,4 +1,4 @@
-import { hasFormula, isFormula } from "./formula-utils";
+import { getInnerFormulas, hasFormula, isFormula } from "./formula-utils";
 
 describe('formula-utils', () => {
     it('check is formula', () => {
@@ -13,5 +13,13 @@ describe('formula-utils', () => {
         expect(hasFormula({})).toBeFalsy();
         expect(hasFormula({"test": "~{123}"})).toBeTruthy();
         expect(hasFormula({"~{key}": 123})).toBeTruthy();
+    });
+
+    it('check get inner formulas', () => {
+        expect(getInnerFormulas("~{formula}")).toEqual([{ formula: "formula", textSuffix: "" }]);
+        expect(getInnerFormulas("~Prefix{formula}Suffix")).toEqual([
+            { formula: "", textSuffix: "Prefix" },
+            { formula: "formula", textSuffix: "Suffix" },
+        ]);
     });
 });
