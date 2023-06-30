@@ -8,4 +8,5 @@ export interface SetAction {
         access?: (StringResolution|NumberResolution)[];
         value: Resolution;
     };
+    sets?: Record<string, Resolution>;
 }
