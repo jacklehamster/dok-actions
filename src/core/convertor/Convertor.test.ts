@@ -25,7 +25,7 @@ describe('convertor', () => {
             innerStep,
         ]);
         const action: ScriptAction = {
-            script: "myScript",
+            executeScript: "myScript",
             parameters: {"x": "~{1 + 2}"},
         };
         const steps: ExecutionStep[] = [];
@@ -47,7 +47,7 @@ describe('convertor', () => {
             innerStep,
         ]);
         const action: ScriptAction = {
-            script: "myScript",
+            executeScript: "myScript",
         };
         const steps: ExecutionStep[] = [];
         await convertAction(action, steps, {getSteps, getRemainingActions, refreshSteps, stopRefresh}, DEFAULT_EXTERNALS, getDefaultConvertors())
@@ -100,11 +100,11 @@ describe('convertor', () => {
                 name: "ScriptTest",
                 actions: [
                     {
-                        script: "LogTest",
+                        executeScript: "LogTest",
                         parameters: {"name": "test"}
                     },
                     {
-                        script: "LogTest",
+                        executeScript: "LogTest",
                         parameters: {"name": "world"}
                     },
                 ]
@@ -134,7 +134,7 @@ describe('convertor', () => {
                 name: "main",
                 actions: [
                     {
-                        script: "LogTest",
+                        executeScript: "LogTest",
                         loop: "~{3 + 2}",
                         parameters: {name : "test"}
                     },
@@ -165,19 +165,19 @@ describe('convertor', () => {
                 actions: [
                     {
                         loop: 1,
-                        script: "LogTest",
+                        executeScript: "LogTest",
                         parameters: {name : "test"},
                         condition: "~{equalText(name, 'test')}",
                     },
                     {
                         loop: 1,
-                        script: "LogTest",
+                        executeScript: "LogTest",
                         parameters: {name : "test2"},
                         condition: "~{equalText(name, 'test')}",
                     },
                     {
                         loop: 3,
-                        script: "LogTest",
+                        executeScript: "LogTest",
                         parameters: {name : "loopingtest"},
                         condition: "~{index == 2}"
                     }
@@ -206,7 +206,7 @@ describe('convertor', () => {
                 name: "sub",
                 actions: [
                     {
-                        script: "LogTest",
+                        executeScript: "LogTest",
                         parameters: {name2 : "sub2"},
                     },
                 ]
@@ -215,7 +215,7 @@ describe('convertor', () => {
                 name: "main",
                 actions: [
                     {
-                        script: "sub",
+                        executeScript: "sub",
                         parameters: {name : "test", name2: "test2"},
                     },
                 ],
@@ -239,7 +239,7 @@ describe('convertor', () => {
                 name: "sub",
                 actions: [
                     {
-                        script: "CustomTest",
+                        executeScript: "CustomTest",
                         parameters: {name2 : "sub2"},
                     },
                 ]
@@ -248,7 +248,7 @@ describe('convertor', () => {
                 name: "main",
                 actions: [
                     {
-                        script: "sub",
+                        executeScript: "sub",
                         parameters: {name : "test", name2: "test2"},
                     },
                 ],

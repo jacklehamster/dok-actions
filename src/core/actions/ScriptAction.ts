@@ -1,9 +1,7 @@
 import { Resolution } from "../resolutions/Resolution";
-import { Tag } from "../scripts/Script";
 
 export interface ScriptAction {
-    script?: string;
-    scriptTags?: Tag[];
+    executeScript?: string;
     parameters?: Record<string, Resolution>;
     defaultParameters?: Record<string, Resolution>;
 }

@@ -18,7 +18,7 @@ describe('parameters convertor', () => {
     it('convert parameters', async () => {
         const results: ExecutionStep[] = [];
         await convertParametersProperty({
-                script: "script",
+                executeScript: "script",
                 parameters: {
                     "param1": 123,
                     "param2": true,
@@ -45,7 +45,7 @@ describe('parameters convertor', () => {
     it('convert parameters with defaults', async () => {
         const results: ExecutionStep[] = [];
         await convertParametersProperty({
-                script: "script",
+                executeScript: "script",
                 defaultParameters: {
                     param1: 100,
                     param2: 102,
@@ -71,7 +71,7 @@ describe('parameters convertor', () => {
     it('convert array parameters', async () => {
         const results: ExecutionStep[] = [];
         await convertParametersProperty({
-                script: "script",
+                executeScript: "script",
                 parameters: {
                     "param4": [1, 2, 3, 4],
                 },
@@ -93,7 +93,7 @@ describe('parameters convertor', () => {
         const results: ExecutionStep[] = [];
         await convertHooksProperty<ScriptAction>({
                 hooks: ["fun"],
-                script: "script",
+                executeScript: "script",
                 parameters: {
                     "test": "~{fun()}",
                 }

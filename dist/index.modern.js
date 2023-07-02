@@ -1220,16 +1220,16 @@ var convertRefreshProperty = function convertRefreshProperty(action, stepResults
   }
 };
 
-var convertScriptProperty = function convertScriptProperty(action, results, _ref, _, __) {
+var convertScriptProperty = function convertScriptProperty(action, results, _ref) {
   var getSteps = _ref.getSteps;
   try {
-    var _action$scriptTags;
-    if (!action.script || (_action$scriptTags = action.scriptTags) !== null && _action$scriptTags !== void 0 && _action$scriptTags.length) {
+    if (!action.executeScript) {
       return Promise.resolve();
     }
+    var executeScript = action.executeScript;
+    var name = executeScript;
     var steps = getSteps({
-      name: action.script,
-      tags: action.scriptTags
+      name: name
     });
     results.push(function (parameters, context) {
       return execute(steps, parameters, context);

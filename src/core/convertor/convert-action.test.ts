@@ -101,7 +101,7 @@ describe('convert script', () => {
                 name: "main-script",
                 actions: [
                     {
-                        script: "sub-script",
+                        executeScript: "sub-script",
                     },
                 ],
             },
