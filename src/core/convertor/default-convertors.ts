@@ -1,6 +1,7 @@
 import { convertActionsProperty } from "./actions-convertor";
 import { convertConditionProperty } from "./condition-convertor";
 import { ActionConvertorList } from "./convert-action";
+import { convertExternalCallProperty } from "./convert-external-call";
 import { convertDelayProperty, convertLockProperty, convertPauseProperty } from "./convert-pause";
 import { convertDefaultValuesProperty, convertSetProperty, convertSetsProperty } from "./convert-set";
 import { convertHooksProperty } from "./hooks-convertor";
@@ -24,6 +25,7 @@ export function getDefaultConvertors(): ActionConvertorList {
         convertSetProperty,
         convertSetsProperty,
         convertLogProperty,
+        convertExternalCallProperty,
         convertScriptProperty,
         convertActionsProperty,
     ];

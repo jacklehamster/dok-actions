@@ -70,4 +70,3 @@ export async function convertWhileProperty<T>(
     });
     return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
 }
-
