@@ -1162,9 +1162,9 @@ var convertLoopEachProperty = function convertLoopEachProperty(action, stepResul
       stepResults.push(function (parameters, context) {
         var array = loopEachResolution === null || loopEachResolution === void 0 ? void 0 : loopEachResolution.valueOf(parameters);
         if (array) {
-          for (var _iterator = _createForOfIteratorHelperLoose(array), _step; !(_step = _iterator()).done;) {
-            var element = _step.value;
-            parameters.element = element;
+          for (var i = 0; i < array.length; i++) {
+            parameters.index = i;
+            parameters.element = array[i];
             execute(subStepResults, parameters, context);
           }
         }

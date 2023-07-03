@@ -88,8 +88,9 @@ export async function convertLoopEachProperty<T>(
     stepResults.push((parameters, context) =>  {
         const array = loopEachResolution?.valueOf(parameters);
         if (array) {
-            for (let element of array) {
-                parameters.element = element;
+            for (let i = 0; i < array.length; i++) {
+                parameters.index = i;
+                parameters.element = array[i];
                 execute(subStepResults, parameters, context);
             }    
         }
