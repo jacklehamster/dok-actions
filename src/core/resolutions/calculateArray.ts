@@ -8,7 +8,7 @@ import { SupportedTypes } from "./SupportedTypes";
 import { hasFormula, isFormula } from "./formula/formula-utils";
 import { ExecutionParameters } from "../execution/ExecutionStep";
 
-export function calculateArray(value: ArrayResolution): ValueOf<SupportedTypes> | undefined {
+export function calculateArray(value: ArrayResolution): ValueOf<SupportedTypes[] | undefined> | undefined {
     //  check if we have any resolution to perform
     if (!hasFormula(value)) {
         if (!Array.isArray(value)) {
@@ -34,9 +34,8 @@ export function calculateArray(value: ArrayResolution): ValueOf<SupportedTypes> 
     const evaluator = array.map(resolution => calculateResolution(resolution));
 
     return {
-        valueOf(parameters: ExecutionParameters): SupportedTypes {
-            const value = evaluator.map(evalItem => evalItem?.valueOf(parameters));
-            return value;
+        valueOf(parameters: ExecutionParameters): SupportedTypes[] {
+            return evaluator.map(evalItem => evalItem?.valueOf(parameters));
         }
     };
 }

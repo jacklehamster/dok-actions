@@ -590,10 +590,9 @@ function calculateArray(value) {
   });
   return {
     valueOf: function valueOf(parameters) {
-      var value = evaluator.map(function (evalItem) {
+      return evaluator.map(function (evalItem) {
         return evalItem === null || evalItem === void 0 ? void 0 : evalItem.valueOf(parameters);
       });
-      return value;
     }
   };
 }
@@ -820,6 +819,32 @@ var convertConditionProperty = function convertConditionProperty(action, results
       });
       return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
     });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+
+var convertExternalCallProperty = function convertExternalCallProperty(action, results, _, external) {
+  try {
+    if (action.callExternal === undefined) {
+      return Promise.resolve();
+    }
+    var callExternal = action.callExternal;
+    var nameResolution = calculateString(callExternal.name);
+    var args = !callExternal.arguments ? [] : Array.isArray(callExternal.arguments) ? callExternal.arguments : [callExternal.arguments];
+    var resolutions = args.map(function (m) {
+      return calculateResolution(m);
+    });
+    results.push(function (parameters) {
+      var name = nameResolution.valueOf(parameters);
+      var fun = external[name];
+      if (typeof fun === "function") {
+        fun.apply(void 0, resolutions.map(function (r) {
+          return r === null || r === void 0 ? void 0 : r.valueOf(parameters);
+        }));
+      }
+    });
+    return Promise.resolve();
   } catch (e) {
     return Promise.reject(e);
   }
@@ -1121,7 +1146,34 @@ var convertLogProperty = function convertLogProperty(action, results, _, externa
   }
 };
 
-var _excluded$2 = ["loop"];
+var _excluded$2 = ["loop"],
+  _excluded3$1 = ["loopEach"];
+var convertLoopEachProperty = function convertLoopEachProperty(action, stepResults, utils, external, actionConversionMap) {
+  try {
+    if (action.loopEach === undefined) {
+      return Promise.resolve();
+    }
+    var loopEach = action.loopEach,
+      subAction = _objectWithoutPropertiesLoose(action, _excluded3$1);
+    var loopEachResolution = calculateArray(loopEach);
+    var subStepResults = [];
+    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
+      stepResults.push(function (parameters, context) {
+        var array = loopEachResolution === null || loopEachResolution === void 0 ? void 0 : loopEachResolution.valueOf(parameters);
+        if (array) {
+          for (var _iterator = _createForOfIteratorHelperLoose(array), _step; !(_step = _iterator()).done;) {
+            var element = _step.value;
+            parameters.element = element;
+            execute(subStepResults, parameters, context);
+          }
+        }
+      });
+      return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
 var convertLoopProperty = function convertLoopProperty(action, stepResults, utils, external, actionConversionMap) {
   try {
     if (action.loop === undefined) {
@@ -1255,7 +1307,7 @@ var convertScriptProperty = function convertScriptProperty(action, results, _ref
 };
 
 function getDefaultConvertors() {
-  return [convertHooksProperty, convertParametersProperty, convertDefaultValuesProperty, convertRefreshProperty, convertLoopProperty, convertConditionProperty, convertDelayProperty, convertPauseProperty, convertLockProperty, convertSetProperty, convertSetsProperty, convertLogProperty, convertScriptProperty, convertActionsProperty];
+  return [convertHooksProperty, convertParametersProperty, convertDefaultValuesProperty, convertRefreshProperty, convertLoopEachProperty, convertLoopProperty, convertConditionProperty, convertDelayProperty, convertPauseProperty, convertLockProperty, convertSetProperty, convertSetsProperty, convertLogProperty, convertExternalCallProperty, convertScriptProperty, convertActionsProperty];
 }
 
 var ScriptProcessor = /*#__PURE__*/function () {

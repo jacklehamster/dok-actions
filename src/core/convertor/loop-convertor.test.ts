@@ -3,7 +3,7 @@ import { LogAction } from "../actions/LogAction";
 import { SetAction } from "../actions/SetAction";
 import { ExecutionStep, execute } from "../execution/ExecutionStep";
 import { getDefaultConvertors } from "./default-convertors";
-import { convertLoopProperty, convertWhileProperty } from "./loop-convertor";
+import { convertLoopEachProperty, convertLoopProperty, convertWhileProperty } from "./loop-convertor";
 
 describe('loop convertor', () => {
     const log = jest.fn();
@@ -84,4 +84,34 @@ describe('loop convertor', () => {
         expect(log).toBeCalledWith(4);
     });
 
+    it('converts loopEach', async () => {
+        const results: ExecutionStep[] = [];
+        await convertLoopEachProperty<ActionsAction<LogAction>>({
+                loopEach: [
+                    {
+                        a: 123
+                    },
+                    {
+                        a: 456,
+                    },
+                    {
+                        a: 789,
+                    },
+                ],
+                actions: [
+                    {
+                        log: "~{element}",
+                    },    
+                ],
+            },
+            results,
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
+            { log },
+            getDefaultConvertors(),
+        );
+        execute(results);
+        expect(log).toBeCalledWith({ a: 123 });
+        expect(log).toBeCalledWith({ a: 456 });
+        expect(log).toBeCalledWith({ a: 789 });
+    });
 });

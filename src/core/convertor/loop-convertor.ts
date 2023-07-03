@@ -6,6 +6,7 @@ import { LogicAction } from "../actions/LogicAction";
 import { Context } from "../context/Context";
 import { ValueOf } from "../types/ValueOf";
 import { calculateBoolean } from "../resolutions/calculateBoolean";
+import { calculateArray } from "../resolutions/calculateArray";
 
 const VARIABLE_NAMES = "ijklmnopqrstuvwxyzabcdefgh".split("");
 
@@ -66,6 +67,31 @@ export async function convertWhileProperty<T>(
     stepResults.push((parameters, context) =>  {
         while(whileResolution.valueOf(parameters)) {
             execute(subStepResults, parameters, context);
+        }
+    });
+    return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+}
+
+export async function convertLoopEachProperty<T>(
+        action: T & LogicAction,
+        stepResults: ExecutionStep[],
+        utils: Utils<T & LogicAction>,
+        external: Record<string, any>,
+        actionConversionMap: ActionConvertorList): Promise<ConvertBehavior | void> {
+    if (action.loopEach === undefined) {
+        return;
+    }
+    const { loopEach, ...subAction } = action;
+    const loopEachResolution = calculateArray(loopEach);
+    const subStepResults: ExecutionStep[] = [];
+    await convertAction<LogicAction>(subAction, subStepResults, utils, external, actionConversionMap);
+    stepResults.push((parameters, context) =>  {
+        const array = loopEachResolution?.valueOf(parameters);
+        if (array) {
+            for (let element of array) {
+                parameters.element = element;
+                execute(subStepResults, parameters, context);
+            }    
         }
     });
     return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
