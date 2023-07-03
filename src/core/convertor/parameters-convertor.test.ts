@@ -1,9 +1,7 @@
-import { ScriptAction } from "../actions/ScriptAction";
-import { createContext } from "../context/Context";
 import { ExecutionStep, execute } from "../execution/ExecutionStep";
 import { getDefaultConvertors } from "./default-convertors";
 import { DEFAULT_EXTERNALS } from "./default-externals";
-import { convertHooksProperty, convertParametersProperty } from "./parameters-convertor";
+import { convertParametersProperty } from "./parameters-convertor";
 
 describe('parameters convertor', () => {
     const mock = jest.fn();
@@ -42,17 +40,12 @@ describe('parameters convertor', () => {
         });
     });
 
-    it('convert parameters with defaults', async () => {
+    it('convert parameters. Parent parameters not retained', async () => {
         const results: ExecutionStep[] = [];
         await convertParametersProperty({
                 executeScript: "script",
-                defaultParameters: {
-                    param1: 100,
-                    param2: 102,
-                    param3: "test",
-                },
                 parameters: {
-                    "param3": "test2",
+                    "param1": 123,
                 },
             },
             results,
@@ -60,11 +53,9 @@ describe('parameters convertor', () => {
             DEFAULT_EXTERNALS,
             getDefaultConvertors(),
         );
-        execute(results, {param2: 0});
+        execute(results, {param1: 555, param2: 666});
         expect(mock).toBeCalledWith({
-            param1: 100,
-            param2: 0,
-            param3: "test2",
+            param1: 123,
         });
     });
 
@@ -84,28 +75,6 @@ describe('parameters convertor', () => {
         execute(results);
         expect(mock).toBeCalledWith({
             param4: [1,2,3,4],
-        });
-    });
-
-    it('convert hooks', async () => {
-        const context = createContext();
-        const fun = jest.fn().mockReturnValue(69);
-        const results: ExecutionStep[] = [];
-        await convertHooksProperty<ScriptAction>({
-                hooks: ["fun"],
-                executeScript: "script",
-                parameters: {
-                    "test": "~{fun()}",
-                }
-            },
-            results,
-            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
-            {...DEFAULT_EXTERNALS, fun},
-            getDefaultConvertors(),
-        );
-        execute(results, {}, context);
-        expect(mock).toBeCalledWith({
-            test: 69,
         });
     });
 });

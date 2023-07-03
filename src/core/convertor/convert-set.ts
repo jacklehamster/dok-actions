@@ -59,12 +59,42 @@ export async function convertSetsProperty(
     const setsEntries: [string, ValueOf<SupportedTypes> | undefined | null][] = !sets ? [] : Object.entries(sets).map(([key, value]) => [key, calculateResolution(value)]);
 
     results.push((parameters, context)=> {
-        const paramCopy = newParams(parameters, context);
+        const paramsTemp = newParams(undefined, context);
 
         for (const [key, value] of setsEntries) {
-            paramCopy.value = paramCopy[key];
-            parameters[key] = value?.valueOf(paramCopy);    
+            parameters.value = parameters[key];
+            paramsTemp[key] = value?.valueOf(parameters);    
         }
-        recycleParams(paramCopy, context);
+        delete parameters.value;
+        for (const [key] of setsEntries) {
+            parameters[key] = paramsTemp[key];
+        }
+        recycleParams(paramsTemp, context);
     });    
+}
+
+export async function convertDefaultValuesProperty(
+    action: SetAction,
+    results: ExecutionStep[]): Promise<ConvertBehavior|void> {
+if (!action.defaultValues) {
+    return;
+}
+const { defaultValues } = action;
+const defaultValuesEntries: [string, ValueOf<SupportedTypes> | undefined | null][] = !defaultValues ? [] : Object.entries(defaultValues).map(([key, value]) => [key, calculateResolution(value)]);
+
+results.push((parameters, context)=> {
+    const paramsTemp = newParams(undefined, context);
+
+    for (const [key, value] of defaultValuesEntries) {
+        parameters.value = parameters[key];
+        paramsTemp[key] = value?.valueOf(parameters);    
+    }
+    delete parameters.value;
+    for (const [key] of defaultValuesEntries) {
+        if (parameters[key] === undefined) {
+            parameters[key] = paramsTemp[key];
+        }
+    }
+    recycleParams(paramsTemp, context);
+});    
 }

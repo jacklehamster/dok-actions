@@ -207,7 +207,7 @@ describe('convertor', () => {
                 actions: [
                     {
                         executeScript: "LogTest",
-                        parameters: {name2 : "sub2"},
+                        parameters: {name: "~{name}", name2 : "sub2"},
                     },
                 ]
             },
@@ -240,7 +240,7 @@ describe('convertor', () => {
                 actions: [
                     {
                         executeScript: "CustomTest",
-                        parameters: {name2 : "sub2"},
+                        parameters: {name: "~{name}", name2 : "sub2"},
                     },
                 ]
             },

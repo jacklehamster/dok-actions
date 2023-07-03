@@ -1,5 +1,5 @@
 import { ExecutionStep, execute } from "../execution/ExecutionStep";
-import { convertSetProperty, convertSetsProperty } from "./convert-set";
+import { convertDefaultValuesProperty, convertSetProperty, convertSetsProperty } from "./convert-set";
 
 describe('set convertor', () => {
     it('convert set', async () => {
@@ -62,4 +62,20 @@ describe('set convertor', () => {
         expect(parameters).toEqual({a: 456, b: 123, c: 7890});
     });
 
+    it('convert defaultValues', async () => {
+        const results: ExecutionStep[] = [];
+        await convertDefaultValuesProperty({
+                defaultValues: {
+                    a: 333,
+                    b: 333,
+                },
+            },
+            results,
+        );
+        const parameters: Record<string, any> = {
+            a: 123,
+        };
+        execute(results, parameters);
+        expect(parameters).toEqual({a: 123, b: 333});
+    });
 });

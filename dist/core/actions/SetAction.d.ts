@@ -8,4 +8,5 @@ export interface SetAction {
         value: Resolution;
     };
     sets?: Record<string, Resolution>;
+    defaultValues?: Record<string, Resolution>;
 }
