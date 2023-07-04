@@ -33,9 +33,9 @@ describe('ScriptProcesor', () => {
             actions: [
                 { mock: 123 },
             ],
-        }], external, [
+        }], external, { actionsConvertor: [
             async (action, results) => results.push((_) => mock(action.mock)),
-        ]);
+        ]});
         await processor.runByName("main");
         expect(mock).toBeCalledWith(123);
     });
@@ -59,9 +59,9 @@ describe('ScriptProcesor', () => {
                 { mock: 789 },
             ],
             tags: ["tagB", "tagA"],
-        }], external, [
+        }], external, { actionsConvertor: [
             async (action, results) => results.push((_) => mock(action.mock)),
-        ]);
+        ]});
         await processor.runByTags(["tagB"]);
         expect(mock).not.toBeCalledWith(123);
         expect(mock).toBeCalledWith(456);
@@ -74,12 +74,12 @@ describe('ScriptProcesor', () => {
             actions: [
                 { mock: "~{time}" },
             ],
-        }], external, [
+        }], external, { actionsConvertor: [
             async (action, results) => {
                 const resolution = calculateNumber(action.mock);
                 results.push((parameters) => mock(resolution.valueOf(parameters)));
             },
-        ]);
+        ]});
         await processor.refreshByName("main");
         
         executeAnimationFrame(123);
@@ -101,12 +101,12 @@ describe('ScriptProcesor', () => {
                 { mock: "~{1000 + time}" },
             ],
             tags: ["tag2"],
-        }], external, [
+        }], external, { actionsConvertor: [
             async (action, results) => {
                 const resolution = calculateNumber(action.mock);
                 results.push((parameters) => mock(resolution.valueOf(parameters)));
             },
-        ]);
+        ]});
         await processor.refreshByTags([]);
         
         executeAnimationFrame(123);
@@ -128,12 +128,12 @@ describe('ScriptProcesor', () => {
                 { mock: "~{1000 + time}" },
             ],
             tags: ["tag2"],
-        }], external, [
+        }], external, { actionsConvertor: [
             async (action, results) => {
                 const resolution = calculateNumber(action.mock);
                 results.push((parameters) => mock(resolution.valueOf(parameters)));
             },
-        ]);
+        ]});
         await processor.refreshByTags([], {
             frameRate: 1,
         });
@@ -163,12 +163,12 @@ describe('ScriptProcesor', () => {
             actions: [
                 { mock: 3},
             ],
-        }], external, [
+        }], external, { actionsConvertor: [
             async (action, results) => {
                 const resolution = calculateNumber(action.mock);
                 results.push((parameters) => mock(resolution.valueOf(parameters)));
             },
-        ]);
+        ]});
         execute(await processor.getSteps({ name: "redraw" }));
         expect(mock).not.toBeCalled();
     });

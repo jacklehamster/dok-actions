@@ -319,11 +319,11 @@ function filterScripts(scripts, filter) {
   });
 }
 
-var executeAction = function executeAction(action, parameters, context, utils, actionConversionMap) {
+var executeAction = function executeAction(action, parameters, context, utils, convertorSet) {
   try {
     var results = [];
     var _ConvertBehavior$SKIP = ConvertBehavior.SKIP_REMAINING_ACTIONS;
-    return Promise.resolve(convertAction(action, results, utils, context.external, actionConversionMap)).then(function (_convertAction) {
+    return Promise.resolve(convertAction(action, results, utils, context.external, convertorSet)).then(function (_convertAction) {
       if (_ConvertBehavior$SKIP !== _convertAction) {
         execute(results, parameters, context);
       }
@@ -332,13 +332,13 @@ var executeAction = function executeAction(action, parameters, context, utils, a
     return Promise.reject(e);
   }
 };
-var executeScript = function executeScript(scriptName, parameters, scripts, external, actionConversionMap, processorHelper) {
+var executeScript = function executeScript(scriptName, parameters, scripts, external, convertorSet, processorHelper) {
   if (parameters === void 0) {
     parameters = {};
   }
   try {
     var context = createContext();
-    return Promise.resolve(convertScripts(scripts, external, actionConversionMap, processorHelper)).then(function (scriptMap) {
+    return Promise.resolve(convertScripts(scripts, external, convertorSet, processorHelper)).then(function (scriptMap) {
       var script = scripts.find(function (_ref) {
         var name = _ref.name;
         return name === scriptName;
@@ -356,7 +356,7 @@ var executeScript = function executeScript(scriptName, parameters, scripts, exte
     return Promise.reject(e);
   }
 };
-var convertScripts = function convertScripts(scripts, external, actionConversionMap, processorHelper) {
+var convertScripts = function convertScripts(scripts, external, convertorSet, processorHelper) {
   try {
     var scriptMap = new Map();
     scripts.forEach(function (script) {
@@ -384,7 +384,7 @@ var convertScripts = function convertScripts(scripts, external, actionConversion
           getRemainingActions: getRemainingActions,
           refreshSteps: processorHelper.refreshSteps,
           stopRefresh: processorHelper.stopRefresh
-        }, external, actionConversionMap)).then(function (convertBehavior) {
+        }, external, convertorSet)).then(function (convertBehavior) {
           if (convertBehavior === ConvertBehavior.SKIP_REMAINING_ACTIONS) {
             _interrupt = true;
           }
@@ -401,11 +401,11 @@ var convertScripts = function convertScripts(scripts, external, actionConversion
     return Promise.reject(e);
   }
 };
-var convertAction = function convertAction(action, stepResults, utils, external, actionConversionMap) {
+var convertAction = function convertAction(action, stepResults, utils, external, convertorSet) {
   try {
     var _exit = false;
-    return Promise.resolve(_forOf(actionConversionMap, function (convertor) {
-      return Promise.resolve(convertor(action, stepResults, utils, external, actionConversionMap)).then(function (convertBehavior) {
+    return Promise.resolve(_forOf(convertorSet.actionsConvertor, function (convertor) {
+      return Promise.resolve(convertor(action, stepResults, utils, external, convertorSet)).then(function (convertBehavior) {
         if (convertBehavior === ConvertBehavior.SKIP_REMAINING_CONVERTORS) {
           _exit = true;
         } else if (convertBehavior === ConvertBehavior.SKIP_REMAINING_ACTIONS) {
@@ -783,14 +783,14 @@ function calculateTypedArray(value, ArrayConstructor) {
   };
 }
 
-var convertActionsProperty = function convertActionsProperty(action, results, utils, external, actionConvertorMap) {
+var convertActionsProperty = function convertActionsProperty(action, results, utils, external, convertorSet) {
   try {
     var _action$actions;
     if (!((_action$actions = action.actions) !== null && _action$actions !== void 0 && _action$actions.length)) {
       return Promise.resolve();
     }
     var _temp = _forOf(action.actions, function (a) {
-      return Promise.resolve(convertAction(a, results, utils, external, actionConvertorMap)).then(function () {});
+      return Promise.resolve(convertAction(a, results, utils, external, convertorSet)).then(function () {});
     });
     return Promise.resolve(_temp && _temp.then ? _temp.then(function () {}) : void 0);
   } catch (e) {
@@ -799,7 +799,7 @@ var convertActionsProperty = function convertActionsProperty(action, results, ut
 };
 
 var _excluded = ["condition"];
-var convertConditionProperty = function convertConditionProperty(action, results, utils, external, actionConversionMap) {
+var convertConditionProperty = function convertConditionProperty(action, results, utils, external, convertorSet) {
   try {
     if (action.condition === undefined) {
       return Promise.resolve();
@@ -811,7 +811,7 @@ var convertConditionProperty = function convertConditionProperty(action, results
       subAction = _objectWithoutPropertiesLoose(action, _excluded);
     var conditionResolution = calculateBoolean(condition);
     var subStepResults = [];
-    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
+    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, convertorSet)).then(function () {
       results.push(function (parameters, context) {
         if (conditionResolution.valueOf(parameters)) {
           execute(subStepResults, parameters, context);
@@ -853,7 +853,7 @@ var convertExternalCallProperty = function convertExternalCallProperty(action, r
 var _excluded$1 = ["delay"],
   _excluded2 = ["pause"],
   _excluded3 = ["lock", "unlock"];
-var convertLockProperty = function convertLockProperty(action, results, utils, external, actionConversionMap) {
+var convertLockProperty = function convertLockProperty(action, results, utils, external, convertorSet) {
   try {
     if (!action.lock && !action.unlock) {
       return Promise.resolve();
@@ -874,7 +874,7 @@ var convertLockProperty = function convertLockProperty(action, results, utils, e
         var lockResolution = calculateBoolean(lock);
         var postStepResults = [];
         var remainingActions = utils.getRemainingActions();
-        return Promise.resolve(convertAction(subAction, postStepResults, utils, external, actionConversionMap)).then(function () {
+        return Promise.resolve(convertAction(subAction, postStepResults, utils, external, convertorSet)).then(function () {
           function _temp6() {
             results.push(function (parameters, context) {
               if (!lockResolution.valueOf(parameters)) {
@@ -900,7 +900,7 @@ var convertLockProperty = function convertLockProperty(action, results, utils, e
             return ConvertBehavior.SKIP_REMAINING_ACTIONS;
           }
           var _temp5 = _forOf(remainingActions, function (action) {
-            return Promise.resolve(convertAction(action, postStepResults, utils, external, actionConversionMap)).then(function () {});
+            return Promise.resolve(convertAction(action, postStepResults, utils, external, convertorSet)).then(function () {});
           });
           return _temp5 && _temp5.then ? _temp5.then(_temp6) : _temp6(_temp5);
         });
@@ -910,7 +910,7 @@ var convertLockProperty = function convertLockProperty(action, results, utils, e
     return Promise.reject(e);
   }
 };
-var convertPauseProperty = function convertPauseProperty(action, results, utils, external, actionConversionMap) {
+var convertPauseProperty = function convertPauseProperty(action, results, utils, external, convertorSet) {
   try {
     if (!action.pause) {
       return Promise.resolve();
@@ -920,7 +920,7 @@ var convertPauseProperty = function convertPauseProperty(action, results, utils,
     var pauseResolution = calculateBoolean(pause);
     var postStepResults = [];
     var remainingActions = utils.getRemainingActions();
-    return Promise.resolve(convertAction(subAction, postStepResults, utils, external, actionConversionMap)).then(function () {
+    return Promise.resolve(convertAction(subAction, postStepResults, utils, external, convertorSet)).then(function () {
       function _temp4() {
         var step = function step(parameters, context) {
           for (var i in parameters) {
@@ -941,7 +941,7 @@ var convertPauseProperty = function convertPauseProperty(action, results, utils,
         return ConvertBehavior.SKIP_REMAINING_ACTIONS;
       }
       var _temp3 = _forOf(remainingActions, function (action) {
-        return Promise.resolve(convertAction(action, postStepResults, utils, external, actionConversionMap)).then(function () {});
+        return Promise.resolve(convertAction(action, postStepResults, utils, external, convertorSet)).then(function () {});
       });
       return _temp3 && _temp3.then ? _temp3.then(_temp4) : _temp4(_temp3);
     });
@@ -949,7 +949,7 @@ var convertPauseProperty = function convertPauseProperty(action, results, utils,
     return Promise.reject(e);
   }
 };
-var convertDelayProperty = function convertDelayProperty(action, results, utils, external, actionConversionMap) {
+var convertDelayProperty = function convertDelayProperty(action, results, utils, external, convertorSet) {
   try {
     if (!action.delay) {
       return Promise.resolve();
@@ -959,7 +959,7 @@ var convertDelayProperty = function convertDelayProperty(action, results, utils,
     var delayAmount = calculateNumber(delay);
     var postStepResults = [];
     var remainingActions = utils.getRemainingActions();
-    return Promise.resolve(convertAction(subAction, postStepResults, utils, external, actionConversionMap)).then(function () {
+    return Promise.resolve(convertAction(subAction, postStepResults, utils, external, convertorSet)).then(function () {
       function _temp2() {
         var performPostSteps = function performPostSteps(context, parameters) {
           execute(postStepResults, parameters, context);
@@ -973,7 +973,7 @@ var convertDelayProperty = function convertDelayProperty(action, results, utils,
         return ConvertBehavior.SKIP_REMAINING_ACTIONS;
       }
       var _temp = _forOf(remainingActions, function (action) {
-        return Promise.resolve(convertAction(action, postStepResults, utils, external, actionConversionMap)).then(function () {});
+        return Promise.resolve(convertAction(action, postStepResults, utils, external, convertorSet)).then(function () {});
       });
       return _temp && _temp.then ? _temp.then(_temp2) : _temp2(_temp);
     });
@@ -1148,7 +1148,7 @@ var convertLogProperty = function convertLogProperty(action, results, _, externa
 
 var _excluded$2 = ["loop"],
   _excluded3$1 = ["loopEach"];
-var convertLoopEachProperty = function convertLoopEachProperty(action, stepResults, utils, external, actionConversionMap) {
+var convertLoopEachProperty = function convertLoopEachProperty(action, stepResults, utils, external, convertorSet) {
   try {
     if (action.loopEach === undefined) {
       return Promise.resolve();
@@ -1157,7 +1157,7 @@ var convertLoopEachProperty = function convertLoopEachProperty(action, stepResul
       subAction = _objectWithoutPropertiesLoose(action, _excluded3$1);
     var loopEachResolution = calculateArray(loopEach);
     var subStepResults = [];
-    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
+    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, convertorSet)).then(function () {
       stepResults.push(function (parameters, context) {
         var array = loopEachResolution === null || loopEachResolution === void 0 ? void 0 : loopEachResolution.valueOf(parameters);
         if (array) {
@@ -1174,7 +1174,7 @@ var convertLoopEachProperty = function convertLoopEachProperty(action, stepResul
     return Promise.reject(e);
   }
 };
-var convertLoopProperty = function convertLoopProperty(action, stepResults, utils, external, actionConversionMap) {
+var convertLoopProperty = function convertLoopProperty(action, stepResults, utils, external, convertorSet) {
   try {
     if (action.loop === undefined) {
       return Promise.resolve();
@@ -1192,7 +1192,7 @@ var convertLoopProperty = function convertLoopProperty(action, stepResults, util
       return calculateNumber(loop, 0);
     });
     var subStepResults = [];
-    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
+    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, convertorSet)).then(function () {
       stepResults.push(function (parameters, context) {
         return keepLooping(parameters, context, loopResolution, subStepResults);
       });
@@ -1221,7 +1221,7 @@ function keepLooping(parameters, context, loops, steps, depth) {
 }
 
 var _excluded$3 = ["parameters"];
-var convertParametersProperty = function convertParametersProperty(action, results, utils, external, actionConversionMap) {
+var convertParametersProperty = function convertParametersProperty(action, results, utils, external, convertorSet) {
   try {
     if (!action.parameters) {
       return Promise.resolve();
@@ -1234,7 +1234,7 @@ var convertParametersProperty = function convertParametersProperty(action, resul
       return [key, calculateResolution(resolution)];
     });
     var subStepResults = [];
-    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
+    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, convertorSet)).then(function () {
       results.push(function (parameters, context) {
         var paramValues = newParams(undefined, context);
         for (var _iterator = _createForOfIteratorHelperLoose(paramEntries), _step; !(_step = _iterator()).done;) {
@@ -1254,7 +1254,7 @@ var convertParametersProperty = function convertParametersProperty(action, resul
 };
 
 var _excluded$4 = ["refresh"];
-var convertRefreshProperty = function convertRefreshProperty(action, stepResults, utils, external, actionConversionMap) {
+var convertRefreshProperty = function convertRefreshProperty(action, stepResults, utils, external, convertorSet) {
   try {
     if (!action.refresh) {
       return Promise.resolve();
@@ -1266,7 +1266,7 @@ var convertRefreshProperty = function convertRefreshProperty(action, stepResults
     var stop = calculateBoolean(refresh.stop);
     var cleanupAfterRefresh = calculateBoolean(refresh.cleanupAfterRefresh);
     var frameRate = calculateNumber(refresh.frameRate, 60);
-    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, actionConversionMap)).then(function () {
+    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, convertorSet)).then(function () {
       stepResults.push(function (parameters, context) {
         if (stop.valueOf(parameters)) {
           utils.stopRefresh(processId.valueOf(parameters));
@@ -1307,20 +1307,22 @@ var convertScriptProperty = function convertScriptProperty(action, results, _ref
 };
 
 function getDefaultConvertors() {
-  return [convertHooksProperty, convertParametersProperty, convertDefaultValuesProperty, convertRefreshProperty, convertLoopEachProperty, convertLoopProperty, convertConditionProperty, convertDelayProperty, convertPauseProperty, convertLockProperty, convertSetProperty, convertSetsProperty, convertLogProperty, convertExternalCallProperty, convertScriptProperty, convertActionsProperty];
+  return {
+    actionsConvertor: [convertHooksProperty, convertParametersProperty, convertDefaultValuesProperty, convertRefreshProperty, convertLoopEachProperty, convertLoopProperty, convertConditionProperty, convertDelayProperty, convertPauseProperty, convertLockProperty, convertSetProperty, convertSetsProperty, convertLogProperty, convertExternalCallProperty, convertScriptProperty, convertActionsProperty]
+  };
 }
 
 var ScriptProcessor = /*#__PURE__*/function () {
-  function ScriptProcessor(scripts, external, actionConversionMap) {
+  function ScriptProcessor(scripts, external, convertorSet) {
     if (external === void 0) {
       external = {};
     }
-    if (actionConversionMap === void 0) {
-      actionConversionMap = getDefaultConvertors();
+    if (convertorSet === void 0) {
+      convertorSet = getDefaultConvertors();
     }
     this.refreshCleanups = {};
     this.scripts = scripts;
-    this.actionConversionMap = actionConversionMap;
+    this.convertorSet = convertorSet;
     this.external = _extends({}, DEFAULT_EXTERNALS, external);
   }
   var _proto = ScriptProcessor.prototype;
@@ -1341,7 +1343,7 @@ var ScriptProcessor = /*#__PURE__*/function () {
       var _this2 = this;
       var _temp = function () {
         if (!_this2.scriptMap) {
-          return Promise.resolve(convertScripts(_this2.scripts, _this2.external, _this2.actionConversionMap, {
+          return Promise.resolve(convertScripts(_this2.scripts, _this2.external, _this2.convertorSet, {
             refreshSteps: _this2.refreshSteps.bind(_this2),
             stopRefresh: _this2.stopRefresh.bind(_this2)
           })).then(function (_convertScripts) {

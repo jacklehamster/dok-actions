@@ -1,4 +1,4 @@
-import { ActionConvertorList } from "../convertor/convert-action";
+import { ConvertorSet } from "../convertor/Convertor";
 import { ExecutionParameters, ExecutionStep } from "../execution/ExecutionStep";
 import { Script, ScriptFilter, Tag } from "../scripts/Script";
 export interface RefreshBehavior {
@@ -14,9 +14,9 @@ export declare class ScriptProcessor<T, E = {}> {
     private scripts;
     private scriptMap?;
     private external;
-    private actionConversionMap;
+    private convertorSet;
     private refreshCleanups;
-    constructor(scripts: Script<T>[], external?: {}, actionConversionMap?: ActionConvertorList);
+    constructor(scripts: Script<T>[], external?: {}, convertorSet?: ConvertorSet);
     clear(): void;
     private fetchScripts;
     private createRefreshCleanup;

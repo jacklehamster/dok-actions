@@ -1,7 +1,12 @@
 import { ExecutionStep } from "../execution/ExecutionStep";
 import { RefreshBehavior } from "../processor/ScriptProcessor";
 import { ScriptFilter } from "../scripts/Script";
-import { ActionConvertorList } from "./convert-action";
+
+export type ActionConvertorList = Convertor<any>[];
+
+export interface ConvertorSet {
+    actionsConvertor: ActionConvertorList,
+}
 
 export type GetSteps = (filter: ScriptFilter) => ExecutionStep[];
 
@@ -18,4 +23,4 @@ export interface Utils<T> {
     getRemainingActions: () => T[];
 }
 
-export type Convertor<T> = (action: T, results: ExecutionStep[], utils: Utils<T>, external: Record<string, any>, actionConversionMap: ActionConvertorList) => Promise<ConvertBehavior | void>;
+export type Convertor<T> = (action: T, results: ExecutionStep[], utils: Utils<T>, external: Record<string, any>, convertorSet: ConvertorSet) => Promise<ConvertBehavior | void>;

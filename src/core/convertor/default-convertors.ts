@@ -1,33 +1,35 @@
-import { convertActionsProperty } from "./actions-convertor";
-import { convertConditionProperty } from "./condition-convertor";
-import { ActionConvertorList } from "./convert-action";
-import { convertExternalCallProperty } from "./convert-external-call";
-import { convertDelayProperty, convertLockProperty, convertPauseProperty } from "./convert-pause";
-import { convertDefaultValuesProperty, convertSetProperty, convertSetsProperty } from "./convert-set";
-import { convertHooksProperty } from "./hooks-convertor";
-import { convertLogProperty } from "./log-convertor";
-import { convertLoopEachProperty, convertLoopProperty } from "./loop-convertor";
-import { convertParametersProperty } from "./parameters-convertor";
-import { convertRefreshProperty } from "./refresh-convertor";
-import { convertScriptProperty } from "./script-convertor";
+import { ConvertorSet } from "./Convertor";
+import { convertActionsProperty } from "./actions/actions-convertor";
+import { convertConditionProperty } from "./actions/condition-convertor";
+import { convertExternalCallProperty } from "./actions/convert-external-call";
+import { convertDelayProperty, convertLockProperty, convertPauseProperty } from "./actions/convert-pause";
+import { convertDefaultValuesProperty, convertSetProperty, convertSetsProperty } from "./actions/convert-set";
+import { convertHooksProperty } from "./actions/hooks-convertor";
+import { convertLogProperty } from "./actions/log-convertor";
+import { convertLoopEachProperty, convertLoopProperty } from "./actions/loop-convertor";
+import { convertParametersProperty } from "./actions/parameters-convertor";
+import { convertRefreshProperty } from "./actions/refresh-convertor";
+import { convertScriptProperty } from "./actions/script-convertor";
 
-export function getDefaultConvertors(): ActionConvertorList {
-    return [
-        convertHooksProperty,
-        convertParametersProperty,
-        convertDefaultValuesProperty,
-        convertRefreshProperty,
-        convertLoopEachProperty,
-        convertLoopProperty,
-        convertConditionProperty,
-        convertDelayProperty,
-        convertPauseProperty,
-        convertLockProperty,
-        convertSetProperty,
-        convertSetsProperty,
-        convertLogProperty,
-        convertExternalCallProperty,
-        convertScriptProperty,
-        convertActionsProperty,
-    ];
+export function getDefaultConvertors(): ConvertorSet {
+    return {
+        actionsConvertor: [
+            convertHooksProperty,
+            convertParametersProperty,
+            convertDefaultValuesProperty,
+            convertRefreshProperty,
+            convertLoopEachProperty,
+            convertLoopProperty,
+            convertConditionProperty,
+            convertDelayProperty,
+            convertPauseProperty,
+            convertLockProperty,
+            convertSetProperty,
+            convertSetsProperty,
+            convertLogProperty,
+            convertExternalCallProperty,
+            convertScriptProperty,
+            convertActionsProperty,
+        ],
+    };
 }

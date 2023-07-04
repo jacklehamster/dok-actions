@@ -3,7 +3,7 @@ import { ScriptAction } from "../actions/ScriptAction";
 import { Context, createContext } from "../context/Context";
 import { LogAction } from "../actions/LogAction";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
-import { convertAction, convertScripts, executeScript } from "./convert-action";
+import { convertAction, convertScripts, executeScript } from "./actions/convert-action";
 import { Resolution } from "../resolutions/Resolution";
 import { calculateResolution } from "../resolutions/calculate";
 import { DokAction } from "../actions/Action";
@@ -253,8 +253,8 @@ describe('convertor', () => {
                     },
                 ],
             },
-        ], {}, [
-            ...getDefaultConvertors(),
+        ], {}, { actionsConvertor: [
+            ...getDefaultConvertors().actionsConvertor,
             async (action, results) => {
                 if (!action.custom) {
                     return;
@@ -263,7 +263,7 @@ describe('convertor', () => {
                 const resolutions = messages.map(m => calculateResolution(m));
                 results.push((parameters) => custom(...resolutions.map(r => r?.valueOf(parameters))));
             },
-        ], {refreshSteps, stopRefresh});
+        ]}, {refreshSteps, stopRefresh});
         expect(custom).toBeCalledWith("hello", "test", "sub2");        
     });
 });

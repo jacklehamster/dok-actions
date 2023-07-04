@@ -1,5 +1,6 @@
 import { Context, createContext } from "../context/Context";
-import { ActionConvertorList, convertScripts } from "../convertor/convert-action";
+import { ConvertorSet } from "../convertor/Convertor";
+import { convertScripts } from "../convertor/actions/convert-action";
 import { getDefaultConvertors } from "../convertor/default-convertors";
 import { DEFAULT_EXTERNALS } from "../convertor/default-externals";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
@@ -20,12 +21,12 @@ export class ScriptProcessor<T, E = {}> {
     private scripts: Script<T>[];
     private scriptMap?: Map<Script<T>, ExecutionStep[]>;
     private external: (E|{}) & typeof DEFAULT_EXTERNALS;
-    private actionConversionMap: ActionConvertorList;
+    private convertorSet: ConvertorSet;
     private refreshCleanups: Record<string, () => void> = {};
 
-    constructor(scripts: Script<T>[], external = {}, actionConversionMap: ActionConvertorList = getDefaultConvertors()) {
+    constructor(scripts: Script<T>[], external = {}, convertorSet: ConvertorSet = getDefaultConvertors()) {
         this.scripts = scripts;
-        this.actionConversionMap = actionConversionMap;
+        this.convertorSet = convertorSet;
         this.external = {...DEFAULT_EXTERNALS, ...external};
     }
 
@@ -40,7 +41,7 @@ export class ScriptProcessor<T, E = {}> {
 
     private async fetchScripts(): Promise<Map<Script<T>, ExecutionStep[]>> {
         if (!this.scriptMap) {
-            this.scriptMap = await convertScripts(this.scripts, this.external, this.actionConversionMap, {
+            this.scriptMap = await convertScripts(this.scripts, this.external, this.convertorSet, {
                 refreshSteps: this.refreshSteps.bind(this),
                 stopRefresh: this.stopRefresh.bind(this),
             });
