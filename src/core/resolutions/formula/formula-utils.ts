@@ -1,5 +1,5 @@
 import { Resolution } from "../Resolution";
-import { Expression, FORMULA_SEPERATORS, Formula } from "./Formula";
+import { FORMULA_SEPERATORS, Formula } from "./Formula";
 
 export function hasFormula(resolution: Resolution): boolean {
     if (isFormula(resolution)) {
@@ -14,7 +14,7 @@ export function hasFormula(resolution: Resolution): boolean {
     return false;
 }
 
-export function isFormula(value: Formula | Expression | any) {
+export function isFormula(value: Formula | any) {
     if (!value) {
         return false;
     }
@@ -31,8 +31,7 @@ interface FormulaChunk {
     textSuffix: string;
 }
 
-export function getInnerFormulas(value: Formula | Expression | any): FormulaChunk[] {
-    const formula: string = typeof(value) === "string" ? value : value.formula;
+export function getInnerFormulas(formula: Formula): FormulaChunk[] {
     const [startCharacter, prefix, suffix] = FORMULA_SEPERATORS;
 
     //  parse formulas out. Formulas have format like this: ~{formula}text{formula}.

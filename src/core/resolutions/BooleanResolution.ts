@@ -1,3 +1,3 @@
-import { Expression, Formula } from "./formula/Formula";
+import { Formula } from "./formula/Formula";
 
-export type BooleanResolution = boolean | Formula | Expression | undefined;
+export type BooleanResolution = boolean | Formula | undefined;

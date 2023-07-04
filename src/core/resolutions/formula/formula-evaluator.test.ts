@@ -20,11 +20,6 @@ describe('getFormulaEvaluator', () => {
         expect(evaluator.evaluate()).toEqual(13);
     });
 
-    it('should properly get evaluator with expression', () => {
-        const evaluator = getFormulaEvaluator({ formula: "~{3 + x}" });
-        expect(evaluator.evaluate({x: 4})).toEqual(7);
-    });
-
     it('should evaluate a template with formula and text', () => {
         const evaluator = getFormulaEvaluator("~prefix-{3 + 100}-suffix");
         expect(evaluator.evaluate()).toEqual("prefix-103-suffix")

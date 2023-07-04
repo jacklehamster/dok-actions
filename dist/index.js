@@ -470,8 +470,7 @@ function isFormula(value) {
     suffix = _FORMULA_SEPERATORS$m[2];
   return startCharacter === 0 && prefix > startCharacter && suffix > prefix;
 }
-function getInnerFormulas(value) {
-  var formula = typeof value === "string" ? value : value.formula;
+function getInnerFormulas(formula) {
   var startCharacter = FORMULA_SEPERATORS[0],
     prefix = FORMULA_SEPERATORS[1],
     suffix = FORMULA_SEPERATORS[2];

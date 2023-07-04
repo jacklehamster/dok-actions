@@ -1,9 +1,9 @@
 import * as math from "mathjs";
-import { Expression, FORMULA_SEPERATORS, Formula } from "./Formula";
+import { FORMULA_SEPERATORS, Formula } from "./Formula";
 import { getInnerFormulas, isFormula, isSimpleInnerFormula } from "./formula-utils";
 import { ExecutionParameters } from "../../execution/ExecutionStep";
 
-export function calculateEvaluator<T>(evaluator: math.EvalFunction, parameters: ExecutionParameters = {}, formula: Formula | Expression, defaultValue: T): T {
+export function calculateEvaluator<T>(evaluator: math.EvalFunction, parameters: ExecutionParameters = {}, formula: Formula, defaultValue: T): T {
     const scope = parameters;
     try {
         return evaluator.evaluate(scope ?? {}) ?? defaultValue;
@@ -30,7 +30,7 @@ function getEvaluator(formula: string): math.EvalFunction {
     return mathEvaluator;    
 }
 
-export function getFormulaEvaluator(value: Formula | Expression): math.EvalFunction {
+export function getFormulaEvaluator(value: Formula): math.EvalFunction {
     if (!isFormula(value)) {
         throw new Error(`Formula: ${value} must match the format: "${FORMULA_SEPERATORS[0]}formula${FORMULA_SEPERATORS[1]}".`);
     }

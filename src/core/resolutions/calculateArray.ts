@@ -2,7 +2,7 @@ import { ValueOf } from "../types/ValueOf";
 import { ArrayResolution } from "./ArrayResolution";
 import { calculateResolution } from "./calculate";
 import { calculateEvaluator, getFormulaEvaluator } from "./formula/formula-evaluator";
-import { Expression, Formula } from "./formula/Formula";
+import { Formula } from "./formula/Formula";
 import { Resolution } from "./Resolution";
 import { SupportedTypes } from "./SupportedTypes";
 import { hasFormula, isFormula } from "./formula/formula-utils";
@@ -21,7 +21,7 @@ export function calculateArray(value: ArrayResolution): ValueOf<SupportedTypes[]
         return undefined;
     }
     if (isFormula(value)) {
-        const formula = value as (Formula|Expression);
+        const formula = value as Formula;
         const evaluator = getFormulaEvaluator(formula);
         return {
             valueOf(parameters: ExecutionParameters): SupportedTypes[] | undefined {
