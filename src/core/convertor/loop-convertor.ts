@@ -92,7 +92,7 @@ export async function convertLoopEachProperty<T>(
                 parameters.index = i;
                 parameters.element = array[i];
                 execute(subStepResults, parameters, context);
-            }    
+            }
         }
     });
     return ConvertBehavior.SKIP_REMAINING_CONVERTORS;

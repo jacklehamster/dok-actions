@@ -88,19 +88,42 @@ describe('loop convertor', () => {
         const results: ExecutionStep[] = [];
         await convertLoopEachProperty<ActionsAction<LogAction>>({
                 loopEach: [
-                    {
-                        a: 123
-                    },
-                    {
-                        a: 456,
-                    },
-                    {
-                        a: 789,
-                    },
+                    { a: 123 },
+                    { a: 456 },
+                    { a: 789 },
                 ],
                 actions: [
                     {
                         log: "~{element}",
+                    },    
+                ],
+            },
+            results,
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
+            { log },
+            getDefaultConvertors(),
+        );
+        execute(results);
+        expect(log).toBeCalledWith({ a: 123 });
+        expect(log).toBeCalledWith({ a: 456 });
+        expect(log).toBeCalledWith({ a: 789 });
+    });
+
+    it('converts nested loopEach', async () => {
+        const results: ExecutionStep[] = [];
+        await convertLoopEachProperty<ActionsAction<LogAction>>({
+                loopEach: [
+                    [{ a: 123 },{ a: 456 }],
+                    [{ a: 789 }]
+                ],
+                actions: [
+                    {
+                        loopEach: "~{element}",
+                        actions: [
+                            {
+                                log: "~{element}",
+                            }
+                        ],
                     },    
                 ],
             },
