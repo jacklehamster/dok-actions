@@ -65,6 +65,24 @@ var DEFAULT_EXTERNALS = {
   fetch: global.fetch
 };
 
+var ObjectPool = /*#__PURE__*/function () {
+  function ObjectPool(factory, cleanup) {
+    this.pool = [];
+    this.factory = factory;
+    this.cleanup = cleanup;
+  }
+  var _proto = ObjectPool.prototype;
+  _proto.generate = function generate() {
+    var _this$pool$pop;
+    return (_this$pool$pop = this.pool.pop()) != null ? _this$pool$pop : this.factory();
+  };
+  _proto.recycle = function recycle(value) {
+    this.cleanup(value);
+    this.pool.push(value);
+  };
+  return ObjectPool;
+}();
+
 function createContext(_temp) {
   var _ref = _temp === void 0 ? {} : _temp,
     _ref$parameters = _ref.parameters,
@@ -72,7 +90,13 @@ function createContext(_temp) {
     _ref$cleanupActions = _ref.cleanupActions,
     cleanupActions = _ref$cleanupActions === void 0 ? [] : _ref$cleanupActions,
     _ref$objectPool = _ref.objectPool,
-    objectPool = _ref$objectPool === void 0 ? [] : _ref$objectPool,
+    objectPool = _ref$objectPool === void 0 ? new ObjectPool(function () {
+      return {};
+    }, function (value) {
+      for (var k in value) {
+        delete value[k];
+      }
+    }) : _ref$objectPool,
     _ref$postActionListen = _ref.postActionListener,
     postActionListener = _ref$postActionListen === void 0 ? new Set() : _ref$postActionListen,
     _ref$external = _ref.external,
@@ -422,21 +446,14 @@ var convertAction = function convertAction(action, stepResults, utils, external,
 };
 
 function newParams(parameters, context) {
-  var _context$objectPool$p, _context$objectPool;
-  var params = (_context$objectPool$p = (_context$objectPool = context.objectPool) === null || _context$objectPool === void 0 ? void 0 : _context$objectPool.pop()) != null ? _context$objectPool$p : {};
-  if (parameters) {
-    for (var k in parameters) {
-      params[k] = parameters[k];
-    }
+  var params = context.objectPool.generate();
+  for (var k in parameters) {
+    params[k] = parameters[k];
   }
   return params;
 }
 function recycleParams(params, context) {
-  var _context$objectPool2;
-  for (var k in params) {
-    delete params[k];
-  }
-  (_context$objectPool2 = context.objectPool) === null || _context$objectPool2 === void 0 ? void 0 : _context$objectPool2.push(params);
+  context.objectPool.recycle(params);
 }
 
 var FORMULA_SEPERATORS = ["~", "{", "}"];
@@ -1496,5 +1513,5 @@ var ScriptProcessor = /*#__PURE__*/function () {
   return ScriptProcessor;
 }();
 
-export { ConvertBehavior, DEFAULT_EXTERNALS, FORMULA_SEPERATORS, ScriptProcessor, calculateArray, calculateBoolean, calculateEvaluator, calculateNumber, calculateResolution, calculateString, calculateTypedArray, convertAction, convertScripts, createContext, execute, executeAction, executeScript, filterScripts, getDefaultConvertors, getFormulaEvaluator, getInnerFormulas, hasFormula, isFormula, isSimpleInnerFormula, newParams, recycleParams };
+export { ConvertBehavior, DEFAULT_EXTERNALS, FORMULA_SEPERATORS, ObjectPool, ScriptProcessor, calculateArray, calculateBoolean, calculateEvaluator, calculateNumber, calculateResolution, calculateString, calculateTypedArray, convertAction, convertScripts, createContext, execute, executeAction, executeScript, filterScripts, getDefaultConvertors, getFormulaEvaluator, getInnerFormulas, hasFormula, isFormula, isSimpleInnerFormula, newParams, recycleParams };
 //# sourceMappingURL=index.modern.js.map

@@ -1,5 +1,6 @@
 import { DEFAULT_EXTERNALS } from "../convertor/default-externals";
 import { ExecutionParameters, ExecutionStep } from "../execution/ExecutionStep";
+import { ObjectPool } from "./ObjectPool";
 
 export interface ExecutionWithParams {
     steps: ExecutionStep[];
@@ -9,7 +10,7 @@ export interface ExecutionWithParams {
 export interface Context<E = {}> {
     parameters: ExecutionParameters[];
     cleanupActions:(() => void)[];
-    objectPool: ExecutionParameters[];
+    objectPool: ObjectPool<ExecutionParameters>;
     postActionListener: Set<ExecutionWithParams>;
     external: (E|{}) & typeof DEFAULT_EXTERNALS;
     locked: boolean;
@@ -18,13 +19,17 @@ export interface Context<E = {}> {
 export function createContext<E>({
         parameters = [],
         cleanupActions = [],
-        objectPool = [],
+        objectPool = new ObjectPool<ExecutionParameters>(() => ({}), value => {
+            for (let k in value) {
+                delete value[k];
+            }
+        }),
         postActionListener = new Set(),
         external = {},
 }: {
     parameters?: ExecutionParameters[];
     cleanupActions?:(() => void)[];
-    objectPool?: ExecutionParameters[];
+    objectPool?: ObjectPool<ExecutionParameters>;
     postActionListener?: Set<ExecutionWithParams>;
     external?: E | {};
 } = {}): Context<E|{}> {

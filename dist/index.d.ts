@@ -7,6 +7,7 @@ export * from "./core/actions/LogAction";
 export * from "./core/actions/PauseAction";
 export * from "./core/actions/ReferenceAction";
 export * from "./core/context/Context";
+export * from "./core/context/ObjectPool";
 export * from "./core/convertor/Convertor";
 export * from "./core/convertor/actions/convert-action";
 export * from "./core/convertor/actions/parameter-utils";
