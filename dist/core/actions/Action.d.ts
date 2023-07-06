@@ -1,4 +1,5 @@
 import { ActionsAction } from "./ActionsAction";
+import { ExternalAction } from "./ExternalAction";
 import { HookAction } from "./HookAction";
 import { LogAction } from "./LogAction";
 import { LogicAction } from "./LogicAction";
@@ -7,4 +8,4 @@ import { ReferenceAction } from "./ReferenceAction";
 import { RefreshAction } from "./RefreshAction";
 import { ScriptAction } from "./ScriptAction";
 import { SetAction } from "./SetAction";
-export declare type DokAction<T = {}> = ScriptAction & LogAction & ActionsAction<T> & LogicAction & PauseAction & HookAction & ReferenceAction & RefreshAction & SetAction;
+export declare type DokAction<T = {}> = ScriptAction & LogAction & ActionsAction<T> & LogicAction & PauseAction & HookAction & ReferenceAction & RefreshAction & SetAction & ExternalAction;
