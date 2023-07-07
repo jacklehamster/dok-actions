@@ -896,7 +896,7 @@ var convertExternalCallProperty = function convertExternalCallProperty(action, r
         var method = methodResolution === null || methodResolution === void 0 ? void 0 : methodResolution.valueOf(parameters);
         var m = s[method];
         if (typeof m === "function") {
-          m.apply(void 0, argsValues.map(function (r) {
+          m.apply(s, argsValues.map(function (r) {
             return r === null || r === void 0 ? void 0 : r.valueOf(parameters);
           }));
         }

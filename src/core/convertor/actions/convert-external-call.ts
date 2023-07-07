@@ -25,7 +25,7 @@ export async function convertExternalCallProperty<T>(
             const method = methodResolution?.valueOf(parameters);
             const m = s[method];
             if (typeof(m) === "function") {
-                m(...argsValues.map(r => r?.valueOf(parameters)));
+                m.apply(s, argsValues.map(r => r?.valueOf(parameters)));
             }    
         }
     });
