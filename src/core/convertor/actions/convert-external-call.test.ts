@@ -19,12 +19,42 @@ describe('external convertor', () => {
         );
         await convertExternalCallProperty({
                 callExternal: {
-                    method: "~{fun}",
+                    method: "fun",
                     arguments: "fun-test",
                 },
             },
-            results);
+            results,
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
+            { fun },
+        );
         execute(results);
         expect(fun).toBeCalledWith("fun-test");
     });
+
+    it('convert external call with subject', async () => {
+        const subject = {
+            fun,
+        };
+        const results: ExecutionStep[] = [];
+        await convertHooksProperty({
+                hooks: ["subject"],
+            },
+            results,
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
+            { subject },
+        );
+        await convertExternalCallProperty({
+                callExternal: {
+                    subject: "~{subject}",
+                    method: "fun",
+                    arguments: "fun-test",
+                },
+            },
+            results,
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
+            { fun },
+        );
+        execute(results);
+        expect(fun).toBeCalledWith("fun-test");
+    });    
 });
