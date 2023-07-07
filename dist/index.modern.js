@@ -841,24 +841,30 @@ var convertConditionProperty = function convertConditionProperty(action, results
   }
 };
 
-var convertExternalCallProperty = function convertExternalCallProperty(action, results) {
+var convertExternalCallProperty = function convertExternalCallProperty(action, results, _, external) {
   try {
     if (action.callExternal === undefined) {
       return Promise.resolve();
     }
     var callExternal = action.callExternal;
-    var methodResolution = calculateResolution(callExternal.method);
+    var subjectResolution = calculateResolution(callExternal.subject);
+    var methodResolution = calculateString(callExternal.method);
     var args = !callExternal.arguments ? [] : Array.isArray(callExternal.arguments) ? callExternal.arguments : [callExternal.arguments];
     var argsValues = args.map(function (m) {
       return calculateResolution(m);
     });
     results.push(function (parameters) {
-      var method = methodResolution === null || methodResolution === void 0 ? void 0 : methodResolution.valueOf(parameters);
-      if (typeof method === "function") {
-        var m = method;
-        m.apply(void 0, argsValues.map(function (r) {
-          return r === null || r === void 0 ? void 0 : r.valueOf(parameters);
-        }));
+      var _subjectResolution$va;
+      var subject = (_subjectResolution$va = subjectResolution === null || subjectResolution === void 0 ? void 0 : subjectResolution.valueOf(parameters)) != null ? _subjectResolution$va : external;
+      if (subject && typeof subject === "object" && !Array.isArray(subject)) {
+        var s = subject;
+        var method = methodResolution === null || methodResolution === void 0 ? void 0 : methodResolution.valueOf(parameters);
+        var m = s[method];
+        if (typeof m === "function") {
+          m.apply(void 0, argsValues.map(function (r) {
+            return r === null || r === void 0 ? void 0 : r.valueOf(parameters);
+          }));
+        }
       }
     });
     return Promise.resolve();
