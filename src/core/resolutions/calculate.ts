@@ -6,6 +6,8 @@ import { SupportedTypes } from "./SupportedTypes";
 import { calculateMap } from "./calculateMap";
 import { isFormula } from "./formula/formula-utils";
 import { ExecutionParameters } from "../execution/ExecutionStep";
+import { calculateObject } from "./calculateObjectResolution";
+import { ObjectResolution } from "./ObjectResolution";
 
 export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> | undefined | null {
     if (!value) {
@@ -30,6 +32,9 @@ export function calculateResolution(value: Resolution): ValueOf<SupportedTypes> 
         return calculateArray(value);
     }
     if (typeof(value) === "object") {
+        if (value.subject) {
+            return calculateObject(value as ObjectResolution);
+        }
         return calculateMap(value);
     }
     const evaluator = getFormulaEvaluator(value);

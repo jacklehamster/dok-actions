@@ -1,2 +1,2 @@
-export declare const FORMULA_SEPERATORS: string[];
+export declare const FORMULA_SEPARATORS: string[];
 export declare type Formula = string;

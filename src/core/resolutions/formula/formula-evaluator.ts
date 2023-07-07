@@ -1,5 +1,5 @@
 import * as math from "mathjs";
-import { FORMULA_SEPERATORS, Formula } from "./Formula";
+import { FORMULA_SEPARATORS, Formula } from "./Formula";
 import { getInnerFormulas, isFormula, isSimpleInnerFormula } from "./formula-utils";
 import { ExecutionParameters } from "../../execution/ExecutionStep";
 
@@ -32,7 +32,7 @@ function getEvaluator(formula: string): math.EvalFunction {
 
 export function getFormulaEvaluator(value: Formula): math.EvalFunction {
     if (!isFormula(value)) {
-        throw new Error(`Formula: ${value} must match the format: "${FORMULA_SEPERATORS[0]}formula${FORMULA_SEPERATORS[1]}".`);
+        throw new Error(`Formula: ${value} must match the format: "${FORMULA_SEPARATORS[0]}formula${FORMULA_SEPARATORS[1]}".`);
     }
     const values = getInnerFormulas(value);
     if (values.length === 1 && !values[0].textSuffix.length) {

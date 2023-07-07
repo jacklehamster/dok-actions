@@ -455,7 +455,7 @@ function recycleParams(params, context) {
   context.objectPool.recycle(params);
 }
 
-var FORMULA_SEPERATORS = ["~", "{", "}"];
+var FORMULA_SEPARATORS = ["~", "{", "}"];
 
 function hasFormula(resolution) {
   if (isFormula(resolution)) {
@@ -479,18 +479,18 @@ function isFormula(value) {
     return false;
   }
   var formula = typeof value === "string" ? value : value.formula;
-  var _FORMULA_SEPERATORS$m = FORMULA_SEPERATORS.map(function (_char) {
+  var _FORMULA_SEPARATORS$m = FORMULA_SEPARATORS.map(function (_char) {
       return formula === null || formula === void 0 ? void 0 : formula.indexOf(_char);
     }),
-    startCharacter = _FORMULA_SEPERATORS$m[0],
-    prefix = _FORMULA_SEPERATORS$m[1],
-    suffix = _FORMULA_SEPERATORS$m[2];
+    startCharacter = _FORMULA_SEPARATORS$m[0],
+    prefix = _FORMULA_SEPARATORS$m[1],
+    suffix = _FORMULA_SEPARATORS$m[2];
   return startCharacter === 0 && prefix > startCharacter && suffix > prefix;
 }
 function getInnerFormulas(formula) {
-  var startCharacter = FORMULA_SEPERATORS[0],
-    prefix = FORMULA_SEPERATORS[1],
-    suffix = FORMULA_SEPERATORS[2];
+  var startCharacter = FORMULA_SEPARATORS[0],
+    prefix = FORMULA_SEPARATORS[1],
+    suffix = FORMULA_SEPARATORS[2];
   return formula.substring(startCharacter.length).split(prefix).map(function (chunk, index) {
     if (index === 0) {
       return {
@@ -550,7 +550,7 @@ function getEvaluator(formula) {
 }
 function getFormulaEvaluator(value) {
   if (!isFormula(value)) {
-    throw new Error("Formula: " + value + " must match the format: \"" + FORMULA_SEPERATORS[0] + "formula" + FORMULA_SEPERATORS[1] + "\".");
+    throw new Error("Formula: " + value + " must match the format: \"" + FORMULA_SEPARATORS[0] + "formula" + FORMULA_SEPARATORS[1] + "\".");
   }
   var values = getInnerFormulas(value);
   if (values.length === 1 && !values[0].textSuffix.length) {
@@ -648,6 +648,39 @@ function calculateMap(value) {
   };
 }
 
+function calculateObject(value) {
+  var _value$access;
+  var subject = calculateResolution(value.subject);
+  var access = ((_value$access = value.access) != null ? _value$access : []).map(function (key) {
+    return calculateResolution(key);
+  });
+  return {
+    valueOf: function valueOf(parameters) {
+      var node = subject === null || subject === void 0 ? void 0 : subject.valueOf(parameters);
+      var keys = access.map(function (key) {
+        return key === null || key === void 0 ? void 0 : key.valueOf(parameters);
+      });
+      for (var _iterator = _createForOfIteratorHelperLoose(keys), _step; !(_step = _iterator()).done;) {
+        var key = _step.value;
+        if (Array.isArray(node)) {
+          if (typeof key === "number") {
+            var _node;
+            node = (_node = node) === null || _node === void 0 ? void 0 : _node[key];
+          } else {
+            return undefined;
+          }
+        } else if (typeof key === "string" && typeof node === "object") {
+          var _node2;
+          node = (_node2 = node) === null || _node2 === void 0 ? void 0 : _node2[key];
+        } else {
+          return undefined;
+        }
+      }
+      return node;
+    }
+  };
+}
+
 function calculateResolution(value) {
   if (!value) {
     return {
@@ -669,6 +702,9 @@ function calculateResolution(value) {
     return calculateArray(value);
   }
   if (typeof value === "object") {
+    if (value.subject) {
+      return calculateObject(value);
+    }
     return calculateMap(value);
   }
   var evaluator = getFormulaEvaluator(value);
@@ -1519,7 +1555,7 @@ var ScriptProcessor = /*#__PURE__*/function () {
 }();
 
 exports.DEFAULT_EXTERNALS = DEFAULT_EXTERNALS;
-exports.FORMULA_SEPERATORS = FORMULA_SEPERATORS;
+exports.FORMULA_SEPARATORS = FORMULA_SEPARATORS;
 exports.ObjectPool = ObjectPool;
 exports.ScriptProcessor = ScriptProcessor;
 exports.calculateArray = calculateArray;
