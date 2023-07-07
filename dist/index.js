@@ -840,22 +840,22 @@ var convertConditionProperty = function convertConditionProperty(action, results
   }
 };
 
-var convertExternalCallProperty = function convertExternalCallProperty(action, results, _, external) {
+var convertExternalCallProperty = function convertExternalCallProperty(action, results) {
   try {
     if (action.callExternal === undefined) {
       return Promise.resolve();
     }
     var callExternal = action.callExternal;
-    var nameResolution = calculateString(callExternal.name);
+    var methodResolution = calculateResolution(callExternal.method);
     var args = !callExternal.arguments ? [] : Array.isArray(callExternal.arguments) ? callExternal.arguments : [callExternal.arguments];
-    var resolutions = args.map(function (m) {
+    var argsValues = args.map(function (m) {
       return calculateResolution(m);
     });
     results.push(function (parameters) {
-      var name = nameResolution.valueOf(parameters);
-      var fun = external[name];
-      if (typeof fun === "function") {
-        fun.apply(void 0, resolutions.map(function (r) {
+      var method = methodResolution === null || methodResolution === void 0 ? void 0 : methodResolution.valueOf(parameters);
+      if (typeof method === "function") {
+        var m = method;
+        m.apply(void 0, argsValues.map(function (r) {
           return r === null || r === void 0 ? void 0 : r.valueOf(parameters);
         }));
       }

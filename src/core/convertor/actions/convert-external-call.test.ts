@@ -1,5 +1,6 @@
 import { ExecutionStep, execute } from "../../execution/ExecutionStep";
 import { convertExternalCallProperty } from "./convert-external-call";
+import { convertHooksProperty } from "./hooks-convertor";
 
 describe('external convertor', () => {
     const fun = jest.fn();
@@ -9,16 +10,20 @@ describe('external convertor', () => {
     const stopRefresh = jest.fn();
     it('convert external call', async () => {
         const results: ExecutionStep[] = [];
-        await convertExternalCallProperty({
-                callExternal: {
-                    name: "fun",
-                    arguments: "fun-test",
-                },
+        await convertHooksProperty({
+                hooks: ["fun"],
             },
             results,
             {getSteps, getRemainingActions, refreshSteps, stopRefresh},
             { fun },
         );
+        await convertExternalCallProperty({
+                callExternal: {
+                    method: "~{fun}",
+                    arguments: "fun-test",
+                },
+            },
+            results);
         execute(results);
         expect(fun).toBeCalledWith("fun-test");
     });
