@@ -80,7 +80,9 @@ describe('ScriptProcesor', () => {
                 results.push((parameters) => mock(resolution.valueOf(parameters)));
             },
         ]});
-        await processor.refreshByName("main");
+        await processor.refreshByName("main", {
+            frameRate: 60,
+        });
         
         executeAnimationFrame(123);
         expect(mock).toBeCalledWith(123);
@@ -107,7 +109,9 @@ describe('ScriptProcesor', () => {
                 results.push((parameters) => mock(resolution.valueOf(parameters)));
             },
         ]});
-        await processor.refreshByTags([]);
+        await processor.refreshByTags([], {
+            frameRate: 60,
+        });
         
         executeAnimationFrame(123);
         expect(mock).toBeCalledWith(1123);

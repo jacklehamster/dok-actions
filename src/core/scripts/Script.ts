@@ -1,10 +1,10 @@
-import { DokAction } from "../actions/Action";
+import { ActionList } from "../actions/ActionsAction";
 
 export type Tag = string|[string, string|number|boolean];
 
 export interface Script<T> {
     name?: string;
-    actions: (T & DokAction<T>)[];
+    actions: ActionList<T>;
     tags?: Tag[];
 }
 

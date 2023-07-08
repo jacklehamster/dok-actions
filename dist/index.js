@@ -1,4 +1,5 @@
 var math = require('mathjs');
+var uuid = require('uuid');
 
 function _extends() {
   _extends = Object.assign ? Object.assign.bind() : function (target) {
@@ -835,22 +836,72 @@ function calculateTypedArray(value, ArrayConstructor) {
   };
 }
 
+var _excluded = ["refresh"];
+var convertRefreshProperty = function convertRefreshProperty(action, stepResults, utils, external, convertorSet) {
+  try {
+    if (!action.refresh) {
+      return Promise.resolve();
+    }
+    var refresh = action.refresh,
+      subAction = _objectWithoutPropertiesLoose(action, _excluded);
+    var subStepResults = [];
+    var processIdValue = calculateString(refresh.processId, "");
+    var stop = calculateBoolean(refresh.stop);
+    var cleanupAfterRefresh = calculateBoolean(refresh.cleanupAfterRefresh);
+    var frameRate = calculateNumber(refresh.frameRate, DEFAULT_REFRESH_FRAME_RATE);
+    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, convertorSet)).then(function () {
+      stepResults.push(function (parameters, context) {
+        if (stop.valueOf(parameters)) {
+          utils.stopRefresh(processIdValue.valueOf(parameters));
+        } else {
+          var _utils$refreshSteps = utils.refreshSteps(subStepResults, {
+              cleanupAfterRefresh: cleanupAfterRefresh.valueOf(parameters),
+              frameRate: frameRate.valueOf(parameters),
+              parameters: parameters
+            }, processIdValue.valueOf(parameters)),
+            cleanup = _utils$refreshSteps.cleanup,
+            processId = _utils$refreshSteps.processId;
+          parameters.processId = processId;
+          context.cleanupActions.push(cleanup);
+        }
+      });
+      return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+var DEFAULT_REFRESH_FRAME_RATE = 1;
+
 var convertActionsProperty = function convertActionsProperty(action, results, utils, external, convertorSet) {
   try {
     var _action$actions;
     if (!((_action$actions = action.actions) !== null && _action$actions !== void 0 && _action$actions.length)) {
       return Promise.resolve();
     }
-    var _temp = _forOf(action.actions, function (a) {
-      return Promise.resolve(convertAction(a, results, utils, external, convertorSet)).then(function () {});
-    });
-    return Promise.resolve(_temp && _temp.then ? _temp.then(function () {}) : void 0);
+    return Promise.resolve(convertActions(action.actions, results, utils, external, convertorSet)).then(function () {});
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+var convertActions = function convertActions(actions, results, utils, external, convertorSet) {
+  try {
+    return Promise.resolve(_forOf(actions, function (a) {
+      var _temp = function () {
+        if (Array.isArray(a)) {
+          return Promise.resolve(convertActions(a, results, utils, external, convertorSet)).then(function () {});
+        } else {
+          return Promise.resolve(convertAction(a, results, utils, external, convertorSet)).then(function () {});
+        }
+      }();
+      if (_temp && _temp.then) return _temp.then(function () {});
+    }));
   } catch (e) {
     return Promise.reject(e);
   }
 };
 
-var _excluded = ["condition"];
+var _excluded$1 = ["condition"];
 var convertConditionProperty = function convertConditionProperty(action, results, utils, external, convertorSet) {
   try {
     if (action.condition === undefined) {
@@ -860,7 +911,7 @@ var convertConditionProperty = function convertConditionProperty(action, results
       return Promise.resolve(exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS);
     }
     var condition = action.condition,
-      subAction = _objectWithoutPropertiesLoose(action, _excluded);
+      subAction = _objectWithoutPropertiesLoose(action, _excluded$1);
     var conditionResolution = calculateBoolean(condition);
     var subStepResults = [];
     return Promise.resolve(convertAction(subAction, subStepResults, utils, external, convertorSet)).then(function () {
@@ -908,7 +959,7 @@ var convertExternalCallProperty = function convertExternalCallProperty(action, r
   }
 };
 
-var _excluded$1 = ["delay"],
+var _excluded$2 = ["delay"],
   _excluded2 = ["pause"],
   _excluded3 = ["lock", "unlock"];
 var convertLockProperty = function convertLockProperty(action, results, utils, external, convertorSet) {
@@ -1013,7 +1064,7 @@ var convertDelayProperty = function convertDelayProperty(action, results, utils,
       return Promise.resolve();
     }
     var delay = action.delay,
-      subAction = _objectWithoutPropertiesLoose(action, _excluded$1);
+      subAction = _objectWithoutPropertiesLoose(action, _excluded$2);
     var delayAmount = calculateNumber(delay);
     var postStepResults = [];
     var remainingActions = utils.getRemainingActions();
@@ -1204,7 +1255,7 @@ var convertLogProperty = function convertLogProperty(action, results, _, externa
   }
 };
 
-var _excluded$2 = ["loop"],
+var _excluded$3 = ["loop"],
   _excluded3$1 = ["loopEach"];
 var convertLoopEachProperty = function convertLoopEachProperty(action, stepResults, utils, external, convertorSet) {
   try {
@@ -1241,7 +1292,7 @@ var convertLoopProperty = function convertLoopProperty(action, stepResults, util
       return Promise.resolve(exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS);
     }
     var loop = action.loop,
-      subAction = _objectWithoutPropertiesLoose(action, _excluded$2);
+      subAction = _objectWithoutPropertiesLoose(action, _excluded$3);
     var loops = Array.isArray(loop) ? loop : [loop];
     if (!loops.length) {
       return Promise.resolve(exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS);
@@ -1278,14 +1329,14 @@ function keepLooping(parameters, context, loops, steps, depth) {
   }
 }
 
-var _excluded$3 = ["parameters"];
+var _excluded$4 = ["parameters"];
 var convertParametersProperty = function convertParametersProperty(action, results, utils, external, convertorSet) {
   try {
     if (!action.parameters) {
       return Promise.resolve();
     }
     var parameters = action.parameters,
-      subAction = _objectWithoutPropertiesLoose(action, _excluded$3);
+      subAction = _objectWithoutPropertiesLoose(action, _excluded$4);
     var paramEntries = Object.entries(parameters != null ? parameters : {}).map(function (_ref) {
       var key = _ref[0],
         resolution = _ref[1];
@@ -1303,39 +1354,6 @@ var convertParametersProperty = function convertParametersProperty(action, resul
         }
         execute(subStepResults, paramValues, context);
         recycleParams(paramValues, context);
-      });
-      return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
-    });
-  } catch (e) {
-    return Promise.reject(e);
-  }
-};
-
-var _excluded$4 = ["refresh"];
-var convertRefreshProperty = function convertRefreshProperty(action, stepResults, utils, external, convertorSet) {
-  try {
-    if (!action.refresh) {
-      return Promise.resolve();
-    }
-    var refresh = action.refresh,
-      subAction = _objectWithoutPropertiesLoose(action, _excluded$4);
-    var subStepResults = [];
-    var processId = calculateString(refresh.processId, "");
-    var stop = calculateBoolean(refresh.stop);
-    var cleanupAfterRefresh = calculateBoolean(refresh.cleanupAfterRefresh);
-    var frameRate = calculateNumber(refresh.frameRate, 60);
-    return Promise.resolve(convertAction(subAction, subStepResults, utils, external, convertorSet)).then(function () {
-      stepResults.push(function (parameters, context) {
-        if (stop.valueOf(parameters)) {
-          utils.stopRefresh(processId.valueOf(parameters));
-        } else {
-          var cleanup = utils.refreshSteps(subStepResults, {
-            cleanupAfterRefresh: cleanupAfterRefresh.valueOf(parameters),
-            frameRate: frameRate.valueOf(parameters),
-            parameters: parameters
-          }, processId.valueOf(parameters));
-          context.cleanupActions.push(cleanup);
-        }
       });
       return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
     });
@@ -1384,6 +1402,11 @@ var ScriptProcessor = /*#__PURE__*/function () {
     this.external = _extends({}, DEFAULT_EXTERNALS, external);
   }
   var _proto = ScriptProcessor.prototype;
+  _proto.updateScripts = function updateScripts(scripts) {
+    this.clear();
+    this.scripts = scripts;
+    this.scriptMap = undefined;
+  };
   _proto.clear = function clear() {
     var _this = this;
     Object.values(this.refreshCleanups).forEach(function (cleanup) {
@@ -1500,7 +1523,7 @@ var ScriptProcessor = /*#__PURE__*/function () {
     delete this.refreshCleanups[processId];
   };
   _proto.refreshSteps = function refreshSteps(steps, behavior, processId) {
-    var _behavior$frameRate;
+    var _behavior$frameRate, _this$refreshCleanups3, _this$refreshCleanups4;
     if (behavior === void 0) {
       behavior = {};
     }
@@ -1510,7 +1533,7 @@ var ScriptProcessor = /*#__PURE__*/function () {
       frame: 0
     });
     var refreshCleanup = this.createRefreshCleanup(behavior, context);
-    var frameRate = (_behavior$frameRate = behavior.frameRate) != null ? _behavior$frameRate : 60;
+    var frameRate = (_behavior$frameRate = behavior.frameRate) != null ? _behavior$frameRate : DEFAULT_REFRESH_FRAME_RATE;
     var frameMs = 1000 / frameRate;
     var lastFrameTime = Number.MIN_SAFE_INTEGER;
     var frame = 0;
@@ -1530,10 +1553,13 @@ var ScriptProcessor = /*#__PURE__*/function () {
       refreshCleanup();
       cancelAnimationFrame(animationFrameId);
     };
-    if (processId !== null && processId !== void 0 && processId.length) {
-      this.refreshCleanups[processId] = cleanup;
-    }
-    return cleanup;
+    var actualProcessId = processId != null ? processId : uuid.v4();
+    (_this$refreshCleanups3 = (_this$refreshCleanups4 = this.refreshCleanups)[actualProcessId]) === null || _this$refreshCleanups3 === void 0 ? void 0 : _this$refreshCleanups3.call(_this$refreshCleanups4);
+    this.refreshCleanups[actualProcessId] = cleanup;
+    return {
+      processId: actualProcessId,
+      cleanup: cleanup
+    };
   };
   _proto.refreshByName = function refreshByName(name, behavior) {
     if (behavior === void 0) {

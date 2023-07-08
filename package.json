@@ -35,6 +35,7 @@
       "@types/node": "^12.12.38",
       "@types/react": "^18.0.10",
       "@types/react-dom": "^18.0.10",
+      "@types/uuid": "^9.0.2",
       "@typescript-eslint/eslint-plugin": "^4.10.0",
       "@typescript-eslint/parser": "^4.10.0",
       "babel-eslint": "^10.0.3",
@@ -80,6 +81,7 @@
    ],
    "homepage": "https://github.com/jacklehamster/dok-actions#readme",
    "dependencies": {
-      "mathjs": "^11.8.0"
+      "mathjs": "^11.8.0",
+      "uuid": "^9.0.0"
    }
 }

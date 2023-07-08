@@ -17,7 +17,7 @@ export enum ConvertBehavior {
 }
 
 export interface Utils<T> {
-    refreshSteps(steps: ExecutionStep[], loopBehavior?: RefreshBehavior, processId?: string): () => void;
+    refreshSteps(steps: ExecutionStep[], loopBehavior?: RefreshBehavior, processId?: string): { cleanup: () => void; processId: string };
     stopRefresh(processId?: string): void;
     getSteps: GetSteps;
     getRemainingActions: () => T[];

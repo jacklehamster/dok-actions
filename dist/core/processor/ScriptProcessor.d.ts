@@ -7,7 +7,10 @@ export interface RefreshBehavior {
     parameters?: ExecutionParameters;
 }
 export interface ScriptProcessorHelper {
-    refreshSteps(steps: ExecutionStep[], behavior?: RefreshBehavior, processId?: string): () => void;
+    refreshSteps(steps: ExecutionStep[], behavior?: RefreshBehavior, processId?: string): {
+        cleanup: () => void;
+        processId: string;
+    };
     stopRefresh(processId: string): void;
 }
 export declare class ScriptProcessor<T, E = {}> {
@@ -17,6 +20,7 @@ export declare class ScriptProcessor<T, E = {}> {
     private convertorSet;
     private refreshCleanups;
     constructor(scripts: Script<T>[], external?: {}, convertorSet?: ConvertorSet);
+    updateScripts(scripts: Script<T>[]): void;
     clear(): void;
     private fetchScripts;
     private createRefreshCleanup;
@@ -26,6 +30,12 @@ export declare class ScriptProcessor<T, E = {}> {
     private refreshWithFilter;
     private stopRefresh;
     private refreshSteps;
-    refreshByName(name: string, behavior?: RefreshBehavior): Promise<() => void>;
-    refreshByTags(tags: string[], behavior?: RefreshBehavior): Promise<() => void>;
+    refreshByName(name: string, behavior?: RefreshBehavior): Promise<{
+        processId: string;
+        cleanup: () => void;
+    }>;
+    refreshByTags(tags: string[], behavior?: RefreshBehavior): Promise<{
+        processId: string;
+        cleanup: () => void;
+    }>;
 }

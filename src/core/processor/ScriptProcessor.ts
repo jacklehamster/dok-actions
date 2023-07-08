@@ -1,10 +1,12 @@
 import { Context, createContext } from "../context/Context";
 import { ConvertorSet } from "../convertor/Convertor";
 import { convertScripts } from "../convertor/actions/convert-action";
+import { DEFAULT_REFRESH_FRAME_RATE } from "../convertor/actions/refresh-convertor";
 import { getDefaultConvertors } from "../convertor/default-convertors";
 import { DEFAULT_EXTERNALS } from "../convertor/default-externals";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
 import { Script, ScriptFilter, Tag, filterScripts } from "../scripts/Script";
+import { v4 as uuidv4 } from 'uuid';
 
 export interface RefreshBehavior {
     frameRate?: number;
@@ -13,7 +15,7 @@ export interface RefreshBehavior {
 }
 
 export interface ScriptProcessorHelper {
-    refreshSteps(steps: ExecutionStep[], behavior?: RefreshBehavior, processId?: string): () => void;
+    refreshSteps(steps: ExecutionStep[], behavior?: RefreshBehavior, processId?: string): { cleanup: () => void; processId: string };
     stopRefresh(processId: string): void;
 }
 
@@ -28,6 +30,12 @@ export class ScriptProcessor<T, E = {}> {
         this.scripts = scripts;
         this.convertorSet = convertorSet;
         this.external = {...DEFAULT_EXTERNALS, ...external};
+    }
+
+    updateScripts(scripts: Script<T>[]) {
+        this.clear();
+        this.scripts = scripts;
+        this.scriptMap = undefined;
     }
 
     clear() {
@@ -92,7 +100,7 @@ export class ScriptProcessor<T, E = {}> {
         const context: Context = createContext();
         const parameters: ExecutionParameters = { ...behavior.parameters, time: 0, frame: 0 };
         const refreshCleanup = this.createRefreshCleanup(behavior, context);
-        const frameRate = behavior.frameRate ?? 60;
+        const frameRate = behavior.frameRate ?? DEFAULT_REFRESH_FRAME_RATE;
         const frameMs = 1000 / frameRate;
         let lastFrameTime = Number.MIN_SAFE_INTEGER;
         let frame = 0;
@@ -112,11 +120,13 @@ export class ScriptProcessor<T, E = {}> {
             refreshCleanup();
             cancelAnimationFrame(animationFrameId);
         }
-        if (processId?.length) {
-            this.refreshCleanups[processId] = cleanup;
-        }
+        const actualProcessId = processId ?? uuidv4();
+        //  cleanup previous process if it exists.
+        this.refreshCleanups[actualProcessId]?.();
 
-        return cleanup;
+        this.refreshCleanups[actualProcessId] = cleanup;
+
+        return { processId: actualProcessId, cleanup };
     }
     
     refreshByName(name: string, behavior: RefreshBehavior = {}) {
