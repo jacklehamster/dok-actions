@@ -42,3 +42,25 @@ export function createContext<E>({
         locked: false,
     };
 }
+
+export function addPostAction(postAction: ExecutionWithParams, context: Context): void {
+    if (!context.postActionListener.has(postAction)) {
+        context.postActionListener.add(postAction);
+        context.cleanupActions.push(() => {
+            postAction.steps.forEach(step => step(postAction.parameters, context));
+        });    
+    }
+}
+
+export function deletePostAction(postAction: ExecutionWithParams, context: Context): void {
+    context.postActionListener.delete(postAction);
+}
+
+export function executePostActions(parameters: ExecutionParameters, context: Context): void {
+    context.postActionListener.forEach(listener => {
+        for (let i in parameters) {
+            listener.parameters[i] = parameters[i];
+        }
+        listener.steps.forEach(step => step(listener.parameters, context));
+    });
+}

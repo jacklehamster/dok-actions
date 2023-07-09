@@ -111,6 +111,29 @@ function createContext(_temp) {
     locked: false
   };
 }
+function addPostAction(postAction, context) {
+  if (!context.postActionListener.has(postAction)) {
+    context.postActionListener.add(postAction);
+    context.cleanupActions.push(function () {
+      postAction.steps.forEach(function (step) {
+        return step(postAction.parameters, context);
+      });
+    });
+  }
+}
+function deletePostAction(postAction, context) {
+  context.postActionListener["delete"](postAction);
+}
+function executePostActions(parameters, context) {
+  context.postActionListener.forEach(function (listener) {
+    for (var i in parameters) {
+      listener.parameters[i] = parameters[i];
+    }
+    listener.steps.forEach(function (step) {
+      return step(listener.parameters, context);
+    });
+  });
+}
 
 var ConvertBehavior;
 (function (ConvertBehavior) {
@@ -312,14 +335,7 @@ function execute(steps, parameters, context) {
     var step = _step.value;
     step(parameters, context);
   }
-  context.postActionListener.forEach(function (listener) {
-    for (var i in parameters) {
-      listener.parameters[i] = parameters[i];
-    }
-    listener.steps.forEach(function (step) {
-      return step(listener.parameters, context);
-    });
-  });
+  executePostActions(parameters, context);
   if (changedParameters) {
     params.pop();
   }
@@ -1070,7 +1086,7 @@ var convertLockProperty = function convertLockProperty(action, results, utils, e
                     postExecution.parameters[i] = parameters[i];
                   }
                   if (!context.locked) {
-                    context.postActionListener["delete"](postExecution);
+                    deletePostAction(postExecution, context);
                     execute(postStepResults, parameters, context);
                   }
                 };
@@ -1078,7 +1094,7 @@ var convertLockProperty = function convertLockProperty(action, results, utils, e
                   steps: [step],
                   parameters: parameters
                 };
-                context.postActionListener.add(postExecution);
+                addPostAction(postExecution, context);
               }
             });
             return ConvertBehavior.SKIP_REMAINING_ACTIONS;
@@ -1111,10 +1127,10 @@ var convertPauseProperty = function convertPauseProperty(action, results, utils,
             postExecution.parameters[i] = parameters[i];
           }
           if (!pauseResolution.valueOf(postExecution.parameters)) {
-            context.postActionListener["delete"](postExecution);
+            deletePostAction(postExecution, context);
             execute(postStepResults, postExecution.parameters, context);
-          } else if (!context.postActionListener.has(postExecution)) {
-            context.postActionListener.add(postExecution);
+          } else {
+            addPostAction(postExecution, context);
           }
         };
         var postExecution = {
@@ -1541,6 +1557,9 @@ var ScriptProcessor = /*#__PURE__*/function () {
     }
   };
   _proto.runByName = function runByName(name, parameters) {
+    if (parameters === void 0) {
+      parameters = {};
+    }
     try {
       var _this4 = this;
       var context = createContext();
@@ -1560,6 +1579,9 @@ var ScriptProcessor = /*#__PURE__*/function () {
     }
   };
   _proto.runByTags = function runByTags(tags, parameters) {
+    if (parameters === void 0) {
+      parameters = {};
+    }
     try {
       var _this5 = this;
       var context = createContext();
@@ -1655,5 +1677,5 @@ var ScriptProcessor = /*#__PURE__*/function () {
   return ScriptProcessor;
 }();
 
-export { ConvertBehavior, DEFAULT_EXTERNALS, FORMULA_SEPARATORS, ObjectPool, ScriptProcessor, calculateArray, calculateBoolean, calculateEvaluator, calculateNumber, calculateResolution, calculateString, calculateTypedArray, convertAction, convertScripts, createContext, execute, executeAction, executeScript, filterScripts, getDefaultConvertors, getFormulaEvaluator, getInnerFormulas, hasFormula, isFormula, isSimpleInnerFormula, newParams, recycleParams };
+export { ConvertBehavior, DEFAULT_EXTERNALS, FORMULA_SEPARATORS, ObjectPool, ScriptProcessor, addPostAction, calculateArray, calculateBoolean, calculateEvaluator, calculateNumber, calculateResolution, calculateString, calculateTypedArray, convertAction, convertScripts, createContext, deletePostAction, execute, executeAction, executePostActions, executeScript, filterScripts, getDefaultConvertors, getFormulaEvaluator, getInnerFormulas, hasFormula, isFormula, isSimpleInnerFormula, newParams, recycleParams };
 //# sourceMappingURL=index.modern.js.map

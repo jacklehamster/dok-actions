@@ -20,3 +20,6 @@ export declare function createContext<E>({ parameters, cleanupActions, objectPoo
     postActionListener?: Set<ExecutionWithParams>;
     external?: E | {};
 }): Context<E | {}>;
+export declare function addPostAction(postAction: ExecutionWithParams, context: Context): void;
+export declare function deletePostAction(postAction: ExecutionWithParams, context: Context): void;
+export declare function executePostActions(parameters: ExecutionParameters, context: Context): void;

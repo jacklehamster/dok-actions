@@ -75,13 +75,13 @@ export class ScriptProcessor<T, E = {}> {
         return steps;
     }
 
-    async runByName(name: string, parameters?: ExecutionParameters) {
+    async runByName(name: string, parameters: ExecutionParameters = {}) {
         const context: Context = createContext();
         execute(await this.getSteps({ name }), parameters, context);
         return () => context.cleanupActions?.forEach(action => action());
     }
 
-    async runByTags(tags: Tag[], parameters?: ExecutionParameters) {
+    async runByTags(tags: Tag[], parameters: ExecutionParameters = {}) {
         const context: Context = createContext();
         execute(await this.getSteps({ tags }), parameters, context);
         return () => context.cleanupActions?.forEach(action => action());

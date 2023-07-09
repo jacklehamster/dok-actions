@@ -111,6 +111,29 @@ function createContext(_temp) {
     locked: false
   };
 }
+function addPostAction(postAction, context) {
+  if (!context.postActionListener.has(postAction)) {
+    context.postActionListener.add(postAction);
+    context.cleanupActions.push(function () {
+      postAction.steps.forEach(function (step) {
+        return step(postAction.parameters, context);
+      });
+    });
+  }
+}
+function deletePostAction(postAction, context) {
+  context.postActionListener["delete"](postAction);
+}
+function executePostActions(parameters, context) {
+  context.postActionListener.forEach(function (listener) {
+    for (var i in parameters) {
+      listener.parameters[i] = parameters[i];
+    }
+    listener.steps.forEach(function (step) {
+      return step(listener.parameters, context);
+    });
+  });
+}
 
 (function (ConvertBehavior) {
   ConvertBehavior[ConvertBehavior["NONE"] = 0] = "NONE";
@@ -311,14 +334,7 @@ function execute(steps, parameters, context) {
     var step = _step.value;
     step(parameters, context);
   }
-  context.postActionListener.forEach(function (listener) {
-    for (var i in parameters) {
-      listener.parameters[i] = parameters[i];
-    }
-    listener.steps.forEach(function (step) {
-      return step(listener.parameters, context);
-    });
-  });
+  executePostActions(parameters, context);
   if (changedParameters) {
     params.pop();
   }
@@ -1069,7 +1085,7 @@ var convertLockProperty = function convertLockProperty(action, results, utils, e
                     postExecution.parameters[i] = parameters[i];
                   }
                   if (!context.locked) {
-                    context.postActionListener["delete"](postExecution);
+                    deletePostAction(postExecution, context);
                     execute(postStepResults, parameters, context);
                   }
                 };
@@ -1077,7 +1093,7 @@ var convertLockProperty = function convertLockProperty(action, results, utils, e
                   steps: [step],
                   parameters: parameters
                 };
-                context.postActionListener.add(postExecution);
+                addPostAction(postExecution, context);
               }
             });
             return exports.ConvertBehavior.SKIP_REMAINING_ACTIONS;
@@ -1110,10 +1126,10 @@ var convertPauseProperty = function convertPauseProperty(action, results, utils,
             postExecution.parameters[i] = parameters[i];
           }
           if (!pauseResolution.valueOf(postExecution.parameters)) {
-            context.postActionListener["delete"](postExecution);
+            deletePostAction(postExecution, context);
             execute(postStepResults, postExecution.parameters, context);
-          } else if (!context.postActionListener.has(postExecution)) {
-            context.postActionListener.add(postExecution);
+          } else {
+            addPostAction(postExecution, context);
           }
         };
         var postExecution = {
@@ -1540,6 +1556,9 @@ var ScriptProcessor = /*#__PURE__*/function () {
     }
   };
   _proto.runByName = function runByName(name, parameters) {
+    if (parameters === void 0) {
+      parameters = {};
+    }
     try {
       var _this4 = this;
       var context = createContext();
@@ -1559,6 +1578,9 @@ var ScriptProcessor = /*#__PURE__*/function () {
     }
   };
   _proto.runByTags = function runByTags(tags, parameters) {
+    if (parameters === void 0) {
+      parameters = {};
+    }
     try {
       var _this5 = this;
       var context = createContext();
@@ -1658,6 +1680,7 @@ exports.DEFAULT_EXTERNALS = DEFAULT_EXTERNALS;
 exports.FORMULA_SEPARATORS = FORMULA_SEPARATORS;
 exports.ObjectPool = ObjectPool;
 exports.ScriptProcessor = ScriptProcessor;
+exports.addPostAction = addPostAction;
 exports.calculateArray = calculateArray;
 exports.calculateBoolean = calculateBoolean;
 exports.calculateEvaluator = calculateEvaluator;
@@ -1668,8 +1691,10 @@ exports.calculateTypedArray = calculateTypedArray;
 exports.convertAction = convertAction;
 exports.convertScripts = convertScripts;
 exports.createContext = createContext;
+exports.deletePostAction = deletePostAction;
 exports.execute = execute;
 exports.executeAction = executeAction;
+exports.executePostActions = executePostActions;
 exports.executeScript = executeScript;
 exports.filterScripts = filterScripts;
 exports.getDefaultConvertors = getDefaultConvertors;

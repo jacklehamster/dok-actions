@@ -1,4 +1,4 @@
-import { Context, createContext } from "../context/Context";
+import { Context, createContext, executePostActions } from "../context/Context";
 import { SupportedTypes } from "../resolutions/SupportedTypes";
 
 export type ExecutionParameters = Record<string, SupportedTypes>;
@@ -20,12 +20,7 @@ export function execute(steps?: ExecutionStep[], parameters: ExecutionParameters
     for (let step of steps) {
         step(parameters, context);
     }
-    context.postActionListener.forEach(listener => {
-        for (let i in parameters) {
-            listener.parameters[i] = parameters[i];
-        }
-        listener.steps.forEach(step => step(listener.parameters, context));
-    });
+    executePostActions(parameters, context);
 
     if (changedParameters) {
         params.pop();

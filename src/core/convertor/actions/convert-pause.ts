@@ -1,5 +1,5 @@
 import { PauseAction } from "../../actions/PauseAction";
-import { Context, ExecutionWithParams } from "../../context/Context";
+import { Context, ExecutionWithParams, addPostAction, deletePostAction } from "../../context/Context";
 import { ExecutionParameters, ExecutionStep, execute } from "../../execution/ExecutionStep";
 import { calculateBoolean } from "../../resolutions/calculateBoolean";
 import { calculateNumber } from "../../resolutions/calculateNumber";
@@ -59,10 +59,10 @@ export async function convertPauseProperty<T>(
             postExecution.parameters[i] = parameters[i];
         }
         if (!pauseResolution.valueOf(postExecution.parameters)) {
-            context.postActionListener.delete(postExecution);
+            deletePostAction(postExecution, context);
             execute(postStepResults, postExecution.parameters, context);
-        } else if (!context.postActionListener.has(postExecution)) {
-            context.postActionListener.add(postExecution);
+        } else {
+            addPostAction(postExecution, context);
         }
     };
 
@@ -116,7 +116,7 @@ export async function convertLockProperty<T>(
                         postExecution.parameters[i] = parameters[i];
                     }
                     if (!context.locked) {
-                        context.postActionListener.delete(postExecution);
+                        deletePostAction(postExecution, context);
                         execute(postStepResults, parameters, context);    
                     }
                 };
@@ -125,7 +125,7 @@ export async function convertLockProperty<T>(
                     parameters,
                 };
         
-                context.postActionListener.add(postExecution);
+                addPostAction(postExecution, context);
             }
         });
         return ConvertBehavior.SKIP_REMAINING_ACTIONS;
