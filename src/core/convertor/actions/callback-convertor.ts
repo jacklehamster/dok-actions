@@ -20,7 +20,7 @@ export async function convertCallbackProperty<T>(
     const { callback, ...subAction } = action;
 
     const callbackParameters: Record<string, ExecutionParameters | undefined> = {};
-    const executeCallback = { ...utils.executeCallback};
+    const executeCallback: Utils<T & CallbackAction<T>>["executeCallback"] = { ...utils.executeCallback};
     for (const key in callback) {
         const callbackSteps: ExecutionStep[] = [];
         await convertActions(callback[key], callbackSteps, utils, external, convertorSet);

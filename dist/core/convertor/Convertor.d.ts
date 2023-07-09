@@ -20,6 +20,6 @@ export interface Utils<T> {
     stopRefresh(processId?: string): void;
     getSteps: GetSteps;
     getRemainingActions: () => T[];
-    executeCallback?: (context: Context) => void;
+    executeCallback?: Record<string, (context: Context) => void>;
 }
 export declare type Convertor<T> = (action: T, results: ExecutionStep[], utils: Utils<T>, external: Record<string, any>, convertorSet: ConvertorSet) => Promise<ConvertBehavior | void>;

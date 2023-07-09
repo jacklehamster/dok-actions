@@ -217,6 +217,16 @@ function _forTo(array, body, check) {
 	return pact;
 }
 
+// Asynchronously iterate through an object's properties (including properties inherited from the prototype)
+// Uses a snapshot of the object's properties
+function _forIn(target, body, check) {
+	var keys = [];
+	for (var key in target) {
+		keys.push(key);
+	}
+	return _forTo(keys, function(i) { return body(keys[i]); }, check);
+}
+
 const _iteratorSymbol = /*#__PURE__*/ typeof Symbol !== "undefined" ? (Symbol.iterator || (Symbol.iterator = Symbol("Symbol.iterator"))) : "@@iterator";
 
 // Asynchronously iterate through an object's values
@@ -909,12 +919,11 @@ var convertExecuteCallbackProperty = function convertExecuteCallbackProperty(act
       return Promise.resolve();
     }
     var executeCallback = action.executeCallback;
-    var executeFlag = calculateBoolean(executeCallback);
+    var callbackToExecute = calculateString(executeCallback);
     results.push(function (parameters, context) {
-      if (executeFlag.valueOf(parameters)) {
-        var _utils$executeCallbac;
-        (_utils$executeCallbac = utils.executeCallback) === null || _utils$executeCallbac === void 0 ? void 0 : _utils$executeCallbac.call(utils, context);
-      }
+      var _utils$executeCallbac, _utils$executeCallbac2;
+      var callbackName = callbackToExecute.valueOf(parameters);
+      (_utils$executeCallbac = utils.executeCallback) === null || _utils$executeCallbac === void 0 ? void 0 : (_utils$executeCallbac2 = _utils$executeCallbac[callbackName]) === null || _utils$executeCallbac2 === void 0 ? void 0 : _utils$executeCallbac2.call(_utils$executeCallbac, context);
     });
     return Promise.resolve();
   } catch (e) {
@@ -923,35 +932,45 @@ var convertExecuteCallbackProperty = function convertExecuteCallbackProperty(act
 };
 var convertCallbackProperty = function convertCallbackProperty(action, results, utils, external, convertorSet) {
   try {
+    var _temp2 = function _temp2() {
+      var subStepResults = [];
+      return Promise.resolve(convertAction(subAction, subStepResults, _extends({}, utils, {
+        executeCallback: executeCallback
+      }), external, convertorSet)).then(function () {
+        results.push(function (parameters, context) {
+          for (var key in callback) {
+            callbackParameters[key] = newParams(parameters, context);
+          }
+          execute(subStepResults, parameters, context);
+        });
+        return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+      });
+    };
     if (!action.callback) {
       return Promise.resolve();
     }
     var callback = action.callback,
       subAction = _objectWithoutPropertiesLoose(action, _excluded$1);
-    var callbackSteps = [];
-    return Promise.resolve(convertActions(callback, callbackSteps, utils, external, convertorSet)).then(function () {
-      var callbackParameters;
-      var onCallback = callbackSteps.length ? function (context) {
-        execute(callbackSteps, callbackParameters, context);
-        for (var i in callbackParameters) {
-          delete callbackParameters[i];
-        }
-        if (callbackParameters && context) {
-          recycleParams(callbackParameters, context);
-          callbackParameters = undefined;
-        }
-      } : undefined;
-      var subStepResults = [];
-      return Promise.resolve(convertAction(subAction, subStepResults, _extends({}, utils, {
-        executeCallback: onCallback
-      }), external, convertorSet)).then(function () {
-        results.push(function (parameters, context) {
-          callbackParameters = newParams(parameters, context);
-          execute(subStepResults, parameters, context);
-        });
-        return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+    var callbackParameters = {};
+    var executeCallback = _extends({}, utils.executeCallback);
+    var _temp = _forIn(callback, function (key) {
+      var callbackSteps = [];
+      return Promise.resolve(convertActions(callback[key], callbackSteps, utils, external, convertorSet)).then(function () {
+        var onCallback = callbackSteps.length ? function (context) {
+          execute(callbackSteps, callbackParameters[key], context);
+          for (var i in callbackParameters[key]) {
+            var _callbackParameters$k;
+            (_callbackParameters$k = callbackParameters[key]) === null || _callbackParameters$k === void 0 ? true : delete _callbackParameters$k[i];
+          }
+          if (callbackParameters && context) {
+            recycleParams(callbackParameters, context);
+            callbackParameters[key] = undefined;
+          }
+        } : function () {};
+        executeCallback[key] = onCallback;
       });
     });
+    return Promise.resolve(_temp && _temp.then ? _temp.then(_temp2) : _temp2(_temp));
   } catch (e) {
     return Promise.reject(e);
   }
