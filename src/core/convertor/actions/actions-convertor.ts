@@ -3,7 +3,7 @@ import { ExecutionStep } from "../../execution/ExecutionStep";
 import { ConvertBehavior, ConvertorSet, Utils } from "../Convertor";
 import { convertAction } from "./convert-action";
 
-async function convertActions<T>(
+export async function convertActions<T>(
         actions: ActionList<T>,
         results: ExecutionStep[],
         utils: Utils<T & ActionsAction<T>>,

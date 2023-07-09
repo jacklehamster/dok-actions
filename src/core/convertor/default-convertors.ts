@@ -1,5 +1,6 @@
 import { ConvertorSet } from "./Convertor";
 import { convertActionsProperty } from "./actions/actions-convertor";
+import { convertCallbackProperty, convertExecuteCallbackProperty } from "./actions/callback-convertor";
 import { convertConditionProperty } from "./actions/condition-convertor";
 import { convertExternalCallProperty } from "./actions/convert-external-call";
 import { convertDelayProperty, convertLockProperty, convertPauseProperty } from "./actions/convert-pause";
@@ -21,13 +22,15 @@ export function getDefaultConvertors(): ConvertorSet {
             convertLoopEachProperty,
             convertLoopProperty,
             convertConditionProperty,
+            convertCallbackProperty,
             convertDelayProperty,
             convertPauseProperty,
             convertLockProperty,
             convertSetProperty,
             convertSetsProperty,
-            convertLogProperty,
+            convertExecuteCallbackProperty,
             convertExternalCallProperty,
+            convertLogProperty,
             convertScriptProperty,
             convertActionsProperty,
         ],

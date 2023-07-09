@@ -901,7 +901,62 @@ var convertActions = function convertActions(actions, results, utils, external, 
   }
 };
 
-var _excluded$1 = ["condition"];
+var _excluded$1 = ["callback"];
+var convertExecuteCallbackProperty = function convertExecuteCallbackProperty(action, results, utils) {
+  try {
+    if (!action.executeCallback) {
+      return Promise.resolve();
+    }
+    var executeCallback = action.executeCallback;
+    var executeFlag = calculateBoolean(executeCallback);
+    results.push(function (parameters, context) {
+      if (executeFlag.valueOf(parameters)) {
+        var _utils$executeCallbac;
+        (_utils$executeCallbac = utils.executeCallback) === null || _utils$executeCallbac === void 0 ? void 0 : _utils$executeCallbac.call(utils, context);
+      }
+    });
+    return Promise.resolve();
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+var convertCallbackProperty = function convertCallbackProperty(action, results, utils, external, convertorSet) {
+  try {
+    if (!action.callback) {
+      return Promise.resolve();
+    }
+    var callback = action.callback,
+      subAction = _objectWithoutPropertiesLoose(action, _excluded$1);
+    var callbackSteps = [];
+    return Promise.resolve(convertActions(callback, callbackSteps, utils, external, convertorSet)).then(function () {
+      var callbackParameters;
+      var onCallback = callbackSteps.length ? function (context) {
+        execute(callbackSteps, callbackParameters, context);
+        for (var i in callbackParameters) {
+          delete callbackParameters[i];
+        }
+        if (callbackParameters && context) {
+          recycleParams(callbackParameters, context);
+          callbackParameters = undefined;
+        }
+      } : undefined;
+      var subStepResults = [];
+      return Promise.resolve(convertAction(subAction, subStepResults, _extends({}, utils, {
+        executeCallback: onCallback
+      }), external, convertorSet)).then(function () {
+        results.push(function (parameters, context) {
+          callbackParameters = newParams(parameters, context);
+          execute(subStepResults, parameters, context);
+        });
+        return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
+      });
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+
+var _excluded$2 = ["condition"];
 var convertConditionProperty = function convertConditionProperty(action, results, utils, external, convertorSet) {
   try {
     if (action.condition === undefined) {
@@ -911,7 +966,7 @@ var convertConditionProperty = function convertConditionProperty(action, results
       return Promise.resolve(exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS);
     }
     var condition = action.condition,
-      subAction = _objectWithoutPropertiesLoose(action, _excluded$1);
+      subAction = _objectWithoutPropertiesLoose(action, _excluded$2);
     var conditionResolution = calculateBoolean(condition);
     var subStepResults = [];
     return Promise.resolve(convertAction(subAction, subStepResults, utils, external, convertorSet)).then(function () {
@@ -959,7 +1014,7 @@ var convertExternalCallProperty = function convertExternalCallProperty(action, r
   }
 };
 
-var _excluded$2 = ["delay"],
+var _excluded$3 = ["delay"],
   _excluded2 = ["pause"],
   _excluded3 = ["lock", "unlock"];
 var convertLockProperty = function convertLockProperty(action, results, utils, external, convertorSet) {
@@ -1064,7 +1119,7 @@ var convertDelayProperty = function convertDelayProperty(action, results, utils,
       return Promise.resolve();
     }
     var delay = action.delay,
-      subAction = _objectWithoutPropertiesLoose(action, _excluded$2);
+      subAction = _objectWithoutPropertiesLoose(action, _excluded$3);
     var delayAmount = calculateNumber(delay);
     var postStepResults = [];
     var remainingActions = utils.getRemainingActions();
@@ -1255,7 +1310,7 @@ var convertLogProperty = function convertLogProperty(action, results, _, externa
   }
 };
 
-var _excluded$3 = ["loop"],
+var _excluded$4 = ["loop"],
   _excluded3$1 = ["loopEach"];
 var convertLoopEachProperty = function convertLoopEachProperty(action, stepResults, utils, external, convertorSet) {
   try {
@@ -1292,7 +1347,7 @@ var convertLoopProperty = function convertLoopProperty(action, stepResults, util
       return Promise.resolve(exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS);
     }
     var loop = action.loop,
-      subAction = _objectWithoutPropertiesLoose(action, _excluded$3);
+      subAction = _objectWithoutPropertiesLoose(action, _excluded$4);
     var loops = Array.isArray(loop) ? loop : [loop];
     if (!loops.length) {
       return Promise.resolve(exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS);
@@ -1329,14 +1384,14 @@ function keepLooping(parameters, context, loops, steps, depth) {
   }
 }
 
-var _excluded$4 = ["parameters"];
+var _excluded$5 = ["parameters"];
 var convertParametersProperty = function convertParametersProperty(action, results, utils, external, convertorSet) {
   try {
     if (!action.parameters) {
       return Promise.resolve();
     }
     var parameters = action.parameters,
-      subAction = _objectWithoutPropertiesLoose(action, _excluded$4);
+      subAction = _objectWithoutPropertiesLoose(action, _excluded$5);
     var paramEntries = Object.entries(parameters != null ? parameters : {}).map(function (_ref) {
       var key = _ref[0],
         resolution = _ref[1];
@@ -1384,7 +1439,7 @@ var convertScriptProperty = function convertScriptProperty(action, results, _ref
 
 function getDefaultConvertors() {
   return {
-    actionsConvertor: [convertHooksProperty, convertParametersProperty, convertDefaultValuesProperty, convertRefreshProperty, convertLoopEachProperty, convertLoopProperty, convertConditionProperty, convertDelayProperty, convertPauseProperty, convertLockProperty, convertSetProperty, convertSetsProperty, convertLogProperty, convertExternalCallProperty, convertScriptProperty, convertActionsProperty]
+    actionsConvertor: [convertHooksProperty, convertParametersProperty, convertDefaultValuesProperty, convertRefreshProperty, convertLoopEachProperty, convertLoopProperty, convertConditionProperty, convertCallbackProperty, convertDelayProperty, convertPauseProperty, convertLockProperty, convertSetProperty, convertSetsProperty, convertExecuteCallbackProperty, convertExternalCallProperty, convertLogProperty, convertScriptProperty, convertActionsProperty]
   };
 }
 

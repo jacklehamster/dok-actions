@@ -1,3 +1,4 @@
+import { Context } from "../context/Context";
 import { ExecutionStep } from "../execution/ExecutionStep";
 import { RefreshBehavior } from "../processor/ScriptProcessor";
 import { ScriptFilter } from "../scripts/Script";
@@ -21,6 +22,7 @@ export interface Utils<T> {
     stopRefresh(processId?: string): void;
     getSteps: GetSteps;
     getRemainingActions: () => T[];
+    executeCallback?: Record<string, (context: Context) => void>;
 }
 
 export type Convertor<T> = (action: T, results: ExecutionStep[], utils: Utils<T>, external: Record<string, any>, convertorSet: ConvertorSet) => Promise<ConvertBehavior | void>;
