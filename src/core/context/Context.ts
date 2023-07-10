@@ -7,13 +7,71 @@ export interface ExecutionWithParams {
     parameters: ExecutionParameters;
 }
 
-export interface Context<E = {}> {
+export class Context<E = {}> {
     parameters: ExecutionParameters[];
-    cleanupActions:(() => void)[];
     objectPool: ObjectPool<ExecutionParameters>;
-    postActionListener: Set<ExecutionWithParams>;
     external: (E|{}) & typeof DEFAULT_EXTERNALS;
     locked: boolean;
+    private postActionListener: Set<ExecutionWithParams>;
+    private cleanupActions:(() => void)[];
+
+    constructor({
+        parameters = [],
+        cleanupActions = [],
+        objectPool = new ObjectPool<ExecutionParameters>(() => ({}), value => {
+            for (let k in value) {
+                delete value[k];
+            }
+        }),
+        postActionListener = new Set(),
+        external = {}
+    }: {
+        parameters?: ExecutionParameters[];
+        cleanupActions?:(() => void)[];
+        objectPool?: ObjectPool<ExecutionParameters>;
+        postActionListener?: Set<ExecutionWithParams>;
+        external?: E | {}
+    } = {}) {
+        this.parameters = parameters;
+        this.cleanupActions = cleanupActions;
+        this.objectPool = objectPool;
+        this.postActionListener = postActionListener;
+        this.external = {...DEFAULT_EXTERNALS, ...external};
+        this.locked = false;
+    }
+
+    addCleanup(cleanup: () => void) {
+        this.cleanupActions.push(cleanup);        
+    }
+
+    addPostAction(postAction: ExecutionWithParams) {
+        if (!this.postActionListener.has(postAction)) {
+            this.postActionListener.add(postAction);
+        }
+    }
+
+    deletePostAction(postAction: ExecutionWithParams): void {
+        this.postActionListener.delete(postAction);
+    }
+
+    executePostActions(parameters: ExecutionParameters): void {
+        this.postActionListener.forEach(listener => {
+            for (let i in parameters) {
+                listener.parameters[i] = parameters[i];
+            }
+            listener.steps.forEach(step => step(listener.parameters, this));
+        });
+    }
+
+    cleanup() {
+        this.cleanupActions.forEach(action => action());
+        this.cleanupActions.length = 0;
+    }
+
+    clear() {
+        this.cleanup();
+        this.postActionListener.clear();
+    }
 }
 
 export function createContext<E>({
@@ -33,34 +91,5 @@ export function createContext<E>({
     postActionListener?: Set<ExecutionWithParams>;
     external?: E | {};
 } = {}): Context<E|{}> {
-    return {
-        parameters,
-        cleanupActions,
-        objectPool,
-        postActionListener,
-        external: {...DEFAULT_EXTERNALS, ...external},
-        locked: false,
-    };
-}
-
-export function addPostAction(postAction: ExecutionWithParams, context: Context): void {
-    if (!context.postActionListener.has(postAction)) {
-        context.postActionListener.add(postAction);
-        context.cleanupActions.push(() => {
-            postAction.steps.forEach(step => step(postAction.parameters, context));
-        });    
-    }
-}
-
-export function deletePostAction(postAction: ExecutionWithParams, context: Context): void {
-    context.postActionListener.delete(postAction);
-}
-
-export function executePostActions(parameters: ExecutionParameters, context: Context): void {
-    context.postActionListener.forEach(listener => {
-        for (let i in parameters) {
-            listener.parameters[i] = parameters[i];
-        }
-        listener.steps.forEach(step => step(listener.parameters, context));
-    });
+    return new Context({parameters, cleanupActions, objectPool, postActionListener, external});
 }

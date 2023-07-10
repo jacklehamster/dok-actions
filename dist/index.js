@@ -84,54 +84,91 @@ var ObjectPool = /*#__PURE__*/function () {
   return ObjectPool;
 }();
 
-function createContext(_temp) {
-  var _ref = _temp === void 0 ? {} : _temp,
-    _ref$parameters = _ref.parameters,
-    parameters = _ref$parameters === void 0 ? [] : _ref$parameters,
-    _ref$cleanupActions = _ref.cleanupActions,
-    cleanupActions = _ref$cleanupActions === void 0 ? [] : _ref$cleanupActions,
-    _ref$objectPool = _ref.objectPool,
-    objectPool = _ref$objectPool === void 0 ? new ObjectPool(function () {
+var Context = /*#__PURE__*/function () {
+  function Context(_temp) {
+    var _ref = _temp === void 0 ? {} : _temp,
+      _ref$parameters = _ref.parameters,
+      parameters = _ref$parameters === void 0 ? [] : _ref$parameters,
+      _ref$cleanupActions = _ref.cleanupActions,
+      cleanupActions = _ref$cleanupActions === void 0 ? [] : _ref$cleanupActions,
+      _ref$objectPool = _ref.objectPool,
+      objectPool = _ref$objectPool === void 0 ? new ObjectPool(function () {
+        return {};
+      }, function (value) {
+        for (var k in value) {
+          delete value[k];
+        }
+      }) : _ref$objectPool,
+      _ref$postActionListen = _ref.postActionListener,
+      postActionListener = _ref$postActionListen === void 0 ? new Set() : _ref$postActionListen,
+      _ref$external = _ref.external,
+      external = _ref$external === void 0 ? {} : _ref$external;
+    this.parameters = parameters;
+    this.cleanupActions = cleanupActions;
+    this.objectPool = objectPool;
+    this.postActionListener = postActionListener;
+    this.external = _extends({}, DEFAULT_EXTERNALS, external);
+    this.locked = false;
+  }
+  var _proto = Context.prototype;
+  _proto.addCleanup = function addCleanup(cleanup) {
+    this.cleanupActions.push(cleanup);
+  };
+  _proto.addPostAction = function addPostAction(postAction) {
+    if (!this.postActionListener.has(postAction)) {
+      this.postActionListener.add(postAction);
+    }
+  };
+  _proto.deletePostAction = function deletePostAction(postAction) {
+    this.postActionListener["delete"](postAction);
+  };
+  _proto.executePostActions = function executePostActions(parameters) {
+    var _this = this;
+    this.postActionListener.forEach(function (listener) {
+      for (var i in parameters) {
+        listener.parameters[i] = parameters[i];
+      }
+      listener.steps.forEach(function (step) {
+        return step(listener.parameters, _this);
+      });
+    });
+  };
+  _proto.cleanup = function cleanup() {
+    this.cleanupActions.forEach(function (action) {
+      return action();
+    });
+    this.cleanupActions.length = 0;
+  };
+  _proto.clear = function clear() {
+    this.cleanup();
+    this.postActionListener.clear();
+  };
+  return Context;
+}();
+function createContext(_temp2) {
+  var _ref2 = _temp2 === void 0 ? {} : _temp2,
+    _ref2$parameters = _ref2.parameters,
+    parameters = _ref2$parameters === void 0 ? [] : _ref2$parameters,
+    _ref2$cleanupActions = _ref2.cleanupActions,
+    cleanupActions = _ref2$cleanupActions === void 0 ? [] : _ref2$cleanupActions,
+    _ref2$objectPool = _ref2.objectPool,
+    objectPool = _ref2$objectPool === void 0 ? new ObjectPool(function () {
       return {};
     }, function (value) {
       for (var k in value) {
         delete value[k];
       }
-    }) : _ref$objectPool,
-    _ref$postActionListen = _ref.postActionListener,
-    postActionListener = _ref$postActionListen === void 0 ? new Set() : _ref$postActionListen,
-    _ref$external = _ref.external,
-    external = _ref$external === void 0 ? {} : _ref$external;
-  return {
+    }) : _ref2$objectPool,
+    _ref2$postActionListe = _ref2.postActionListener,
+    postActionListener = _ref2$postActionListe === void 0 ? new Set() : _ref2$postActionListe,
+    _ref2$external = _ref2.external,
+    external = _ref2$external === void 0 ? {} : _ref2$external;
+  return new Context({
     parameters: parameters,
     cleanupActions: cleanupActions,
     objectPool: objectPool,
     postActionListener: postActionListener,
-    external: _extends({}, DEFAULT_EXTERNALS, external),
-    locked: false
-  };
-}
-function addPostAction(postAction, context) {
-  if (!context.postActionListener.has(postAction)) {
-    context.postActionListener.add(postAction);
-    context.cleanupActions.push(function () {
-      postAction.steps.forEach(function (step) {
-        return step(postAction.parameters, context);
-      });
-    });
-  }
-}
-function deletePostAction(postAction, context) {
-  context.postActionListener["delete"](postAction);
-}
-function executePostActions(parameters, context) {
-  context.postActionListener.forEach(function (listener) {
-    for (var i in parameters) {
-      listener.parameters[i] = parameters[i];
-    }
-    listener.steps.forEach(function (step) {
-      return step(listener.parameters, context);
-    });
+    external: external
   });
 }
 
@@ -334,7 +371,7 @@ function execute(steps, parameters, context) {
     var step = _step.value;
     step(parameters, context);
   }
-  executePostActions(parameters, context);
+  context.executePostActions(parameters);
   if (changedParameters) {
     params.pop();
   }
@@ -396,10 +433,7 @@ var executeScript = function executeScript(scriptName, parameters, scripts, exte
       var steps = script ? scriptMap.get(script) : [];
       execute(steps, parameters, context);
       return function () {
-        context.cleanupActions.forEach(function (action) {
-          return action();
-        });
-        context.cleanupActions.length = 0;
+        return context.clear();
       };
     });
   } catch (e) {
@@ -888,7 +922,7 @@ var convertRefreshProperty = function convertRefreshProperty(action, stepResults
             cleanup = _utils$refreshSteps.cleanup,
             processId = _utils$refreshSteps.processId;
           parameters.processId = processId;
-          context.cleanupActions.push(cleanup);
+          context.addCleanup(cleanup);
         }
       });
       return exports.ConvertBehavior.SKIP_REMAINING_CONVERTORS;
@@ -1085,7 +1119,7 @@ var convertLockProperty = function convertLockProperty(action, results, utils, e
                     postExecution.parameters[i] = parameters[i];
                   }
                   if (!context.locked) {
-                    deletePostAction(postExecution, context);
+                    context.deletePostAction(postExecution);
                     execute(postStepResults, parameters, context);
                   }
                 };
@@ -1093,7 +1127,7 @@ var convertLockProperty = function convertLockProperty(action, results, utils, e
                   steps: [step],
                   parameters: parameters
                 };
-                addPostAction(postExecution, context);
+                context.addPostAction(postExecution);
               }
             });
             return exports.ConvertBehavior.SKIP_REMAINING_ACTIONS;
@@ -1126,10 +1160,10 @@ var convertPauseProperty = function convertPauseProperty(action, results, utils,
             postExecution.parameters[i] = parameters[i];
           }
           if (!pauseResolution.valueOf(postExecution.parameters)) {
-            deletePostAction(postExecution, context);
+            context.deletePostAction(postExecution);
             execute(postStepResults, postExecution.parameters, context);
           } else {
-            addPostAction(postExecution, context);
+            context.addPostAction(postExecution);
           }
         };
         var postExecution = {
@@ -1165,7 +1199,7 @@ var convertDelayProperty = function convertDelayProperty(action, results, utils,
         };
         results.push(function (parameters, context) {
           var timeout = external.setTimeout(performPostSteps, delayAmount.valueOf(parameters), context, parameters);
-          context.cleanupActions.push(function () {
+          context.addCleanup(function () {
             return clearTimeout(timeout);
           });
         });
@@ -1500,10 +1534,10 @@ var ScriptProcessor = /*#__PURE__*/function () {
   _proto.clear = function clear() {
     var _this = this;
     Object.values(this.refreshCleanups).forEach(function (cleanup) {
-      cleanup();
+      return cleanup();
     });
     Object.keys(this.refreshCleanups).forEach(function (key) {
-      delete _this.refreshCleanups[key];
+      return delete _this.refreshCleanups[key];
     });
   };
   _proto.fetchScripts = function fetchScripts() {
@@ -1528,13 +1562,8 @@ var ScriptProcessor = /*#__PURE__*/function () {
     }
   };
   _proto.createRefreshCleanup = function createRefreshCleanup(behavior, context) {
-    var cleanupActions = context.cleanupActions;
-    return behavior.cleanupAfterRefresh && cleanupActions ? function () {
-      for (var _iterator = _createForOfIteratorHelperLoose(cleanupActions), _step; !(_step = _iterator()).done;) {
-        var cleanup = _step.value;
-        cleanup();
-      }
-      cleanupActions.length = 0;
+    return behavior.cleanupAfterRefresh ? function () {
+      return context.cleanup();
     } : function () {};
   };
   _proto.getSteps = function getSteps(filter) {
@@ -1567,10 +1596,7 @@ var ScriptProcessor = /*#__PURE__*/function () {
       })).then(function (_this4$getSteps) {
         execute(_this4$getSteps, parameters, context);
         return function () {
-          var _context$cleanupActio;
-          return (_context$cleanupActio = context.cleanupActions) === null || _context$cleanupActio === void 0 ? void 0 : _context$cleanupActio.forEach(function (action) {
-            return action();
-          });
+          return context.clear();
         };
       });
     } catch (e) {
@@ -1589,10 +1615,7 @@ var ScriptProcessor = /*#__PURE__*/function () {
       })).then(function (_this5$getSteps) {
         execute(_this5$getSteps, parameters, context);
         return function () {
-          var _context$cleanupActio2;
-          return (_context$cleanupActio2 = context.cleanupActions) === null || _context$cleanupActio2 === void 0 ? void 0 : _context$cleanupActio2.forEach(function (action) {
-            return action();
-          });
+          return context.clear();
         };
       });
     } catch (e) {
@@ -1676,11 +1699,11 @@ var ScriptProcessor = /*#__PURE__*/function () {
   return ScriptProcessor;
 }();
 
+exports.Context = Context;
 exports.DEFAULT_EXTERNALS = DEFAULT_EXTERNALS;
 exports.FORMULA_SEPARATORS = FORMULA_SEPARATORS;
 exports.ObjectPool = ObjectPool;
 exports.ScriptProcessor = ScriptProcessor;
-exports.addPostAction = addPostAction;
 exports.calculateArray = calculateArray;
 exports.calculateBoolean = calculateBoolean;
 exports.calculateEvaluator = calculateEvaluator;
@@ -1691,10 +1714,8 @@ exports.calculateTypedArray = calculateTypedArray;
 exports.convertAction = convertAction;
 exports.convertScripts = convertScripts;
 exports.createContext = createContext;
-exports.deletePostAction = deletePostAction;
 exports.execute = execute;
 exports.executeAction = executeAction;
-exports.executePostActions = executePostActions;
 exports.executeScript = executeScript;
 exports.filterScripts = filterScripts;
 exports.getDefaultConvertors = getDefaultConvertors;

@@ -1,4 +1,4 @@
-import { Context, createContext, executePostActions } from "../context/Context";
+import { Context, createContext } from "../context/Context";
 import { SupportedTypes } from "../resolutions/SupportedTypes";
 
 export type ExecutionParameters = Record<string, SupportedTypes>;
@@ -20,7 +20,7 @@ export function execute(steps?: ExecutionStep[], parameters: ExecutionParameters
     for (let step of steps) {
         step(parameters, context);
     }
-    executePostActions(parameters, context);
+    context.executePostActions(parameters);
 
     if (changedParameters) {
         params.pop();

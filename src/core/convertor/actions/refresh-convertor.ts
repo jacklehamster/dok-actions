@@ -35,7 +35,7 @@ export async function convertRefreshProperty<T>(
                 parameters,
             }, processIdValue.valueOf(parameters));
             parameters.processId = processId;
-            context.cleanupActions.push(cleanup);
+            context.addCleanup(cleanup);
         }
     });
     return ConvertBehavior.SKIP_REMAINING_CONVERTORS;

@@ -5,13 +5,26 @@ export interface ExecutionWithParams {
     steps: ExecutionStep[];
     parameters: ExecutionParameters;
 }
-export interface Context<E = {}> {
+export declare class Context<E = {}> {
     parameters: ExecutionParameters[];
-    cleanupActions: (() => void)[];
     objectPool: ObjectPool<ExecutionParameters>;
-    postActionListener: Set<ExecutionWithParams>;
     external: (E | {}) & typeof DEFAULT_EXTERNALS;
     locked: boolean;
+    private postActionListener;
+    private cleanupActions;
+    constructor({ parameters, cleanupActions, objectPool, postActionListener, external }?: {
+        parameters?: ExecutionParameters[];
+        cleanupActions?: (() => void)[];
+        objectPool?: ObjectPool<ExecutionParameters>;
+        postActionListener?: Set<ExecutionWithParams>;
+        external?: E | {};
+    });
+    addCleanup(cleanup: () => void): void;
+    addPostAction(postAction: ExecutionWithParams): void;
+    deletePostAction(postAction: ExecutionWithParams): void;
+    executePostActions(parameters: ExecutionParameters): void;
+    cleanup(): void;
+    clear(): void;
 }
 export declare function createContext<E>({ parameters, cleanupActions, objectPool, postActionListener, external, }?: {
     parameters?: ExecutionParameters[];
@@ -20,6 +33,3 @@ export declare function createContext<E>({ parameters, cleanupActions, objectPoo
     postActionListener?: Set<ExecutionWithParams>;
     external?: E | {};
 }): Context<E | {}>;
-export declare function addPostAction(postAction: ExecutionWithParams, context: Context): void;
-export declare function deletePostAction(postAction: ExecutionWithParams, context: Context): void;
-export declare function executePostActions(parameters: ExecutionParameters, context: Context): void;

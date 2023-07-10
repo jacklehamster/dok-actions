@@ -1,5 +1,5 @@
 import { PauseAction } from "../../actions/PauseAction";
-import { Context, ExecutionWithParams, addPostAction, deletePostAction } from "../../context/Context";
+import { Context, ExecutionWithParams } from "../../context/Context";
 import { ExecutionParameters, ExecutionStep, execute } from "../../execution/ExecutionStep";
 import { calculateBoolean } from "../../resolutions/calculateBoolean";
 import { calculateNumber } from "../../resolutions/calculateNumber";
@@ -30,7 +30,7 @@ export async function convertDelayProperty<T>(
 
     results.push((parameters, context) => {
         const timeout = external.setTimeout(performPostSteps, delayAmount.valueOf(parameters), context, parameters);
-        context.cleanupActions.push(() => clearTimeout(timeout));
+        context.addCleanup(() => clearTimeout(timeout));
     });
     return ConvertBehavior.SKIP_REMAINING_ACTIONS;
 }
@@ -59,10 +59,10 @@ export async function convertPauseProperty<T>(
             postExecution.parameters[i] = parameters[i];
         }
         if (!pauseResolution.valueOf(postExecution.parameters)) {
-            deletePostAction(postExecution, context);
+            context.deletePostAction(postExecution);
             execute(postStepResults, postExecution.parameters, context);
         } else {
-            addPostAction(postExecution, context);
+            context.addPostAction(postExecution);
         }
     };
 
@@ -116,7 +116,7 @@ export async function convertLockProperty<T>(
                         postExecution.parameters[i] = parameters[i];
                     }
                     if (!context.locked) {
-                        deletePostAction(postExecution, context);
+                        context.deletePostAction(postExecution);
                         execute(postStepResults, parameters, context);    
                     }
                 };
@@ -125,7 +125,7 @@ export async function convertLockProperty<T>(
                     parameters,
                 };
         
-                addPostAction(postExecution, context);
+                context.addPostAction(postExecution);
             }
         });
         return ConvertBehavior.SKIP_REMAINING_ACTIONS;

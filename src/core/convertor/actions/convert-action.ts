@@ -62,10 +62,7 @@ export async function executeScript<T>(
     const script = scripts.find(({name}) => name === scriptName);
     const steps = script ? scriptMap.get(script) : [];
     execute(steps, parameters, context);
-    return () => {
-        context.cleanupActions!.forEach(action => action());
-        context.cleanupActions!.length = 0;
-    };
+    return () => context.clear();
 }
 
 export async function executeAction<T>(

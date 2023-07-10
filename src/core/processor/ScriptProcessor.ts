@@ -39,12 +39,8 @@ export class ScriptProcessor<T, E = {}> {
     }
 
     clear() {
-        Object.values(this.refreshCleanups).forEach(cleanup => {
-            cleanup();
-        });
-        Object.keys(this.refreshCleanups).forEach(key => {
-            delete this.refreshCleanups[key];
-        });
+        Object.values(this.refreshCleanups).forEach(cleanup => cleanup());
+        Object.keys(this.refreshCleanups).forEach(key => delete this.refreshCleanups[key]);
     }
 
     private async fetchScripts(): Promise<Map<Script<T>, ExecutionStep[]>> {
@@ -58,13 +54,7 @@ export class ScriptProcessor<T, E = {}> {
     }
 
     private createRefreshCleanup(behavior: RefreshBehavior, context: Context) {
-        const cleanupActions = context.cleanupActions;
-        return behavior.cleanupAfterRefresh && cleanupActions ? () => {
-            for (let cleanup of cleanupActions) {
-                cleanup();
-            }
-            cleanupActions.length = 0;
-        } : () => {};
+        return behavior.cleanupAfterRefresh ? () => context.cleanup() : () => {};
     }
 
     async getSteps(filter: ScriptFilter) {
@@ -78,13 +68,13 @@ export class ScriptProcessor<T, E = {}> {
     async runByName(name: string, parameters: ExecutionParameters = {}) {
         const context: Context = createContext();
         execute(await this.getSteps({ name }), parameters, context);
-        return () => context.cleanupActions?.forEach(action => action());
+        return () => context.clear();
     }
 
     async runByTags(tags: Tag[], parameters: ExecutionParameters = {}) {
         const context: Context = createContext();
         execute(await this.getSteps({ tags }), parameters, context);
-        return () => context.cleanupActions?.forEach(action => action());
+        return () => context.clear();
     }
 
     private async refreshWithFilter(filter: ScriptFilter, behavior: RefreshBehavior = {}) {
