@@ -72,7 +72,7 @@ export function getTypeArrayContructor(glType?: GlType | string): ValueOf<TypedA
   };
 }
 
-export function calculateTypeArrayConstructor(glType: StringResolution<GlType>): ValueOf<TypedArrayConstructor | undefined> {
+export function calculateTypeArrayConstructor(glType: StringResolution<GlType>): ValueOf<TypedArrayConstructor> {
   const glTypeValueOf = calculateString<GlType>(glType);
   return convertValueOf(glTypeValueOf, getTypedArray);
 }
