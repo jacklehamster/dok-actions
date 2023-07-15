@@ -845,6 +845,14 @@ function calculateBoolean(value, defaultValue) {
   };
 }
 
+function convertValueOf(val, convertor) {
+  return {
+    valueOf: function valueOf(parameters) {
+      return convertor(val.valueOf(parameters));
+    }
+  };
+}
+
 function getGlType(type) {
   if (type && typeof type !== "string") {
     return {
@@ -899,6 +907,10 @@ function getTypeArrayContructor(glType) {
       return getTypedArray(glType);
     }
   };
+}
+function calculateTypeArrayConstructor(glType) {
+  var glTypeValueOf = calculateString(glType);
+  return convertValueOf(glTypeValueOf, getTypedArray);
 }
 function calculateTypedArray(value, typedArrayContructor) {
   if (typedArrayContructor === void 0) {
@@ -1772,9 +1784,11 @@ exports.calculateEvaluator = calculateEvaluator;
 exports.calculateNumber = calculateNumber;
 exports.calculateResolution = calculateResolution;
 exports.calculateString = calculateString;
+exports.calculateTypeArrayConstructor = calculateTypeArrayConstructor;
 exports.calculateTypedArray = calculateTypedArray;
 exports.convertAction = convertAction;
 exports.convertScripts = convertScripts;
+exports.convertValueOf = convertValueOf;
 exports.createContext = createContext;
 exports.execute = execute;
 exports.executeAction = executeAction;

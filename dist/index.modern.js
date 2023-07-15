@@ -846,6 +846,14 @@ function calculateBoolean(value, defaultValue) {
   };
 }
 
+function convertValueOf(val, convertor) {
+  return {
+    valueOf: function valueOf(parameters) {
+      return convertor(val.valueOf(parameters));
+    }
+  };
+}
+
 function getGlType(type) {
   if (type && typeof type !== "string") {
     return {
@@ -900,6 +908,10 @@ function getTypeArrayContructor(glType) {
       return getTypedArray(glType);
     }
   };
+}
+function calculateTypeArrayConstructor(glType) {
+  var glTypeValueOf = calculateString(glType);
+  return convertValueOf(glTypeValueOf, getTypedArray);
 }
 function calculateTypedArray(value, typedArrayContructor) {
   if (typedArrayContructor === void 0) {
@@ -1762,5 +1774,5 @@ var ScriptProcessor = /*#__PURE__*/function () {
   return ScriptProcessor;
 }();
 
-export { Context, ConvertBehavior, DEFAULT_EXTERNALS, FORMULA_SEPARATORS, ObjectPool, ScriptProcessor, calculateArray, calculateBoolean, calculateEvaluator, calculateNumber, calculateResolution, calculateString, calculateTypedArray, convertAction, convertScripts, createContext, execute, executeAction, executeScript, filterScripts, getByteSize, getDefaultConvertors, getFormulaEvaluator, getGlType, getInnerFormulas, getTypeArrayContructor, getTypedArray, hasFormula, isFormula, isSimpleInnerFormula, newParams, recycleParams };
+export { Context, ConvertBehavior, DEFAULT_EXTERNALS, FORMULA_SEPARATORS, ObjectPool, ScriptProcessor, calculateArray, calculateBoolean, calculateEvaluator, calculateNumber, calculateResolution, calculateString, calculateTypeArrayConstructor, calculateTypedArray, convertAction, convertScripts, convertValueOf, createContext, execute, executeAction, executeScript, filterScripts, getByteSize, getDefaultConvertors, getFormulaEvaluator, getGlType, getInnerFormulas, getTypeArrayContructor, getTypedArray, hasFormula, isFormula, isSimpleInnerFormula, newParams, recycleParams };
 //# sourceMappingURL=index.modern.js.map
