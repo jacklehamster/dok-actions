@@ -846,20 +846,77 @@ function calculateBoolean(value, defaultValue) {
   };
 }
 
-function calculateTypedArray(value, ArrayConstructor) {
-  if (ArrayConstructor === void 0) {
-    ArrayConstructor = Float32Array;
+var DEFAULT_TYPED_ARRAY = {
+  valueOf: function valueOf() {
+    return Float32Array;
+  }
+};
+function getGlType(type) {
+  if (type && typeof type !== "string") {
+    return {
+      valueOf: function valueOf(parameters) {
+        return getGlType(type.valueOf(parameters)).valueOf(parameters);
+      }
+    };
+  }
+  switch (type) {
+    case "BYTE":
+      return WebGL2RenderingContext.BYTE;
+    case "FLOAT":
+      return WebGL2RenderingContext.FLOAT;
+    case "SHORT":
+      return WebGL2RenderingContext.SHORT;
+    case "UNSIGNED_BYTE":
+      return WebGL2RenderingContext.UNSIGNED_BYTE;
+    case "UNSIGNED_SHORT":
+      return WebGL2RenderingContext.UNSIGNED_SHORT;
+    case "INT":
+      return WebGL2RenderingContext.INT;
+    case "UNSIGNED_INT":
+      return WebGL2RenderingContext.UNSIGNED_INT;
+  }
+  return WebGL2RenderingContext.FLOAT;
+}
+function getTypedArray(type) {
+  switch (type) {
+    case "BYTE":
+      return Int8Array;
+    case "FLOAT":
+      return Float32Array;
+    case "SHORT":
+      return Int16Array;
+    case "UNSIGNED_BYTE":
+      return Uint8Array;
+    case "UNSIGNED_SHORT":
+      return Uint16Array;
+    case "INT":
+      return Int32Array;
+    case "UNSIGNED_INT":
+      return Uint32Array;
+  }
+  return Float32Array;
+}
+function getByteSize(type) {
+  return getTypedArray(type).BYTES_PER_ELEMENT;
+}
+function calculateTypedArray(value, typedArrayContructor) {
+  if (typedArrayContructor === void 0) {
+    typedArrayContructor = DEFAULT_TYPED_ARRAY;
   }
   if (value instanceof Float32Array || value instanceof Int8Array || value instanceof Uint8Array || value instanceof Int16Array || value instanceof Uint16Array || value instanceof Int32Array || value instanceof Uint32Array) {
     return value;
   }
+  var ArrayConstructor = undefined;
   if (Array.isArray(value)) {
-    var array = new ArrayConstructor(value.length);
     var compiledArray = value.map(function (value) {
       return calculateNumber(value, 0);
     });
     return {
       valueOf: function valueOf(parameters) {
+        if (!ArrayConstructor) {
+          ArrayConstructor = typedArrayContructor.valueOf(parameters);
+        }
+        var array = new ArrayConstructor(value.length);
         for (var i = 0; i < compiledArray.length; i++) {
           array[i] = compiledArray[i].valueOf(parameters);
         }
@@ -878,6 +935,9 @@ function calculateTypedArray(value, ArrayConstructor) {
       }
       if (value instanceof Float32Array || value instanceof Int8Array || value instanceof Uint8Array || value instanceof Int16Array || value instanceof Uint16Array || value instanceof Int32Array || value instanceof Uint32Array) {
         return value;
+      }
+      if (!ArrayConstructor) {
+        ArrayConstructor = typedArrayContructor.valueOf(parameters);
       }
       if (Array.isArray(value)) {
         if (!bufferArray) {
@@ -1700,5 +1760,5 @@ var ScriptProcessor = /*#__PURE__*/function () {
   return ScriptProcessor;
 }();
 
-export { Context, ConvertBehavior, DEFAULT_EXTERNALS, FORMULA_SEPARATORS, ObjectPool, ScriptProcessor, calculateArray, calculateBoolean, calculateEvaluator, calculateNumber, calculateResolution, calculateString, calculateTypedArray, convertAction, convertScripts, createContext, execute, executeAction, executeScript, filterScripts, getDefaultConvertors, getFormulaEvaluator, getInnerFormulas, hasFormula, isFormula, isSimpleInnerFormula, newParams, recycleParams };
+export { Context, ConvertBehavior, DEFAULT_EXTERNALS, FORMULA_SEPARATORS, ObjectPool, ScriptProcessor, calculateArray, calculateBoolean, calculateEvaluator, calculateNumber, calculateResolution, calculateString, calculateTypedArray, convertAction, convertScripts, createContext, execute, executeAction, executeScript, filterScripts, getByteSize, getDefaultConvertors, getFormulaEvaluator, getGlType, getInnerFormulas, getTypedArray, hasFormula, isFormula, isSimpleInnerFormula, newParams, recycleParams };
 //# sourceMappingURL=index.modern.js.map
