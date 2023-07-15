@@ -845,11 +845,6 @@ function calculateBoolean(value, defaultValue) {
   };
 }
 
-var DEFAULT_TYPED_ARRAY = {
-  valueOf: function valueOf() {
-    return Float32Array;
-  }
-};
 function getGlType(type) {
   if (type && typeof type !== "string") {
     return {
@@ -898,9 +893,16 @@ function getTypedArray(type) {
 function getByteSize(type) {
   return getTypedArray(type).BYTES_PER_ELEMENT;
 }
+function getTypeArrayContructor(glType) {
+  return {
+    valueOf: function valueOf() {
+      return getTypedArray(glType);
+    }
+  };
+}
 function calculateTypedArray(value, typedArrayContructor) {
   if (typedArrayContructor === void 0) {
-    typedArrayContructor = DEFAULT_TYPED_ARRAY;
+    typedArrayContructor = getTypeArrayContructor("FLOAT");
   }
   if (value instanceof Float32Array || value instanceof Int8Array || value instanceof Uint8Array || value instanceof Int16Array || value instanceof Uint16Array || value instanceof Int32Array || value instanceof Uint32Array) {
     return value;
@@ -1783,6 +1785,7 @@ exports.getDefaultConvertors = getDefaultConvertors;
 exports.getFormulaEvaluator = getFormulaEvaluator;
 exports.getGlType = getGlType;
 exports.getInnerFormulas = getInnerFormulas;
+exports.getTypeArrayContructor = getTypeArrayContructor;
 exports.getTypedArray = getTypedArray;
 exports.hasFormula = hasFormula;
 exports.isFormula = isFormula;

@@ -11,12 +11,6 @@ export interface TypedArrayConstructor {
     BYTES_PER_ELEMENT: number;
 }
 
-const DEFAULT_TYPED_ARRAY = {
-    valueOf() {
-        return Float32Array;
-    }
-};
-
 export function getGlType(type: GlType | ValueOf<GlType> | string | undefined): ValueOf<GLenum> {
   if (type && typeof(type) !== "string") {
     return {
@@ -68,7 +62,15 @@ export function getByteSize(type?: GlType) {
   return getTypedArray(type).BYTES_PER_ELEMENT;
 }
 
-export function calculateTypedArray(value: TypedArrayResolution, typedArrayContructor: ValueOf<TypedArrayConstructor> = DEFAULT_TYPED_ARRAY): ValueOf<TypedArray | undefined> {
+export function getTypeArrayContructor(glType?: GlType): ValueOf<TypedArrayConstructor> {
+  return {
+    valueOf() {
+        return getTypedArray(glType);
+    }
+  };
+}
+
+export function calculateTypedArray(value: TypedArrayResolution, typedArrayContructor: ValueOf<TypedArrayConstructor> = getTypeArrayContructor("FLOAT")): ValueOf<TypedArray | undefined> {
     if (value instanceof Float32Array || value instanceof Int8Array || value instanceof Uint8Array
         || value instanceof Int16Array || value instanceof Uint16Array
         || value instanceof Int32Array || value instanceof Uint32Array) {

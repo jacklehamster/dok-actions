@@ -846,11 +846,6 @@ function calculateBoolean(value, defaultValue) {
   };
 }
 
-var DEFAULT_TYPED_ARRAY = {
-  valueOf: function valueOf() {
-    return Float32Array;
-  }
-};
 function getGlType(type) {
   if (type && typeof type !== "string") {
     return {
@@ -899,9 +894,16 @@ function getTypedArray(type) {
 function getByteSize(type) {
   return getTypedArray(type).BYTES_PER_ELEMENT;
 }
+function getTypeArrayContructor(glType) {
+  return {
+    valueOf: function valueOf() {
+      return getTypedArray(glType);
+    }
+  };
+}
 function calculateTypedArray(value, typedArrayContructor) {
   if (typedArrayContructor === void 0) {
-    typedArrayContructor = DEFAULT_TYPED_ARRAY;
+    typedArrayContructor = getTypeArrayContructor("FLOAT");
   }
   if (value instanceof Float32Array || value instanceof Int8Array || value instanceof Uint8Array || value instanceof Int16Array || value instanceof Uint16Array || value instanceof Int32Array || value instanceof Uint32Array) {
     return value;
@@ -1760,5 +1762,5 @@ var ScriptProcessor = /*#__PURE__*/function () {
   return ScriptProcessor;
 }();
 
-export { Context, ConvertBehavior, DEFAULT_EXTERNALS, FORMULA_SEPARATORS, ObjectPool, ScriptProcessor, calculateArray, calculateBoolean, calculateEvaluator, calculateNumber, calculateResolution, calculateString, calculateTypedArray, convertAction, convertScripts, createContext, execute, executeAction, executeScript, filterScripts, getByteSize, getDefaultConvertors, getFormulaEvaluator, getGlType, getInnerFormulas, getTypedArray, hasFormula, isFormula, isSimpleInnerFormula, newParams, recycleParams };
+export { Context, ConvertBehavior, DEFAULT_EXTERNALS, FORMULA_SEPARATORS, ObjectPool, ScriptProcessor, calculateArray, calculateBoolean, calculateEvaluator, calculateNumber, calculateResolution, calculateString, calculateTypedArray, convertAction, convertScripts, createContext, execute, executeAction, executeScript, filterScripts, getByteSize, getDefaultConvertors, getFormulaEvaluator, getGlType, getInnerFormulas, getTypeArrayContructor, getTypedArray, hasFormula, isFormula, isSimpleInnerFormula, newParams, recycleParams };
 //# sourceMappingURL=index.modern.js.map
