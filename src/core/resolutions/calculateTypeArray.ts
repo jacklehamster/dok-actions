@@ -62,7 +62,7 @@ export function getByteSize(type?: GlType) {
   return getTypedArray(type).BYTES_PER_ELEMENT;
 }
 
-export function getTypeArrayContructor(glType?: GlType): ValueOf<TypedArrayConstructor> {
+export function getTypeArrayContructor(glType?: GlType | string): ValueOf<TypedArrayConstructor> {
   return {
     valueOf() {
         return getTypedArray(glType);

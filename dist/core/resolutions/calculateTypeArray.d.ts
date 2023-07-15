@@ -9,5 +9,5 @@ export interface TypedArrayConstructor {
 export declare function getGlType(type: GlType | ValueOf<GlType> | string | undefined): ValueOf<GLenum>;
 export declare function getTypedArray(type: GlType | string | undefined): TypedArrayConstructor;
 export declare function getByteSize(type?: GlType): number;
-export declare function getTypeArrayContructor(glType?: GlType): ValueOf<TypedArrayConstructor>;
+export declare function getTypeArrayContructor(glType?: GlType | string): ValueOf<TypedArrayConstructor>;
 export declare function calculateTypedArray(value: TypedArrayResolution, typedArrayContructor?: ValueOf<TypedArrayConstructor>): ValueOf<TypedArray | undefined>;
