@@ -1,9 +1,11 @@
 import { ExecutionParameters } from "../execution/ExecutionStep";
 import { GlType } from "../types/GlType";
 import { TypedArray } from "../types/TypedArray";
-import { ValueOf } from "../types/ValueOf";
+import { convertValueOf, ValueOf } from "../types/ValueOf";
 import { calculateNumber } from "./calculateNumber";
+import { calculateString } from "./calculateString";
 import { calculateEvaluator, getFormulaEvaluator } from "./formula/formula-evaluator";
+import { StringResolution } from "./StringResolution";
 import { TypedArrayResolution } from "./TypedArrayResolution";
 
 export interface TypedArrayConstructor {
@@ -68,6 +70,11 @@ export function getTypeArrayContructor(glType?: GlType | string): ValueOf<TypedA
         return getTypedArray(glType);
     }
   };
+}
+
+export function calculateTypeArrayConstructor(glType: StringResolution<GlType>): ValueOf<TypedArrayConstructor | undefined> {
+  const glTypeValueOf = calculateString<GlType>(glType);
+  return convertValueOf(glTypeValueOf, getTypedArray);
 }
 
 export function calculateTypedArray(value: TypedArrayResolution, typedArrayContructor: ValueOf<TypedArrayConstructor> = getTypeArrayContructor("FLOAT")): ValueOf<TypedArray | undefined> {

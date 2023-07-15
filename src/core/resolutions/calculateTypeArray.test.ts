@@ -1,4 +1,4 @@
-import { calculateTypedArray } from "./calculateTypeArray";
+import { calculateTypeArrayConstructor, calculateTypedArray } from "./calculateTypeArray";
 
 describe('calculateTypedArray', () => {
     it('should calculate typedarray resolution', () => {
@@ -11,5 +11,9 @@ describe('calculateTypedArray', () => {
 
     it('should calculate typedarray with factory', () => {
         expect(calculateTypedArray("~{x}", { valueOf: () => Int32Array }).valueOf({x: [1, 2, 3]})).toEqual(new Int32Array([1, 2, 3]));
+    });
+
+    it('should convert type array constructor', () => {
+        expect(calculateTypeArrayConstructor("INT").valueOf()).toEqual(Int32Array);
     });
 });
