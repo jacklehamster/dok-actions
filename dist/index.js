@@ -854,10 +854,11 @@ function convertValueOf(val, convertor) {
 }
 
 function getGlType(type) {
+  var glType = calculateString(type);
   if (type && typeof type !== "string") {
     return {
       valueOf: function valueOf(parameters) {
-        return getGlType(type.valueOf(parameters)).valueOf(parameters);
+        return getGlType(glType.valueOf(parameters)).valueOf(parameters);
       }
     };
   }
@@ -899,7 +900,12 @@ function getTypedArray(type) {
   return Float32Array;
 }
 function getByteSize(type) {
-  return getTypedArray(type).BYTES_PER_ELEMENT;
+  var typeArray = calculateTypeArrayConstructor(type);
+  return {
+    valueOf: function valueOf(parameters) {
+      return typeArray.valueOf(parameters).BYTES_PER_ELEMENT;
+    }
+  };
 }
 function getTypeArrayContructor(glType) {
   return {

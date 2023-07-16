@@ -13,11 +13,12 @@ export interface TypedArrayConstructor {
     BYTES_PER_ELEMENT: number;
 }
 
-export function getGlType(type: GlType | ValueOf<GlType> | string | undefined): ValueOf<GLenum> {
+export function getGlType(type: StringResolution<GlType>): ValueOf<GLenum> {
+  const glType = calculateString<GlType>(type);
   if (type && typeof(type) !== "string") {
     return {
       valueOf(parameters: ExecutionParameters) {
-        return getGlType(type.valueOf(parameters)).valueOf(parameters);
+        return getGlType(glType.valueOf(parameters)).valueOf(parameters);
       }
     };
   }
@@ -60,8 +61,13 @@ export function getTypedArray(type: GlType | string | undefined): TypedArrayCons
   return Float32Array;
 }
 
-export function getByteSize(type?: GlType) {
-  return getTypedArray(type).BYTES_PER_ELEMENT;
+export function getByteSize(type?: StringResolution<GlType>): ValueOf<number> {
+  const typeArray = calculateTypeArrayConstructor(type);
+  return {
+    valueOf(parameters: ExecutionParameters) {
+      return typeArray.valueOf(parameters).BYTES_PER_ELEMENT;
+    }
+  };
 }
 
 export function getTypeArrayContructor(glType?: GlType | string): ValueOf<TypedArrayConstructor> {
