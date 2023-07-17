@@ -1,15 +1,11 @@
-import { Editor } from '@monaco-editor/react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { stringify } from 'yaml'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_EXTERNALS, DokAction, ScriptProcessor } from 'dok-actions';
-import { Language, getObject } from './language/lang-utils';
-import { ObjEditor } from './editor/obj-editor';
+import { DokEditor, getObject } from "dok-editor";
 
 export const App = () => {
-    const [language, setLanguage] = useState<Language>("yaml");
-    const [editor, setEditor] = useState(false);
     const [code, setCode] = useState("");
     const [output, setOutput] = useState("");
+    const [language, setLanguage] = useState("yaml");
 
     useEffect(() => {
         fetch("code/initial-code.yaml").then(response => response.text()).then(text => {
@@ -18,57 +14,44 @@ export const App = () => {
     }, []);
 
     const processor = useRef<ScriptProcessor<DokAction>>();
+    const outputer = useMemo(() => {
+        let preDate = "";
+        return {
+            send: (params: any) => {
+                setOutput(output => {
+                    const dateLine = `====== ${new Date().toLocaleString()} =======\n`;
+                    const result = output + (preDate !== dateLine ? dateLine : "") + params + "\n";
+                    preDate = dateLine;
+                    return result;
+                });
+            },
+        };
+    }, [setOutput]);
 
     const execute = useCallback(() => {
         processor.current?.clear();
         const obj = getObject(code, language);
         processor.current = new ScriptProcessor(obj.scripts, {
             ...DEFAULT_EXTERNALS,
-            log: (params: any) => setOutput(output => output + params + "\n"),
+            log: outputer.send,
         });
         processor.current.runByTags(["main"]);
-    }, [code, language]);
+    }, [code, language, outputer]);
 
     return <>
         <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "row" }}>
             <div style={{ border: "1px solid black", width: "50%", height: "100%" }}>
-                <div>
-                    <label htmlFor="log">Logs</label>
-                    <textarea id="log" readOnly style={{ width: "100%", height: 300, borderWidth: 0 }} value={output}></textarea>
+                <div style={{ width: "100%" }}>
+                    <div style={{ backgroundColor: "#bbffdd", width: "100%" }}>
+                        <label htmlFor="log">Output</label>
+                    </div>
+                    <textarea id="log" readOnly style={{ width: "100%", height: 300, borderWidth: 0, color: "snow", backgroundColor: "black"  }} value={output}></textarea>
                 </div>
                 <button onClick={() => setOutput("")}>clear</button>
             </div>
             <div style={{ border: "1px solid black", width: "50%", height: "100%" }}>
-                <select onChange={({ target }) => {
-                    const option = target.value;
-                    if (option === "editor") {
-                        setEditor(true);
-                    } else {
-                        setEditor(false);
-                        setLanguage(lang => {
-                            const obj = getObject(code, lang);
-                            const newLang = option;
-                            if (newLang === 'yaml') {
-                                setCode(stringify(obj));
-                            } else if(newLang === 'json') {
-                                setCode(JSON.stringify(obj, null, "  ") + "\n")
-                            }
-                            return newLang;
-                        });    
-                    }
-                }}>
-                    <option value="yaml">yaml</option>
-                    <option value="json">json</option>
-                    <option value="editor">editor</option>
-                </select>
                 <button onClick={execute}>execute</button>
-                {!editor && <Editor height="80vh" defaultLanguage={language} value={code}
-                    onChange={value => {
-                        if (value && code !== value) {
-                            setCode(value);
-                        }
-                }} />}
-                {editor && <ObjEditor code={code} language={language} />}
+                <DokEditor code={code} onCodeChange={setCode} language={language} onLanguageChange={setLanguage} />
             </div>
         </div>
     </>;

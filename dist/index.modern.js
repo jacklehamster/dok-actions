@@ -1675,7 +1675,10 @@ var ScriptProcessor = /*#__PURE__*/function () {
       return Promise.resolve(_this4.getSteps({
         name: name
       })).then(function (_this4$getSteps) {
-        execute(_this4$getSteps, parameters, context);
+        execute(_this4$getSteps, _extends({}, parameters, {
+          time: undefined,
+          index: undefined
+        }), context);
         return function () {
           return context.clear();
         };
@@ -1694,7 +1697,10 @@ var ScriptProcessor = /*#__PURE__*/function () {
       return Promise.resolve(_this5.getSteps({
         tags: tags
       })).then(function (_this5$getSteps) {
-        execute(_this5$getSteps, parameters, context);
+        execute(_this5$getSteps, _extends({}, parameters, {
+          time: undefined,
+          index: undefined
+        }), context);
         return function () {
           return context.clear();
         };
