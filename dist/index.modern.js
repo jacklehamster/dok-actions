@@ -1053,7 +1053,7 @@ var convertExecuteCallbackProperty = function convertExecuteCallbackProperty(act
     results.push(function (parameters, context) {
       var _utils$executeCallbac, _utils$executeCallbac2;
       var callbackName = callbackToExecute.valueOf(parameters);
-      (_utils$executeCallbac = utils.executeCallback) === null || _utils$executeCallbac === void 0 ? void 0 : (_utils$executeCallbac2 = _utils$executeCallbac[callbackName]) === null || _utils$executeCallbac2 === void 0 ? void 0 : _utils$executeCallbac2.call(_utils$executeCallbac, context);
+      (_utils$executeCallbac = utils.executeCallback) === null || _utils$executeCallbac === void 0 ? void 0 : (_utils$executeCallbac2 = _utils$executeCallbac[callbackName]) === null || _utils$executeCallbac2 === void 0 ? void 0 : _utils$executeCallbac2.call(_utils$executeCallbac, context, parameters);
     });
     return Promise.resolve();
   } catch (e) {
@@ -1086,7 +1086,15 @@ var convertCallbackProperty = function convertCallbackProperty(action, results, 
     var _temp = _forIn(callback, function (key) {
       var callbackSteps = [];
       return Promise.resolve(convertActions(callback[key], callbackSteps, utils, external, convertorSet)).then(function () {
-        var onCallback = callbackSteps.length ? function (context) {
+        var onCallback = callbackSteps.length ? function (context, additionalParameters) {
+          if (additionalParameters) {
+            var p = callbackParameters[key];
+            if (p) {
+              for (var k in additionalParameters) {
+                p[k] = additionalParameters[k];
+              }
+            }
+          }
           execute(callbackSteps, callbackParameters[key], context);
           for (var i in callbackParameters[key]) {
             var _callbackParameters$k;

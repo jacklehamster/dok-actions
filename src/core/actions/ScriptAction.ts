@@ -1,6 +1,5 @@
-import { Resolution } from "../resolutions/Resolution";
+import { ActionWithParameters } from "./ActionWithParameters";
 
-export interface ScriptAction {
+export interface ScriptAction extends ActionWithParameters {
     executeScript?: string;
-    parameters?: Record<string, Resolution>;
 }

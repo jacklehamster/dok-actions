@@ -53,4 +53,25 @@ describe('callback convertor', () => {
         execute(results);
         expect(log).not.toBeCalled();
     });
+
+    it('convert callback with extra params', async () => {
+        const results: ExecutionStep[] = [];
+        const action: CallbackAction<LogAction> = {
+            callback: { logCallback: [
+                {
+                    log: "~{testValue}",
+                }
+            ]},
+            executeCallback: "logCallback",
+            parameters: { testValue: "log-test" }
+        };
+        await convertCallbackProperty<LogAction>(action,
+            results,
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
+            { log },
+            getDefaultConvertors(),
+        );
+        execute(results);
+        expect(log).toBeCalledWith("log-test");
+    });
 });

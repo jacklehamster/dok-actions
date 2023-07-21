@@ -25,7 +25,15 @@ export async function convertCallbackProperty<T>(
         const callbackSteps: ExecutionStep[] = [];
         await convertActions(callback[key], callbackSteps, utils, external, convertorSet);
 
-        const onCallback = callbackSteps.length ? (context?: Context) => { 
+        const onCallback = callbackSteps.length ? (context?: Context, additionalParameters?: ExecutionParameters) => { 
+            if (additionalParameters) {
+                const p = callbackParameters[key];
+                if (p) {
+                    for (let k in additionalParameters) {
+                        p[k] = additionalParameters[k];
+                    }    
+                }
+            }
             execute(callbackSteps, callbackParameters[key], context);
             for (let i in callbackParameters[key]) {
                 delete callbackParameters[key]?.[i];
@@ -57,9 +65,10 @@ export async function convertExecuteCallbackProperty<T>(
         return;
     }
     const { executeCallback } = action;
+
     const callbackToExecute = calculateString(executeCallback);
     results.push((parameters, context) => {
         const callbackName = callbackToExecute.valueOf(parameters);
-        utils.executeCallback?.[callbackName]?.(context);
+        utils.executeCallback?.[callbackName]?.(context, parameters);
     });
 }
