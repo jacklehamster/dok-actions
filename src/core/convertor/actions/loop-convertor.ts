@@ -10,7 +10,7 @@ import { calculateArray } from "../../resolutions/calculateArray";
 
 const VARIABLE_NAMES = "ijklmnopqrstuvwxyzabcdefgh".split("");
 
-function keepLooping(parameters: ExecutionParameters, context: Context, loops: ValueOf<number>[], steps: ExecutionStep[], depth: number = 0) {
+function keepLooping(parameters: ExecutionParameters, context: Context, loops: ValueOf<number>[], steps: ExecutionStep[], depth: number = 0, base: number = 0) {
     if (depth >= loops.length) {
         execute(steps, parameters, context);
         return;
@@ -18,9 +18,11 @@ function keepLooping(parameters: ExecutionParameters, context: Context, loops: V
     const length = loops[depth].valueOf(parameters);
     const p = parameters;
     const letter = VARIABLE_NAMES[depth];
+    const subBase = base * length;
     for (let i = 0; i < length; i++) {
-        p.index = p[letter] = i;
-        keepLooping(p, context, loops, steps, depth + 1);
+        p[letter] = i;
+        p.index = subBase + i;
+        keepLooping(p, context, loops, steps, depth + 1, subBase + i);
     }
 }
 

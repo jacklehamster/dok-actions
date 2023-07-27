@@ -1525,9 +1525,12 @@ var convertLoopProperty = function convertLoopProperty(action, stepResults, util
   }
 };
 var VARIABLE_NAMES = "ijklmnopqrstuvwxyzabcdefgh".split("");
-function keepLooping(parameters, context, loops, steps, depth) {
+function keepLooping(parameters, context, loops, steps, depth, base) {
   if (depth === void 0) {
     depth = 0;
+  }
+  if (base === void 0) {
+    base = 0;
   }
   if (depth >= loops.length) {
     execute(steps, parameters, context);
@@ -1536,9 +1539,11 @@ function keepLooping(parameters, context, loops, steps, depth) {
   var length = loops[depth].valueOf(parameters);
   var p = parameters;
   var letter = VARIABLE_NAMES[depth];
+  var subBase = base * length;
   for (var i = 0; i < length; i++) {
-    p.index = p[letter] = i;
-    keepLooping(p, context, loops, steps, depth + 1);
+    p[letter] = i;
+    p.index = subBase + i;
+    keepLooping(p, context, loops, steps, depth + 1, subBase + i);
   }
 }
 
