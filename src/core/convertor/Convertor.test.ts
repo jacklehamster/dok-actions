@@ -126,7 +126,7 @@ describe('convertor', () => {
                 name: "LogTest",
                 actions: [
                     {
-                        log: ["~{index}", "hello", "~{name}"],    
+                        log: ["~{loopIndex}", "hello", "~{name}"],    
                     },
                 ],
             },
@@ -156,7 +156,7 @@ describe('convertor', () => {
                 name: "LogTest",
                 actions: [
                     {
-                        log: ["~{index}", "hello", "~{name}"],
+                        log: ["~{loopIndex}", "hello", "~{name}"],
                     },
                 ],
             },
@@ -179,7 +179,7 @@ describe('convertor', () => {
                         loop: 3,
                         executeScript: "LogTest",
                         parameters: {name : "loopingtest"},
-                        condition: "~{index == 2}"
+                        condition: "~{loopIndex == 2}"
                     }
                 ],
             },

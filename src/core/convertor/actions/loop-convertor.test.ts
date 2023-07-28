@@ -20,7 +20,7 @@ describe('loop convertor', () => {
         const results: ExecutionStep[] = [];
         await convertLoopProperty<LogAction>({
                 loop: 5,
-                log: "~{index}",
+                log: "~{loopIndex}",
             },
             results,
             {getSteps, getRemainingActions, refreshSteps, stopRefresh},
@@ -58,7 +58,7 @@ describe('loop convertor', () => {
         const results: ExecutionStep[] = [];
         await convertLoopProperty<LogAction>({
                 loop: [2, 3],
-                log: "~{index}",
+                log: "~{loopIndex}",
             },
             results,
             {getSteps, getRemainingActions, refreshSteps, stopRefresh},
@@ -78,15 +78,14 @@ describe('loop convertor', () => {
     it('converts while loop', async () => {
         const results: ExecutionStep[] = [];
         await convertWhileProperty<ActionsAction<LogAction & SetAction>>({
-                whileCondition: "~{index < 5}",
+                whileCondition: "~{loopIndex < 5}",
                 actions: [
                     {
-                        log: "~{index}",
+                        log: "~{loopIndex}",
                     },    
                     {
-                        set: {
-                            variable: "index",
-                            value: "~{value + 1}"
+                        sets: {
+                            loopIndex: "~{value + 1}"
                         },
                     },
                 ],
@@ -96,7 +95,7 @@ describe('loop convertor', () => {
             { log },
             getDefaultConvertors(),
         );
-        execute(results, {index: 0});
+        execute(results, {loopIndex: 0});
         expect(log).toBeCalledTimes(5);
         expect(log).toBeCalledWith(0);
         expect(log).toBeCalledWith(1);

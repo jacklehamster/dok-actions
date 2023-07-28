@@ -42,6 +42,20 @@ describe('set convertor', () => {
         expect(parameters.obj.array).toEqual([0, 123, 2]);
     });
 
+    it('convert set with access using formula', async () => {
+        const results: ExecutionStep[] = [];
+        await convertSetProperty({
+                set: {variable: "obj", access: ["array", "~{1}"], value: 123},
+            },
+            results,
+        );
+        const parameters: Record<string, any> = {
+            obj: { array: [0, 1, 2] }
+        };
+        execute(results, parameters);
+        expect(parameters.obj.array).toEqual([0, 123, 2]);
+    });
+
     it('convert sets', async () => {
         const results: ExecutionStep[] = [];
         await convertSetsProperty({

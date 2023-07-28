@@ -1484,7 +1484,7 @@ var convertLoopEachProperty = function convertLoopEachProperty(action, stepResul
         var array = loopEachResolution === null || loopEachResolution === void 0 ? void 0 : loopEachResolution.valueOf(parameters);
         if (array) {
           for (var i = 0; i < array.length; i++) {
-            parameters.index = i;
+            parameters.loopIndex = i;
             parameters.element = array[i];
             execute(subStepResults, parameters, context);
           }
@@ -1542,7 +1542,7 @@ function keepLooping(parameters, context, loops, steps, depth, base) {
   var subBase = base * length;
   for (var i = 0; i < length; i++) {
     p[letter] = i;
-    p.index = subBase + i;
+    p.loopIndex = subBase + i;
     keepLooping(p, context, loops, steps, depth + 1, subBase + i);
   }
 }

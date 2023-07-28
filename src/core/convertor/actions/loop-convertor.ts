@@ -21,7 +21,7 @@ function keepLooping(parameters: ExecutionParameters, context: Context, loops: V
     const subBase = base * length;
     for (let i = 0; i < length; i++) {
         p[letter] = i;
-        p.index = subBase + i;
+        p.loopIndex = subBase + i;
         keepLooping(p, context, loops, steps, depth + 1, subBase + i);
     }
 }
@@ -91,7 +91,7 @@ export async function convertLoopEachProperty<T>(
         const array = loopEachResolution?.valueOf(parameters);
         if (array) {
             for (let i = 0; i < array.length; i++) {
-                parameters.index = i;
+                parameters.loopIndex = i;
                 parameters.element = array[i];
                 execute(subStepResults, parameters, context);
             }
