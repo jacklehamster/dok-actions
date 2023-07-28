@@ -16,4 +16,12 @@ describe('calculateObject', () => {
             subject: "~{x}",
         }).valueOf(parameters)).toEqual({t: "test"});
     });
+
+    it('should calculate resolution with formula', () => {
+        expect(calculateObject({
+            subject: "~{x}",
+            access: [0],
+            formula: "~{value + 5}"
+        }).valueOf({ x: [5] })).toEqual(10);
+    });
 });

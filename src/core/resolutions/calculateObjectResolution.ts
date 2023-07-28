@@ -5,6 +5,7 @@ import { ObjectResolution } from "./ObjectResolution";
 export function calculateObject(value: ObjectResolution): ValueOf<any | undefined> {
     const subject = calculateResolution(value.subject);
     const access = (value.access ?? []).map(key => calculateResolution(key));
+    const formula = value.formula ? calculateResolution(value.formula) : undefined;
 
     return {
         valueOf(parameters) {
@@ -15,13 +16,19 @@ export function calculateObject(value: ObjectResolution): ValueOf<any | undefine
                     if (typeof key === "number") {
                         node = node?.[key];
                     } else {
-                        return undefined;
+                        node = undefined;
+                        break;
                     }
                 } else if (typeof key === "string" && typeof(node) === "object") {
                     node = (node as Record<string, any>)?.[key];
                 } else {
-                    return undefined;
+                    node = undefined;
+                    break;
                 }
+            }
+            if (formula && parameters) {
+                parameters.value = node;
+                node = formula.valueOf(parameters);
             }
             return node;
         },
