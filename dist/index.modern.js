@@ -716,6 +716,7 @@ function calculateObject(value) {
   var access = ((_value$access = value.access) != null ? _value$access : []).map(function (key) {
     return calculateResolution(key);
   });
+  var formula = value.formula ? calculateResolution(value.formula) : undefined;
   return {
     valueOf: function valueOf(parameters) {
       var node = subject === null || subject === void 0 ? void 0 : subject.valueOf(parameters);
@@ -729,14 +730,20 @@ function calculateObject(value) {
             var _node;
             node = (_node = node) === null || _node === void 0 ? void 0 : _node[key];
           } else {
-            return undefined;
+            node = undefined;
+            break;
           }
         } else if (typeof key === "string" && typeof node === "object") {
           var _node2;
           node = (_node2 = node) === null || _node2 === void 0 ? void 0 : _node2[key];
         } else {
-          return undefined;
+          node = undefined;
+          break;
         }
+      }
+      if (formula && parameters) {
+        parameters.value = node;
+        node = formula.valueOf(parameters);
       }
       return node;
     }
