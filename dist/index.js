@@ -709,7 +709,7 @@ function calculateMap(value) {
   };
 }
 
-function calculateObject(value) {
+function calculateObject(value, defaultValue) {
   var _value$access;
   var subject = calculateResolution(value.subject);
   var access = ((_value$access = value.access) != null ? _value$access : []).map(function (key) {
@@ -718,6 +718,7 @@ function calculateObject(value) {
   var formula = value.formula ? calculateResolution(value.formula) : undefined;
   return {
     valueOf: function valueOf(parameters) {
+      var _node;
       var node = subject === null || subject === void 0 ? void 0 : subject.valueOf(parameters);
       var keys = access.map(function (key) {
         return key === null || key === void 0 ? void 0 : key.valueOf(parameters);
@@ -726,15 +727,15 @@ function calculateObject(value) {
         var key = _step.value;
         if (Array.isArray(node)) {
           if (typeof key === "number") {
-            var _node;
-            node = (_node = node) === null || _node === void 0 ? void 0 : _node[key];
+            var _node2;
+            node = (_node2 = node) === null || _node2 === void 0 ? void 0 : _node2[key];
           } else {
             node = undefined;
             break;
           }
         } else if (typeof key === "string" && typeof node === "object") {
-          var _node2;
-          node = (_node2 = node) === null || _node2 === void 0 ? void 0 : _node2[key];
+          var _node3;
+          node = (_node3 = node) === null || _node3 === void 0 ? void 0 : _node3[key];
         } else {
           node = undefined;
           break;
@@ -744,7 +745,7 @@ function calculateObject(value) {
         parameters.value = node;
         node = formula.valueOf(parameters);
       }
-      return node;
+      return (_node = node) != null ? _node : defaultValue;
     }
   };
 }
@@ -800,6 +801,12 @@ function calculateNumber(value, defaultValue) {
       }
     };
   }
+  if (typeof value === "object") {
+    if (value.subject) {
+      return calculateObject(value);
+    }
+    throw new Error("Invalid expression. You need a subject");
+  }
   var evaluator = getFormulaEvaluator(value);
   return {
     valueOf: function valueOf(parameters) {
@@ -822,6 +829,12 @@ function calculateString(value, defaultValue) {
       }
     };
   }
+  if (typeof value === "object") {
+    if (value.subject) {
+      return calculateObject(value, defaultValue);
+    }
+    throw new Error("Invalid expression. You need a subject");
+  }
   var evaluator = getFormulaEvaluator(value);
   return {
     valueOf: function valueOf(parameters) {
@@ -843,6 +856,12 @@ function calculateBoolean(value, defaultValue) {
         return defaultValue;
       }
     };
+  }
+  if (typeof value === "object") {
+    if (value.subject) {
+      return calculateObject(value);
+    }
+    throw new Error("Invalid expression. You need a subject");
   }
   var evaluator = getFormulaEvaluator(value);
   return {

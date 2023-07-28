@@ -13,4 +13,8 @@ describe('calculateBoolean', () => {
         expect(calculateBoolean("~{1 + 1}").valueOf(parameters)).toEqual(true);
         expect(calculateBoolean("~{1 - 1}").valueOf(parameters)).toEqual(false);
     });
+
+    it('should resolve subjects', () => {
+        expect(calculateBoolean({subject: {a: true}, access: ["a"]}).valueOf(parameters)).toEqual(true);
+    });
 });

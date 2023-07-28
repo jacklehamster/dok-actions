@@ -2,7 +2,7 @@ import { ValueOf } from "../types/ValueOf";
 import { calculateResolution } from "./calculate";
 import { ObjectResolution } from "./ObjectResolution";
 
-export function calculateObject(value: ObjectResolution): ValueOf<any | undefined> {
+export function calculateObject<T extends any = object, U = object | undefined>(value: ObjectResolution, defaultValue?: U): ValueOf<T | U> {
     const subject = calculateResolution(value.subject);
     const access = (value.access ?? []).map(key => calculateResolution(key));
     const formula = value.formula ? calculateResolution(value.formula) : undefined;
@@ -30,7 +30,7 @@ export function calculateObject(value: ObjectResolution): ValueOf<any | undefine
                 parameters.value = node;
                 node = formula.valueOf(parameters);
             }
-            return node;
+            return (node ?? defaultValue) as (T | U);
         },
     };
 }

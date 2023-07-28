@@ -1,4 +1,5 @@
 import { ValueOf } from "../types/ValueOf";
 import { NumberResolution } from "./NumberResolution";
 import { BooleanResolution } from "./BooleanResolution";
-export declare function calculateBoolean(value: BooleanResolution | NumberResolution, defaultValue?: boolean): ValueOf<boolean>;
+import { ObjectResolution } from "./ObjectResolution";
+export declare function calculateBoolean(value: BooleanResolution | NumberResolution | ObjectResolution, defaultValue?: boolean): ValueOf<boolean>;

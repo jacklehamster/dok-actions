@@ -23,6 +23,7 @@ export function calculateMap(value: MapResolution): ValueOf<{ [key:string]:Suppo
             }
         };
     }
+    
     const map = value as {[key: string]:Resolution}
     const evaluatorEntries = Object.entries(map).map(([key, resolution]) => [key, calculateResolution(resolution)]);
 
