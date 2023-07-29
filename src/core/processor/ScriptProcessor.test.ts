@@ -1,3 +1,4 @@
+import { getDefaultConvertors } from "../convertor/default-convertors";
 import { execute } from "../execution/ExecutionStep";
 import { calculateNumber } from "../resolutions/calculateNumber";
 import { ScriptProcessor } from "./ScriptProcessor";
@@ -38,6 +39,28 @@ describe('ScriptProcesor', () => {
         ]});
         await processor.runByName("main");
         expect(mock).toBeCalledWith(123);
+    });
+
+    it('run scripts by name including subscripts', async () => {
+        const processor = new ScriptProcessor([{
+            name: "main",
+            scripts: [{
+                name: "subscript",
+                actions: [
+                    { mock: 456 }
+                ]
+            }],
+            actions: [
+                { executeScript: "subscript" },
+            ],
+        }], external, { actionsConvertor: [
+            ...getDefaultConvertors().actionsConvertor,
+            async (action, results) => results.push((_) => {
+                if (action.mock) mock(action.mock);
+            }),
+        ]});
+        await processor.runByName("main");
+        expect(mock).toBeCalledWith(456);
     });
 
     it('run scripts by tags', async () => {

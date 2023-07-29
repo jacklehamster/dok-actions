@@ -440,7 +440,7 @@ var executeScript = function executeScript(scriptName, parameters, scripts, exte
     return Promise.reject(e);
   }
 };
-var convertScripts = function convertScripts(scripts, external, convertorSet, processorHelper) {
+var convertScriptsHelper = function convertScriptsHelper(scripts, external, convertorSet, processorHelper) {
   try {
     var scriptMap = new Map();
     scripts.forEach(function (script) {
@@ -458,7 +458,8 @@ var convertScripts = function convertScripts(scripts, external, convertorSet, pr
       var _scriptMap$get;
       var _interrupt = false;
       var scriptSteps = (_scriptMap$get = scriptMap.get(script)) != null ? _scriptMap$get : [];
-      var actions = script.actions;
+      var _script$actions = script.actions,
+        actions = _script$actions === void 0 ? [] : _script$actions;
       var _temp = _forTo(actions, function (i) {
         var getRemainingActions = function getRemainingActions() {
           return actions.slice(i + 1);
@@ -485,6 +486,13 @@ var convertScripts = function convertScripts(scripts, external, convertorSet, pr
     return Promise.reject(e);
   }
 };
+var convertScripts = function convertScripts(scripts, external, convertorSet, processorHelper) {
+  try {
+    return convertScriptsHelper(spreadScripts(scripts), external, convertorSet, processorHelper);
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
 var convertAction = function convertAction(action, stepResults, utils, external, convertorSet) {
   try {
     var _exit = false;
@@ -504,6 +512,19 @@ var convertAction = function convertAction(action, stepResults, utils, external,
     return Promise.reject(e);
   }
 };
+function spreadScripts(scripts, results) {
+  if (scripts === void 0) {
+    scripts = [];
+  }
+  if (results === void 0) {
+    results = [];
+  }
+  scripts.forEach(function (script) {
+    spreadScripts(script.scripts, results);
+    results.push(script);
+  });
+  return results;
+}
 
 function newParams(parameters, context) {
   var params = context.objectPool.generate();
