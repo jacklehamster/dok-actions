@@ -3,12 +3,13 @@ import { ScriptAction } from "../actions/ScriptAction";
 import { Context, createContext } from "../context/Context";
 import { LogAction } from "../actions/LogAction";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
-import { convertAction, convertScripts, executeScript } from "./actions/convert-action";
+import { convertAction, executeScript } from "./actions/convert-action";
 import { Resolution } from "../resolutions/Resolution";
 import { calculateResolution } from "../resolutions/calculate";
 import { DokAction } from "../actions/Action";
 import { getDefaultConvertors } from "./default-convertors";
 import { DEFAULT_EXTERNALS } from "./default-externals";
+import { convertScripts } from "./utils/script-utils";
 
 describe('convertor', () => {
     const getSteps = jest.fn();

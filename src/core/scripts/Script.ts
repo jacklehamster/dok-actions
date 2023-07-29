@@ -1,4 +1,5 @@
 import { ActionList } from "../actions/ActionsAction";
+import { spreadScripts } from "../convertor/utils/script-utils";
 
 export type Tag = string|[string, string|number|boolean];
 
@@ -25,6 +26,10 @@ function filterMatchesTags(filter: ScriptFilter, tags?: Tag[]) {
 }
 
 export function filterScripts<T>(scripts: Script<T>[], filter: ScriptFilter): Script<T>[] {
+    return filterScriptsHelper(spreadScripts(scripts), filter);
+}
+
+export function filterScriptsHelper<T>(scripts: Script<T>[], filter: ScriptFilter): Script<T>[] {
     const namesToFilter = !filter.name ? undefined : Array.isArray(filter.name) ? filter.name : [filter.name];
     return scripts.filter(({name, tags}) => {
         if (namesToFilter?.length && namesToFilter.indexOf(name ?? "") < 0) {

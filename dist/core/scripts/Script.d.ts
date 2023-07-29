@@ -11,3 +11,4 @@ export interface ScriptFilter {
     tags?: Tag[];
 }
 export declare function filterScripts<T>(scripts: Script<T>[], filter: ScriptFilter): Script<T>[];
+export declare function filterScriptsHelper<T>(scripts: Script<T>[], filter: ScriptFilter): Script<T>[];

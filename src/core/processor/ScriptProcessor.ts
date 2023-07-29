@@ -1,9 +1,9 @@
 import { Context, createContext } from "../context/Context";
 import { ConvertorSet } from "../convertor/Convertor";
-import { convertScripts } from "../convertor/actions/convert-action";
 import { DEFAULT_REFRESH_FRAME_RATE } from "../convertor/actions/refresh-convertor";
 import { getDefaultConvertors } from "../convertor/default-convertors";
 import { DEFAULT_EXTERNALS } from "../convertor/default-externals";
+import { convertScripts } from "../convertor/utils/script-utils";
 import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
 import { Script, ScriptFilter, Tag, filterScripts } from "../scripts/Script";
 import { v4 as uuidv4 } from 'uuid';

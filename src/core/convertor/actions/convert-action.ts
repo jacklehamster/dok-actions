@@ -1,7 +1,8 @@
 import { Context, createContext } from "../../context/Context";
 import { ExecutionParameters, ExecutionStep, execute } from "../../execution/ExecutionStep";
 import { ScriptProcessorHelper } from "../../processor/ScriptProcessor";
-import { Script, ScriptFilter, filterScripts } from "../../scripts/Script";
+import { Script } from "../../scripts/Script";
+import { convertScripts } from "../utils/script-utils";
 import { ConvertBehavior, ConvertorSet, Utils } from "./../Convertor";
 
 export async function convertAction<T>(
@@ -19,51 +20,6 @@ export async function convertAction<T>(
         }
     }
     return;    
-}
-
-function spreadScripts<T>(scripts: Script<T>[] = [], results: Script<T>[] = []): Script<T>[] {
-    scripts.forEach(script => {
-        spreadScripts(script.scripts, results);
-        results.push(script);
-    });
-    return results;
-}
-
-export async function convertScripts<T>(
-        scripts: Script<T>[],
-        external: Record<string, any>,
-        convertorSet: ConvertorSet,
-        processorHelper: ScriptProcessorHelper): Promise<Map<Script<T>, ExecutionStep[]>> {
-    return convertScriptsHelper<T>(spreadScripts(scripts), external, convertorSet, processorHelper);
-}
-
-async function convertScriptsHelper<T>(
-        scripts: Script<T>[],
-        external: Record<string, any>,
-        convertorSet: ConvertorSet,
-        processorHelper: ScriptProcessorHelper): Promise<Map<Script<T>, ExecutionStep[]>> {
-    const scriptMap: Map<Script<T>, ExecutionStep[]> = new Map();
-    scripts.forEach(script => scriptMap.set(script, []));
-    const getSteps = (filter: ScriptFilter) => {
-        const filteredScripts = filterScripts(scripts, filter);
-        const steps: ExecutionStep[] = [];
-        filteredScripts.forEach(script => steps.push(...(scriptMap.get(script)!)));
-        return steps;
-    };
-    for (let script of scripts) {
-        const scriptSteps = scriptMap.get(script) ?? [];
-        const { actions = [] } = script;
-        for (let i = 0; i < actions.length; i++) {
-            const getRemainingActions = () => actions.slice(i + 1);
-            const convertBehavior = await convertAction(actions[i], scriptSteps, {
-                getSteps, getRemainingActions, refreshSteps: processorHelper.refreshSteps, stopRefresh: processorHelper.stopRefresh,
-            }, external, convertorSet);
-            if (convertBehavior === ConvertBehavior.SKIP_REMAINING_ACTIONS) {
-                break;
-            }
-        }
-    }
-    return scriptMap;
 }
 
 export async function executeScript<T>(

@@ -392,6 +392,9 @@ function filterMatchesTags(filter, tags) {
   });
 }
 function filterScripts(scripts, filter) {
+  return filterScriptsHelper(spreadScripts(scripts), filter);
+}
+function filterScriptsHelper(scripts, filter) {
   var namesToFilter = !filter.name ? undefined : Array.isArray(filter.name) ? filter.name : [filter.name];
   return scripts.filter(function (_ref) {
     var name = _ref.name,
@@ -406,40 +409,6 @@ function filterScripts(scripts, filter) {
   });
 }
 
-var executeAction = function executeAction(action, parameters, context, utils, convertorSet) {
-  try {
-    var results = [];
-    var _ConvertBehavior$SKIP = exports.ConvertBehavior.SKIP_REMAINING_ACTIONS;
-    return Promise.resolve(convertAction(action, results, utils, context.external, convertorSet)).then(function (_convertAction) {
-      if (_ConvertBehavior$SKIP !== _convertAction) {
-        execute(results, parameters, context);
-      }
-    });
-  } catch (e) {
-    return Promise.reject(e);
-  }
-};
-var executeScript = function executeScript(scriptName, parameters, scripts, external, convertorSet, processorHelper) {
-  if (parameters === void 0) {
-    parameters = {};
-  }
-  try {
-    var context = createContext();
-    return Promise.resolve(convertScripts(scripts, external, convertorSet, processorHelper)).then(function (scriptMap) {
-      var script = scripts.find(function (_ref) {
-        var name = _ref.name;
-        return name === scriptName;
-      });
-      var steps = script ? scriptMap.get(script) : [];
-      execute(steps, parameters, context);
-      return function () {
-        return context.clear();
-      };
-    });
-  } catch (e) {
-    return Promise.reject(e);
-  }
-};
 var convertScriptsHelper = function convertScriptsHelper(scripts, external, convertorSet, processorHelper) {
   try {
     var scriptMap = new Map();
@@ -493,6 +462,54 @@ var convertScripts = function convertScripts(scripts, external, convertorSet, pr
     return Promise.reject(e);
   }
 };
+function spreadScripts(scripts, results) {
+  if (scripts === void 0) {
+    scripts = [];
+  }
+  if (results === void 0) {
+    results = [];
+  }
+  scripts.forEach(function (script) {
+    spreadScripts(script.scripts, results);
+    results.push(script);
+  });
+  return results;
+}
+
+var executeAction = function executeAction(action, parameters, context, utils, convertorSet) {
+  try {
+    var results = [];
+    var _ConvertBehavior$SKIP = exports.ConvertBehavior.SKIP_REMAINING_ACTIONS;
+    return Promise.resolve(convertAction(action, results, utils, context.external, convertorSet)).then(function (_convertAction) {
+      if (_ConvertBehavior$SKIP !== _convertAction) {
+        execute(results, parameters, context);
+      }
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
+var executeScript = function executeScript(scriptName, parameters, scripts, external, convertorSet, processorHelper) {
+  if (parameters === void 0) {
+    parameters = {};
+  }
+  try {
+    var context = createContext();
+    return Promise.resolve(convertScripts(scripts, external, convertorSet, processorHelper)).then(function (scriptMap) {
+      var script = scripts.find(function (_ref) {
+        var name = _ref.name;
+        return name === scriptName;
+      });
+      var steps = script ? scriptMap.get(script) : [];
+      execute(steps, parameters, context);
+      return function () {
+        return context.clear();
+      };
+    });
+  } catch (e) {
+    return Promise.reject(e);
+  }
+};
 var convertAction = function convertAction(action, stepResults, utils, external, convertorSet) {
   try {
     var _exit = false;
@@ -512,19 +529,6 @@ var convertAction = function convertAction(action, stepResults, utils, external,
     return Promise.reject(e);
   }
 };
-function spreadScripts(scripts, results) {
-  if (scripts === void 0) {
-    scripts = [];
-  }
-  if (results === void 0) {
-    results = [];
-  }
-  scripts.forEach(function (script) {
-    spreadScripts(script.scripts, results);
-    results.push(script);
-  });
-  return results;
-}
 
 function newParams(parameters, context) {
   var params = context.objectPool.generate();
@@ -1859,13 +1863,13 @@ exports.calculateString = calculateString;
 exports.calculateTypeArrayConstructor = calculateTypeArrayConstructor;
 exports.calculateTypedArray = calculateTypedArray;
 exports.convertAction = convertAction;
-exports.convertScripts = convertScripts;
 exports.convertValueOf = convertValueOf;
 exports.createContext = createContext;
 exports.execute = execute;
 exports.executeAction = executeAction;
 exports.executeScript = executeScript;
 exports.filterScripts = filterScripts;
+exports.filterScriptsHelper = filterScriptsHelper;
 exports.getByteSize = getByteSize;
 exports.getDefaultConvertors = getDefaultConvertors;
 exports.getFormulaEvaluator = getFormulaEvaluator;

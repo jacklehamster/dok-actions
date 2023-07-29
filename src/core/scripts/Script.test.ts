@@ -20,6 +20,13 @@ describe('Script', () => {
         {
             actions: [],
             tags: ["loop"],
+        },
+        {
+            scripts: [
+                {
+                    name: "subscript"
+                },
+            ]
         }
     ];
 
@@ -40,5 +47,9 @@ describe('Script', () => {
 
     it('check empty filter', () => {
         expect(filterScripts(scripts, { name: "test" })).toEqual([]);
+    });
+
+    it('find by name with subscripts', () => {
+        expect(filterScripts(scripts, { name: "subscript"})).toEqual([scripts[4].scripts?.[0]]);
     });
 });

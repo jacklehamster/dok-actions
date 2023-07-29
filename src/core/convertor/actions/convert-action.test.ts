@@ -6,8 +6,9 @@ import { createContext } from "../../context/Context";
 import { ExecutionStep, execute } from "../../execution/ExecutionStep";
 import { Script } from "../../scripts/Script";
 import { ConvertBehavior } from "../Convertor";
-import { convertAction, convertScripts, executeAction, executeScript } from "./convert-action";
+import { convertAction, executeAction, executeScript } from "./convert-action";
 import { getDefaultConvertors } from "../default-convertors";
+import { convertScripts } from "../utils/script-utils";
 
 describe('action convertor', () => {
     const log = jest.fn();
