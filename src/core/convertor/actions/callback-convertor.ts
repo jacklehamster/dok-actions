@@ -23,7 +23,7 @@ export async function convertCallbackProperty<T>(
     const executeCallback: Utils<T & CallbackAction<T>>["executeCallback"] = { ...utils.executeCallback};
     for (const key in callback) {
         const callbackSteps: ExecutionStep[] = [];
-        await convertActions(callback[key], callbackSteps, utils, external, convertorSet);
+        await convertActions(callback[key], callbackSteps, {...utils, executeCallback}, external, convertorSet);
 
         const onCallback = callbackSteps.length ? (context?: Context, additionalParameters?: ExecutionParameters) => { 
             if (additionalParameters) {

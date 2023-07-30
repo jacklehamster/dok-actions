@@ -1,7 +1,9 @@
+import { ActionsAction } from "../../actions/ActionsAction";
 import { CallbackAction } from "../../actions/CallbackAction";
 import { LogAction } from "../../actions/LogAction";
 import { ExecutionStep, execute } from "../../execution/ExecutionStep";
 import { getDefaultConvertors } from "../default-convertors";
+import { convertActionsProperty } from "./actions-convertor";
 import { convertCallbackProperty } from "./callback-convertor";
 
 describe('callback convertor', () => {
@@ -74,4 +76,44 @@ describe('callback convertor', () => {
         execute(results);
         expect(log).toBeCalledWith("log-test");
     });
+
+    it('convert multiple callback', async () => {
+        const results: ExecutionStep[] = [];
+        const action: ActionsAction<CallbackAction<LogAction>> = {
+            actions: [
+                {
+                    callback: { logCallback: [
+                        {
+                            log: "~log-test {param}",
+                        }
+                    ]},
+                    executeCallback: "logCallback",
+                    parameters: {
+                        param: 123,
+                    },
+                },
+                {
+                    callback: { logCallback: [
+                        {
+                            log: "~log-test-2 {param}",
+                        }
+                    ]},
+                    executeCallback: "logCallback",    
+                    parameters: {
+                        param: 456,
+                    },
+                },
+            ],
+        };
+        await convertActionsProperty<CallbackAction<LogAction>>(action,
+            results,
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
+            { log },
+            getDefaultConvertors(),
+        );
+        execute(results);
+        expect(log).toBeCalledWith("log-test 123");
+        expect(log).toBeCalledWith("log-test-2 456");
+    });
+
 });

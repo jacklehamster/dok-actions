@@ -1135,7 +1135,9 @@ var convertCallbackProperty = function convertCallbackProperty(action, results, 
     var executeCallback = _extends({}, utils.executeCallback);
     var _temp = _forIn(callback, function (key) {
       var callbackSteps = [];
-      return Promise.resolve(convertActions(callback[key], callbackSteps, utils, external, convertorSet)).then(function () {
+      return Promise.resolve(convertActions(callback[key], callbackSteps, _extends({}, utils, {
+        executeCallback: executeCallback
+      }), external, convertorSet)).then(function () {
         var onCallback = callbackSteps.length ? function (context, additionalParameters) {
           if (additionalParameters) {
             var p = callbackParameters[key];
