@@ -108,7 +108,7 @@ var Context = /*#__PURE__*/function () {
     this.objectPool = objectPool;
     this.postActionListener = postActionListener;
     this.external = _extends({}, DEFAULT_EXTERNALS, external);
-    this.locked = false;
+    this.locked = new Set();
   }
   var _proto = Context.prototype;
   _proto.addCleanup = function addCleanup(cleanup) {
@@ -1235,40 +1235,35 @@ var convertLockProperty = function convertLockProperty(action, results, utils, e
       unlock = action.unlock,
       subAction = _objectWithoutPropertiesLoose(action, _excluded3);
     if (unlock) {
-      var unlockResolution = calculateBoolean(unlock);
+      var unlockResolution = calculateString(unlock);
       results.push(function (parameters, context) {
-        if (unlockResolution.valueOf(parameters)) {
-          context.locked = false;
-        }
+        context.locked["delete"](unlockResolution.valueOf(parameters));
       });
     }
     return Promise.resolve(function () {
       if (lock) {
-        var lockResolution = calculateBoolean(lock);
+        var lockResolution = calculateString(lock);
         var postStepResults = [];
         var remainingActions = utils.getRemainingActions();
         return Promise.resolve(convertAction(subAction, postStepResults, utils, external, convertorSet)).then(function () {
           function _temp6() {
             results.push(function (parameters, context) {
-              if (!lockResolution.valueOf(parameters)) {
-                execute(postStepResults, parameters, context);
-              } else {
-                context.locked = true;
-                var step = function step(parameters, context) {
-                  for (var i in parameters) {
-                    postExecution.parameters[i] = parameters[i];
-                  }
-                  if (!context.locked) {
-                    context.deletePostAction(postExecution);
-                    execute(postStepResults, parameters, context);
-                  }
-                };
-                var postExecution = {
-                  steps: [step],
-                  parameters: parameters
-                };
-                context.addPostAction(postExecution);
-              }
+              var lockId = lockResolution.valueOf(parameters);
+              context.locked.add(lockId);
+              var step = function step(parameters, context) {
+                for (var i in parameters) {
+                  postExecution.parameters[i] = parameters[i];
+                }
+                if (!context.locked.size) {
+                  context.deletePostAction(postExecution);
+                  execute(postStepResults, parameters, context);
+                }
+              };
+              var postExecution = {
+                steps: [step],
+                parameters: parameters
+              };
+              context.addPostAction(postExecution);
             });
             return ConvertBehavior.SKIP_REMAINING_ACTIONS;
           }

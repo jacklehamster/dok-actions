@@ -9,7 +9,7 @@ export declare class Context<E = {}> {
     parameters: ExecutionParameters[];
     objectPool: ObjectPool<ExecutionParameters>;
     external: (E | {}) & typeof DEFAULT_EXTERNALS;
-    locked: boolean;
+    locked: Set<string>;
     private postActionListener;
     private cleanupActions;
     constructor({ parameters, cleanupActions, objectPool, postActionListener, external }?: {
