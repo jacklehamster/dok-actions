@@ -392,7 +392,7 @@ function filterMatchesTags(filter, tags) {
   });
 }
 function filterScripts(scripts, filter) {
-  return filterScriptsHelper(spreadScripts(scripts), filter);
+  return filterScriptsHelper(scripts, filter);
 }
 function filterScriptsHelper(scripts, filter) {
   var namesToFilter = !filter.name ? undefined : Array.isArray(filter.name) ? filter.name : [filter.name];

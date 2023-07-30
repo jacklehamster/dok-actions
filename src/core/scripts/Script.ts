@@ -1,5 +1,4 @@
 import { ActionList } from "../actions/ActionsAction";
-import { spreadScripts } from "../convertor/utils/script-utils";
 
 export type Tag = string|[string, string|number|boolean];
 
@@ -26,7 +25,7 @@ function filterMatchesTags(filter: ScriptFilter, tags?: Tag[]) {
 }
 
 export function filterScripts<T>(scripts: Script<T>[], filter: ScriptFilter): Script<T>[] {
-    return filterScriptsHelper(spreadScripts(scripts), filter);
+    return filterScriptsHelper(scripts, filter);
 }
 
 export function filterScriptsHelper<T>(scripts: Script<T>[], filter: ScriptFilter): Script<T>[] {
