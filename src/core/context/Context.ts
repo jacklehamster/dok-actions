@@ -11,7 +11,7 @@ export class Context<E = {}> {
     parameters: ExecutionParameters[];
     objectPool: ObjectPool<ExecutionParameters>;
     external: (E|{}) & typeof DEFAULT_EXTERNALS;
-    locked: boolean;
+    locked: Set<string>;
     private postActionListener: Set<ExecutionWithParams>;
     private cleanupActions:(() => void)[];
 
@@ -37,7 +37,7 @@ export class Context<E = {}> {
         this.objectPool = objectPool;
         this.postActionListener = postActionListener;
         this.external = {...DEFAULT_EXTERNALS, ...external};
-        this.locked = false;
+        this.locked = new Set();
     }
 
     addCleanup(cleanup: () => void) {

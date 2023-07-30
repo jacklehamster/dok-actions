@@ -3,6 +3,7 @@ import { Context, ExecutionWithParams } from "../../context/Context";
 import { ExecutionParameters, ExecutionStep, execute } from "../../execution/ExecutionStep";
 import { calculateBoolean } from "../../resolutions/calculateBoolean";
 import { calculateNumber } from "../../resolutions/calculateNumber";
+import { calculateString } from "../../resolutions/calculateString";
 import { ConvertBehavior, ConvertorSet, Utils } from "../Convertor";
 import { convertAction } from "./convert-action";
 
@@ -89,16 +90,14 @@ export async function convertLockProperty<T>(
 
 
     if (unlock) {
-        const unlockResolution = calculateBoolean(unlock);
+        const unlockResolution = calculateString(unlock);
         results.push((parameters, context) => {
-            if (unlockResolution.valueOf(parameters)) {
-                context.locked = false;
-            }
+            context.locked.delete(unlockResolution.valueOf(parameters));
         });
     }
 
     if (lock) {
-        const lockResolution = calculateBoolean(lock);
+        const lockResolution = calculateString(lock);
         const postStepResults: ExecutionStep[] = [];
         const remainingActions = utils.getRemainingActions();
         await convertAction(subAction, postStepResults, utils, external, convertorSet);
@@ -107,26 +106,23 @@ export async function convertLockProperty<T>(
         }
 
         results.push((parameters, context) => {
-            if (!lockResolution.valueOf(parameters)) {
-                execute(postStepResults, parameters, context);
-            } else {
-                context.locked = true;
-                const step: ExecutionStep = (parameters, context) => {
-                    for (let i in parameters) {
-                        postExecution.parameters[i] = parameters[i];
-                    }
-                    if (!context.locked) {
-                        context.deletePostAction(postExecution);
-                        execute(postStepResults, parameters, context);    
-                    }
-                };
-                const postExecution: ExecutionWithParams = {
-                    steps: [step],
-                    parameters,
-                };
-        
-                context.addPostAction(postExecution);
-            }
+            const lockId = lockResolution.valueOf(parameters);
+            context.locked.add(lockId);
+            const step: ExecutionStep = (parameters, context) => {
+                for (let i in parameters) {
+                    postExecution.parameters[i] = parameters[i];
+                }
+                if (!context.locked.size) {
+                    context.deletePostAction(postExecution);
+                    execute(postStepResults, parameters, context);    
+                }
+            };
+            const postExecution: ExecutionWithParams = {
+                steps: [step],
+                parameters,
+            };
+    
+            context.addPostAction(postExecution);
         });
         return ConvertBehavior.SKIP_REMAINING_ACTIONS;
     }

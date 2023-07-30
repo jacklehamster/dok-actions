@@ -68,7 +68,7 @@ describe('pause convertor', () => {
         }]);
         const results: ExecutionStep[] = [];
         const behavior = await convertLockProperty({
-                lock: 1,
+                lock: "theLock",
             },
             results,
             {getSteps, getRemainingActions, refreshSteps, stopRefresh},
@@ -81,7 +81,7 @@ describe('pause convertor', () => {
         
         const results2: ExecutionStep[] = [];
         convertLockProperty({
-                unlock: 1,
+                unlock: "theLock",
             },
             results2,
             {getSteps, getRemainingActions, refreshSteps, stopRefresh},
