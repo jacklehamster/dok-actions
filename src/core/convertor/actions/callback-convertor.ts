@@ -26,20 +26,20 @@ export async function convertCallbackProperty<T>(
         await convertActions(callback[key], callbackSteps, {...utils, executeCallback}, external, convertorSet);
 
         const onCallback = callbackSteps.length ? (context?: Context, additionalParameters?: ExecutionParameters) => { 
+            const p = callbackParameters[key];
             if (additionalParameters) {
-                const p = callbackParameters[key];
                 if (p) {
                     for (let k in additionalParameters) {
                         p[k] = additionalParameters[k];
                     }    
                 }
             }
-            execute(callbackSteps, callbackParameters[key], context);
-            for (let i in callbackParameters[key]) {
-                delete callbackParameters[key]?.[i];
+            execute(callbackSteps, p, context);
+            for (let i in p) {
+                delete p[i];
             }
-            if (callbackParameters && context) {
-                recycleParams(callbackParameters, context);
+            if (p && context) {
+                recycleParams(p, context);
                 callbackParameters[key] = undefined;  
             }
         } : () => {};

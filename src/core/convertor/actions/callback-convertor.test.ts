@@ -82,9 +82,10 @@ describe('callback convertor', () => {
         const action: ActionsAction<CallbackAction<LogAction>> = {
             actions: [
                 {
+                    sets: { a: 100 },
                     callback: { logCallback: [
                         {
-                            log: "~log-test {param}",
+                            log: "~log-test {param} {a}",
                         }
                     ]},
                     executeCallback: "logCallback",
@@ -93,9 +94,10 @@ describe('callback convertor', () => {
                     },
                 },
                 {
+                    sets: { a: 200 },
                     callback: { logCallback: [
                         {
-                            log: "~log-test-2 {param}",
+                            log: "~log-test-2 {param} {a}",
                         }
                     ]},
                     executeCallback: "logCallback",    
@@ -112,8 +114,8 @@ describe('callback convertor', () => {
             getDefaultConvertors(),
         );
         execute(results);
-        expect(log).toBeCalledWith("log-test 123");
-        expect(log).toBeCalledWith("log-test-2 456");
+        expect(log).toBeCalledWith("log-test 123 100");
+        expect(log).toBeCalledWith("log-test-2 456 200");
     });
 
 });

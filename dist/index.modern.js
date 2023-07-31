@@ -1140,21 +1140,20 @@ var convertCallbackProperty = function convertCallbackProperty(action, results, 
         executeCallback: executeCallback
       }), external, convertorSet)).then(function () {
         var onCallback = callbackSteps.length ? function (context, additionalParameters) {
+          var p = callbackParameters[key];
           if (additionalParameters) {
-            var p = callbackParameters[key];
             if (p) {
               for (var k in additionalParameters) {
                 p[k] = additionalParameters[k];
               }
             }
           }
-          execute(callbackSteps, callbackParameters[key], context);
-          for (var i in callbackParameters[key]) {
-            var _callbackParameters$k;
-            (_callbackParameters$k = callbackParameters[key]) === null || _callbackParameters$k === void 0 ? true : delete _callbackParameters$k[i];
+          execute(callbackSteps, p, context);
+          for (var i in p) {
+            delete p[i];
           }
-          if (callbackParameters && context) {
-            recycleParams(callbackParameters, context);
+          if (p && context) {
+            recycleParams(p, context);
             callbackParameters[key] = undefined;
           }
         } : function () {};
