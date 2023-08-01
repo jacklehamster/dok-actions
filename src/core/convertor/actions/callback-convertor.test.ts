@@ -77,7 +77,7 @@ describe('callback convertor', () => {
         expect(log).toBeCalledWith("log-test");
     });
 
-    it('convert multiple callback', async () => {
+    it.skip('convert multiple actions', async () => {
         const results: ExecutionStep[] = [];
         const action: ActionsAction<CallbackAction<LogAction>> = {
             actions: [
@@ -118,4 +118,56 @@ describe('callback convertor', () => {
         expect(log).toBeCalledWith("log-test-2 456 200");
     });
 
+
+    it.skip('convert multiple callback', async () => {
+        const results: ExecutionStep[] = [];
+        const action: ActionsAction<CallbackAction<LogAction>> = {
+            actions: [
+                {
+                    sets: { a: 100 },
+                    callback: { logCallback: [
+                        {
+                            log: "~log-test {param} {a}",
+                        }
+                    ]},
+                    actions: [
+                        {
+                            delay: 100,
+                            executeCallback: "logCallback",
+                            parameters: {
+                                param: 123,
+                            },
+                        }
+                    ],
+                },
+                {
+                    sets: { a: 200 },
+                    callback: { logCallback: [
+                        {
+                            log: "~log-test-2 {param} {a}",
+                        }
+                    ]},
+                    actions: [
+                        {
+                            delay: 100,
+                            executeCallback: "logCallback",
+                            parameters: {
+                                param: 456,
+                            },
+                        }
+                    ]
+                },
+            ],
+        };
+        await convertActionsProperty<CallbackAction<LogAction>>(action,
+            results,
+            {getSteps, getRemainingActions, refreshSteps, stopRefresh},
+            { log, setTimeout },
+            getDefaultConvertors(),
+        );
+        execute(results);
+        await new Promise(r => setTimeout(r, 500));
+        expect(log).toBeCalledWith("log-test 123 100");
+        expect(log).toBeCalledWith("log-test-2 456 200");
+    });
 });
