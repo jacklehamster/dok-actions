@@ -633,7 +633,8 @@ function calculateEvaluator(evaluator, parameters, formula, defaultValue) {
     var _evaluator$evaluate;
     return (_evaluator$evaluate = evaluator.evaluate(scope != null ? scope : {})) != null ? _evaluator$evaluate : defaultValue;
   } catch (e) {
-    console.error("Error: " + e + " on formula: " + formula + ", scope: ", JSON.parse(JSON.stringify(scope)));
+    console.error("Error: " + e + " on formula: " + formula + ", scope: ", scope);
+    debugger;
   }
   return defaultValue;
 }

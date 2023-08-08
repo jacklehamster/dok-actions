@@ -8,7 +8,8 @@ export function calculateEvaluator<T>(evaluator: math.EvalFunction, parameters: 
     try {
         return evaluator.evaluate(scope ?? {}) ?? defaultValue;
     } catch (e) {
-        console.error("Error: " + e + " on formula: " + formula + ", scope: ", JSON.parse(JSON.stringify(scope)));
+        console.error("Error: " + e + " on formula: " + formula + ", scope: ", scope);
+        debugger;
     }
     return defaultValue;
 }
