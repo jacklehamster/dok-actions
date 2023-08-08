@@ -116,6 +116,7 @@ var Context = /*#__PURE__*/function () {
   };
   _proto.addPostAction = function addPostAction(postAction) {
     if (!this.postActionListener.has(postAction)) {
+      postAction.parameters.postAction = postAction;
       this.postActionListener.add(postAction);
     }
   };
@@ -374,7 +375,7 @@ function execute(steps, parameters, context) {
   if (context === void 0) {
     context = createContext();
   }
-  if (!(steps !== null && steps !== void 0 && steps.getSteps().length)) {
+  if (!steps.getSteps().length) {
     return;
   }
   if (!context.parameters) {
@@ -439,7 +440,7 @@ var convertScriptsHelper = function convertScriptsHelper(scripts, external, conv
       filteredScripts.forEach(function (script) {
         var stepScript = scriptMap.get(script);
         stepScript === null || stepScript === void 0 ? void 0 : stepScript.getSteps().forEach(function (step) {
-          return stepScript.add(step);
+          return steps.add(step);
         });
       });
       return steps;
@@ -517,11 +518,12 @@ var executeScript = function executeScript(scriptName, parameters, scripts, exte
   try {
     var context = createContext();
     return Promise.resolve(convertScripts(scripts, external, convertorSet, processorHelper)).then(function (scriptMap) {
+      var _ref2;
       var script = scripts.find(function (_ref) {
         var name = _ref.name;
         return name === scriptName;
       });
-      var steps = script ? scriptMap.get(script) : new StepScript();
+      var steps = (_ref2 = script ? scriptMap.get(script) : null) != null ? _ref2 : new StepScript();
       execute(steps, parameters, context);
       return function () {
         return context.clear();
@@ -1312,7 +1314,8 @@ var convertPauseProperty = function convertPauseProperty(action, results, utils,
     return Promise.resolve(convertAction(subAction, postStepResults, utils, external, convertorSet)).then(function () {
       function _temp4() {
         var step = function step(parameters, context) {
-          var postExecution = {
+          var _parameters$postActio;
+          var postExecution = (_parameters$postActio = parameters.postAction) != null ? _parameters$postActio : {
             steps: [step],
             parameters: {}
           };
