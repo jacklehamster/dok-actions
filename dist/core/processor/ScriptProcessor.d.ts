@@ -1,5 +1,5 @@
-import { ConvertorSet } from "../convertor/Convertor";
-import { ExecutionParameters, ExecutionStep } from "../execution/ExecutionStep";
+import { ConvertorSet, StepScript } from "../convertor/Convertor";
+import { ExecutionParameters } from "../execution/ExecutionStep";
 import { Script, ScriptFilter, Tag } from "../scripts/Script";
 export interface RefreshBehavior {
     frameRate?: number;
@@ -7,7 +7,7 @@ export interface RefreshBehavior {
     parameters?: ExecutionParameters;
 }
 export interface ScriptProcessorHelper {
-    refreshSteps(steps: ExecutionStep[], behavior?: RefreshBehavior, processId?: string): {
+    refreshSteps(steps: StepScript, behavior?: RefreshBehavior, processId?: string): {
         cleanup: () => void;
         processId: string;
     };
@@ -24,7 +24,7 @@ export declare class ScriptProcessor<T, E = {}> {
     clear(): void;
     private fetchScripts;
     private createRefreshCleanup;
-    getSteps(filter: ScriptFilter): Promise<ExecutionStep[]>;
+    getSteps(filter: ScriptFilter): Promise<StepScript>;
     runByName(name: string, parameters?: ExecutionParameters): Promise<() => void>;
     runByTags(tags: Tag[], parameters?: ExecutionParameters): Promise<() => void>;
     private refreshWithFilter;

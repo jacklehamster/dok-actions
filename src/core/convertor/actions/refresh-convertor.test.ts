@@ -1,4 +1,5 @@
-import { ExecutionStep, execute } from "../../execution/ExecutionStep";
+import { execute } from "../../execution/ExecutionStep";
+import { StepScript } from "../Convertor";
 import { getDefaultConvertors } from "../default-convertors";
 import { convertRefreshProperty } from "./refresh-convertor";
 
@@ -13,7 +14,7 @@ describe('refresh convertor', () => {
     const refreshSteps = jest.fn().mockReturnValue(Promise.resolve(jest.fn()));
     const stopRefresh = jest.fn();
     it('convert refresh', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertRefreshProperty({
                 log: "log-test",
                 refresh: {
@@ -34,7 +35,7 @@ describe('refresh convertor', () => {
     });
 
     it('convert stop refresh', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertRefreshProperty({
                 log: "log-test",
                 refresh: {

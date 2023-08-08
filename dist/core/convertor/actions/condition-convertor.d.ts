@@ -1,4 +1,3 @@
-import { ConvertBehavior, ConvertorSet, Utils } from "../Convertor";
-import { ExecutionStep } from "../../execution/ExecutionStep";
+import { ConvertBehavior, ConvertorSet, StepScript, Utils } from "../Convertor";
 import { LogicAction } from "../../actions/LogicAction";
-export declare function convertConditionProperty<T>(action: LogicAction, results: ExecutionStep[], utils: Utils<T & LogicAction>, external: Record<string, any>, convertorSet: ConvertorSet): Promise<ConvertBehavior | void>;
+export declare function convertConditionProperty<T>(action: LogicAction, results: StepScript, utils: Utils<T & LogicAction>, external: Record<string, any>, convertorSet: ConvertorSet): Promise<ConvertBehavior | void>;

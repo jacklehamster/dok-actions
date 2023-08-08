@@ -1,5 +1,5 @@
-import { ExecutionStep, execute } from "../../execution/ExecutionStep";
-import { ConvertBehavior } from "../Convertor";
+import { execute } from "../../execution/ExecutionStep";
+import { ConvertBehavior, StepScript } from "../Convertor";
 import { getDefaultConvertors } from "../default-convertors";
 import { convertDelayProperty, convertLockProperty, convertPauseProperty } from "./convert-pause";
 import { createContext } from "../../context/Context";
@@ -23,7 +23,7 @@ describe('pause convertor', () => {
         getRemainingActions.mockReturnValue([{
             log: "test",
         }]);
-        const results: ExecutionStep[] = [];
+        const results: StepScript =  new StepScript();
         const behavior = await convertDelayProperty({
                 delay: 123,
             },
@@ -45,7 +45,7 @@ describe('pause convertor', () => {
         getRemainingActions.mockReturnValue([{
             log: "test2",
         }]);
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         const behavior = await convertPauseProperty({
                 pause: "~{not completed}",
             },
@@ -66,7 +66,7 @@ describe('pause convertor', () => {
         getRemainingActions.mockReturnValue([{
             log: "test3",
         }]);
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         const behavior = await convertLockProperty({
                 lock: "theLock",
             },
@@ -79,7 +79,7 @@ describe('pause convertor', () => {
         execute(results, {}, context);
         expect(log).not.toBeCalled();
         
-        const results2: ExecutionStep[] = [];
+        const results2: StepScript = new StepScript();
         convertLockProperty({
                 unlock: "theLock",
             },

@@ -1,11 +1,12 @@
 import { Context, createContext } from "../context/Context";
+import { StepScript } from "../convertor/Convertor";
 import { SupportedTypes } from "../resolutions/SupportedTypes";
 
-export type ExecutionParameters = Record<string, SupportedTypes>;
+export type ExecutionParameters = Record<string, SupportedTypes|any>;
 export type ExecutionStep = (parameters: ExecutionParameters, context: Context) => void;
 
-export function execute(steps?: ExecutionStep[], parameters: ExecutionParameters = {}, context: Context = createContext()) {
-    if (!steps?.length) {
+export function execute(steps: StepScript, parameters: ExecutionParameters = {}, context: Context = createContext()) {
+    if (!steps.getSteps().length) {
         return;
     }
     if (!context.parameters) {
@@ -17,7 +18,7 @@ export function execute(steps?: ExecutionStep[], parameters: ExecutionParameters
     if (changedParameters) {
         params.push(parameters);
     }
-    for (let step of steps) {
+    for (let step of steps.getSteps()) {
         step(parameters, context);
     }
     context.executePostActions(parameters);

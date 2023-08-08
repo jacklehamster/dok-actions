@@ -1,11 +1,10 @@
 import { ActionList, ActionsAction } from "../../actions/ActionsAction";
-import { ExecutionStep } from "../../execution/ExecutionStep";
-import { ConvertBehavior, ConvertorSet, Utils } from "../Convertor";
+import { ConvertBehavior, ConvertorSet, StepScript, Utils } from "../Convertor";
 import { convertAction } from "./convert-action";
 
 export async function convertActions<T>(
         actions: ActionList<T>,
-        results: ExecutionStep[],
+        results: StepScript,
         utils: Utils<T & ActionsAction<T>>,
         external: Record<string, any>,
         convertorSet: ConvertorSet) {
@@ -20,7 +19,7 @@ export async function convertActions<T>(
 
 export async function convertActionsProperty<T>(
         action: ActionsAction<T>,
-        results: ExecutionStep[],
+        results: StepScript,
         utils: Utils<T & ActionsAction<T>>,
         external: Record<string, any>,
         convertorSet: ConvertorSet): Promise<ConvertBehavior | void> {

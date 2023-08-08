@@ -1,13 +1,12 @@
 import { HookAction } from "../../actions/HookAction";
-import { ExecutionStep } from "../../execution/ExecutionStep";
 import { StringResolution } from "../../resolutions/StringResolution";
 import { calculateString } from "../../resolutions/calculateString";
 import { ValueOf } from "../../types/ValueOf";
-import { ConvertBehavior, Utils } from "../Convertor";
+import { ConvertBehavior, StepScript, Utils } from "../Convertor";
 
 export async function convertHooksProperty<T>(
         action: HookAction & T,
-        results: ExecutionStep[],
+        results: StepScript,
         _: Utils<T & HookAction>,
         external: Record<string, any>): Promise<ConvertBehavior|void> {
     if (!action.hooks) {
@@ -18,7 +17,7 @@ export async function convertHooksProperty<T>(
     const hooksResolution: StringResolution[] = hooks;
     const hooksValueOf: ValueOf<string>[] = hooksResolution.map(hook => calculateString(hook));
 
-    results.push((parameters) => {
+    results.add((parameters) => {
         for (let hook of hooksValueOf) {
             const h = hook.valueOf(parameters);
             const x = external[h];

@@ -1,10 +1,10 @@
 import { Context, createContext } from "../context/Context";
-import { ConvertorSet } from "../convertor/Convertor";
+import { ConvertorSet, StepScript } from "../convertor/Convertor";
 import { DEFAULT_REFRESH_FRAME_RATE } from "../convertor/actions/refresh-convertor";
 import { getDefaultConvertors } from "../convertor/default-convertors";
 import { DEFAULT_EXTERNALS } from "../convertor/default-externals";
 import { convertScripts } from "../convertor/utils/script-utils";
-import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
+import { ExecutionParameters, execute } from "../execution/ExecutionStep";
 import { Script, ScriptFilter, Tag, filterScripts } from "../scripts/Script";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -15,13 +15,13 @@ export interface RefreshBehavior {
 }
 
 export interface ScriptProcessorHelper {
-    refreshSteps(steps: ExecutionStep[], behavior?: RefreshBehavior, processId?: string): { cleanup: () => void; processId: string };
+    refreshSteps(steps: StepScript, behavior?: RefreshBehavior, processId?: string): { cleanup: () => void; processId: string };
     stopRefresh(processId: string): void;
 }
 
 export class ScriptProcessor<T, E = {}> {
     private scripts: Script<T>[];
-    private scriptMap?: Map<Script<T>, ExecutionStep[]>;
+    private scriptMap?: Map<Script<T>, StepScript>;
     private external: (E|{}) & typeof DEFAULT_EXTERNALS;
     private convertorSet: ConvertorSet;
     private refreshCleanups: Record<string, () => void> = {};
@@ -43,7 +43,7 @@ export class ScriptProcessor<T, E = {}> {
         Object.keys(this.refreshCleanups).forEach(key => delete this.refreshCleanups[key]);
     }
 
-    private async fetchScripts(): Promise<Map<Script<T>, ExecutionStep[]>> {
+    private async fetchScripts(): Promise<Map<Script<T>, StepScript>> {
         if (!this.scriptMap) {
             this.scriptMap = await convertScripts(this.scripts, this.external, this.convertorSet, {
                 refreshSteps: this.refreshSteps.bind(this),
@@ -60,8 +60,8 @@ export class ScriptProcessor<T, E = {}> {
     async getSteps(filter: ScriptFilter) {
         const scriptMap = await this.fetchScripts();
         const scripts = filterScripts(this.scripts, filter);
-        const steps: ExecutionStep[] = [];
-        scripts.forEach(script => scriptMap.get(script)?.forEach(step => steps.push(step)));
+        const steps: StepScript = new StepScript();
+        scripts.forEach(script => scriptMap.get(script)?.getSteps().forEach(step => steps.add(step)));
         return steps;
     }
 
@@ -94,7 +94,7 @@ export class ScriptProcessor<T, E = {}> {
         delete this.refreshCleanups[processId];
     }
     
-    private refreshSteps(steps: ExecutionStep[], behavior: RefreshBehavior = {}, processId?: string) {
+    private refreshSteps(steps: StepScript, behavior: RefreshBehavior = {}, processId?: string) {
         const context: Context = createContext();
         const parameters: ExecutionParameters = { ...behavior.parameters, time: 0, frame: 0 };
         const refreshCleanup = this.createRefreshCleanup(behavior, context);

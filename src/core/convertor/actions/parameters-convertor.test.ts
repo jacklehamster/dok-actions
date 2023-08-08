@@ -1,4 +1,5 @@
 import { ExecutionStep, execute } from "../../execution/ExecutionStep";
+import { StepScript } from "../Convertor";
 import { getDefaultConvertors } from "../default-convertors";
 import { DEFAULT_EXTERNALS } from "../default-externals";
 import { convertParametersProperty } from "./parameters-convertor";
@@ -8,13 +9,13 @@ describe('parameters convertor', () => {
     const scriptExecution: ExecutionStep = (parameters) => {
         mock(JSON.parse(JSON.stringify(parameters)));
     };
-    const getSteps = jest.fn().mockReturnValue([scriptExecution]);
+    const getSteps = jest.fn().mockReturnValue(new StepScript([scriptExecution]));
     const getRemainingActions = jest.fn().mockReturnValue([]);
     const refreshSteps = jest.fn();
     const stopRefresh = jest.fn();
 
     it('convert parameters', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertParametersProperty({
                 executeScript: "script",
                 parameters: {
@@ -41,7 +42,7 @@ describe('parameters convertor', () => {
     });
 
     it('convert parameters. Parent parameters not retained', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertParametersProperty({
                 executeScript: "script",
                 parameters: {
@@ -60,7 +61,7 @@ describe('parameters convertor', () => {
     });
 
     it('convert array parameters', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertParametersProperty({
                 executeScript: "script",
                 parameters: {

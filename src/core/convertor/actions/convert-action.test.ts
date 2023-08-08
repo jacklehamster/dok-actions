@@ -3,9 +3,9 @@ import { LogicAction } from "../../actions/LogicAction";
 import { PauseAction } from "../../actions/PauseAction";
 import { ScriptAction } from "../../actions/ScriptAction";
 import { createContext } from "../../context/Context";
-import { ExecutionStep, execute } from "../../execution/ExecutionStep";
+import { execute } from "../../execution/ExecutionStep";
 import { Script } from "../../scripts/Script";
-import { ConvertBehavior } from "../Convertor";
+import { ConvertBehavior, StepScript } from "../Convertor";
 import { convertAction, executeAction, executeScript } from "./convert-action";
 import { getDefaultConvertors } from "../default-convertors";
 import { convertScripts } from "../utils/script-utils";
@@ -21,7 +21,7 @@ describe('action convertor', () => {
     });
 
     it('convert action no skip', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript()
         const behavior = await convertAction<LogAction>({
                 log: "log-test",
             },
@@ -36,7 +36,7 @@ describe('action convertor', () => {
     });
 
     it('convert action with skip convertor', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         const behavior = await convertAction<LogAction & LogicAction>({
                 log: "log-test",
                 condition: false,
@@ -53,7 +53,7 @@ describe('action convertor', () => {
     });
 
     it('convert action with skip actions', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript()
         const behavior = await convertAction<LogAction & PauseAction>({
                 log: "log-test",
                 pause: true,
@@ -92,8 +92,8 @@ describe('convert script', () => {
         getDefaultConvertors(),
         { refreshSteps, stopRefresh });
 
-        expect(map.get(scripts[0])?.length).toEqual(0);
-        expect(map.get(scripts[1])?.length).toEqual(1);
+        expect(map.get(scripts[0])?.getSteps().length).toEqual(0);
+        expect(map.get(scripts[1])?.getSteps().length).toEqual(1);
     });
 
     it('execute scripts', async () => {

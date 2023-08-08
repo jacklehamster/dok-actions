@@ -1,6 +1,7 @@
 import { ScriptAction } from "../../actions/ScriptAction";
 import { createContext } from "../../context/Context";
 import { ExecutionStep, execute } from "../../execution/ExecutionStep";
+import { StepScript } from "../Convertor";
 import { getDefaultConvertors } from "../default-convertors";
 import { DEFAULT_EXTERNALS } from "../default-externals";
 import { convertHooksProperty } from "./hooks-convertor";
@@ -12,7 +13,7 @@ describe('hooks convertor', () => {
     const scriptExecution: ExecutionStep = (parameters) => {
         mock(JSON.parse(JSON.stringify(parameters)));
     };
-    const getSteps = jest.fn().mockReturnValue([scriptExecution]);
+    const getSteps = jest.fn().mockReturnValue(new StepScript([scriptExecution]));
     const getRemainingActions = jest.fn().mockReturnValue([]);
     const refreshSteps = jest.fn();
     const stopRefresh = jest.fn();
@@ -20,7 +21,7 @@ describe('hooks convertor', () => {
     it('convert hooks', async () => {
         const context = createContext();
         const fun = jest.fn().mockReturnValue(69);
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         const actions = {
             hooks: ["fun"],
             executeScript: "script",

@@ -1,7 +1,8 @@
 import { ActionsAction } from "../../actions/ActionsAction";
 import { LogAction } from "../../actions/LogAction";
 import { SetAction } from "../../actions/SetAction";
-import { ExecutionStep, execute } from "../../execution/ExecutionStep";
+import { execute } from "../../execution/ExecutionStep";
+import { StepScript } from "../Convertor";
 import { getDefaultConvertors } from "../default-convertors";
 import { convertLoopEachProperty, convertLoopProperty, convertWhileProperty } from "./loop-convertor";
 
@@ -17,7 +18,7 @@ describe('loop convertor', () => {
     });
 
     it('convert loop', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertLoopProperty<LogAction>({
                 loop: 5,
                 log: "~{loopIndex}",
@@ -34,7 +35,7 @@ describe('loop convertor', () => {
     });
 
     it('converts doubly loop', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertLoopProperty<LogAction>({
                 loop: [2, 3],
                 log: "~{i * 100 + j}",
@@ -55,7 +56,7 @@ describe('loop convertor', () => {
     });
 
     it('converts doubly loop', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertLoopProperty<LogAction>({
                 loop: [2, 3],
                 log: "~{loopIndex}",
@@ -76,7 +77,7 @@ describe('loop convertor', () => {
     });
 
     it('converts while loop', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertWhileProperty<ActionsAction<LogAction & SetAction>>({
                 whileCondition: "~{loopIndex < 5}",
                 actions: [
@@ -105,7 +106,7 @@ describe('loop convertor', () => {
     });
 
     it('converts loopEach', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertLoopEachProperty<ActionsAction<LogAction>>({
                 loopEach: [
                     { a: 123 },
@@ -130,7 +131,7 @@ describe('loop convertor', () => {
     });
 
     it('converts nested loopEach', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertLoopEachProperty<ActionsAction<LogAction>>({
                 loopEach: [
                     [{ a: 123 },{ a: 456 }],

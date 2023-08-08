@@ -1,9 +1,10 @@
-import { ExecutionStep, execute } from "../../execution/ExecutionStep";
+import { execute } from "../../execution/ExecutionStep";
+import { StepScript } from "../Convertor";
 import { convertDefaultValuesProperty, convertSetProperty, convertSetsProperty } from "./convert-set";
 
 describe('set convertor', () => {
     it('convert set', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertSetProperty({
                 set: {variable: "a", value: 123},
             },
@@ -15,7 +16,7 @@ describe('set convertor', () => {
     });
 
     it('convert set with update', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertSetProperty({
                 set: {variable: "a", value: "~{value + 100}"},
             },
@@ -29,7 +30,7 @@ describe('set convertor', () => {
     });
 
     it('convert set with access', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertSetProperty({
                 set: {variable: "obj", access: ["array", 1], value: 123},
             },
@@ -43,7 +44,7 @@ describe('set convertor', () => {
     });
 
     it('convert set with access using formula', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertSetProperty({
                 set: {variable: "obj", access: ["array", "~{1}"], value: 123},
             },
@@ -57,7 +58,7 @@ describe('set convertor', () => {
     });
 
     it('convert sets', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertSetsProperty({
                 sets: {
                     a: "~{b}",
@@ -77,7 +78,7 @@ describe('set convertor', () => {
     });
 
     it('convert defaultValues', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertDefaultValuesProperty({
                 defaultValues: {
                     a: 333,

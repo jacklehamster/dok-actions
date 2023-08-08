@@ -2,7 +2,7 @@ import assert from "assert";
 import { ScriptAction } from "../actions/ScriptAction";
 import { Context, createContext } from "../context/Context";
 import { LogAction } from "../actions/LogAction";
-import { ExecutionParameters, ExecutionStep, execute } from "../execution/ExecutionStep";
+import { ExecutionParameters, execute } from "../execution/ExecutionStep";
 import { convertAction, executeScript } from "./actions/convert-action";
 import { Resolution } from "../resolutions/Resolution";
 import { calculateResolution } from "../resolutions/calculate";
@@ -10,6 +10,7 @@ import { DokAction } from "../actions/Action";
 import { getDefaultConvertors } from "./default-convertors";
 import { DEFAULT_EXTERNALS } from "./default-externals";
 import { convertScripts } from "./utils/script-utils";
+import { StepScript } from "./Convertor";
 
 describe('convertor', () => {
     const getSteps = jest.fn();
@@ -22,18 +23,18 @@ describe('convertor', () => {
         const mockStep = jest.fn();
         const innerStep = (params: ExecutionParameters, context: Context) => mockStep(context, JSON.parse(JSON.stringify(params)));
 
-        getSteps.mockReturnValue([
+        getSteps.mockReturnValue(new StepScript([
             innerStep,
-        ]);
+        ]));
         const action: ScriptAction = {
             executeScript: "myScript",
             parameters: {"x": "~{1 + 2}"},
         };
-        const steps: ExecutionStep[] = [];
+        const steps: StepScript = new StepScript();
         await convertAction(action, steps, {getSteps, getRemainingActions, refreshSteps, stopRefresh}, DEFAULT_EXTERNALS, getDefaultConvertors());
 
         expect(getSteps).toBeCalledWith({name: "myScript"});
-        assert(steps.length);
+        assert(steps.getSteps().length);
         execute(steps, {x: 5}, context);
         expect(mockStep).toBeCalledWith(context, { x: 3 });
         execute(steps, {}, context);
@@ -44,17 +45,17 @@ describe('convertor', () => {
         const mockStep = jest.fn();
         const innerStep = (params: ExecutionParameters, context: Context) => mockStep(context, JSON.parse(JSON.stringify(params)));
 
-        getSteps.mockReturnValue([
+        getSteps.mockReturnValue(new StepScript([
             innerStep,
-        ]);
+        ]));
         const action: ScriptAction = {
             executeScript: "myScript",
         };
-        const steps: ExecutionStep[] = [];
+        const steps: StepScript = new StepScript();
         await convertAction(action, steps, {getSteps, getRemainingActions, refreshSteps, stopRefresh}, DEFAULT_EXTERNALS, getDefaultConvertors())
 
         expect(getSteps).toBeCalledWith({name: "myScript"});
-        assert(steps.length);
+        assert(steps.getSteps().length);
         execute(steps, {x: 5}, context);
         expect(mockStep).toBeCalledWith(context, { x: 5 });
         execute(steps, {}, context);
@@ -66,10 +67,10 @@ describe('convertor', () => {
         const action: LogAction = {
             log: ["hello", "world"],
         };
-        const steps: ExecutionStep[] = [];
+        const steps: StepScript = new StepScript();
         await convertAction(action, steps, {getSteps, getRemainingActions, refreshSteps, stopRefresh}, { log }, getDefaultConvertors());
 
-        assert(steps.length);
+        assert(steps.getSteps().length);
         execute(steps, {}, context);
         expect(log).toBeCalledWith("hello", "world");
     });
@@ -79,9 +80,9 @@ describe('convertor', () => {
         const action: LogAction = {
             log: ["hello", "~{1 + 3}"],
         };
-        const steps: ExecutionStep[] = [];
+        const steps: StepScript = new StepScript();
         await convertAction(action, steps, {getSteps, getRemainingActions, refreshSteps, stopRefresh}, { log }, getDefaultConvertors());
-        assert(steps.length);
+        assert(steps.getSteps().length);
         execute(steps, {}, context);
         expect(log).toBeCalledWith("hello", 4);
     });
@@ -115,7 +116,8 @@ describe('convertor', () => {
             log,
         }, getDefaultConvertors(), {refreshSteps, stopRefresh});
 
-        scriptMap.get(scripts.find(({name}) => name === "ScriptTest")!)!.forEach(step => step({}, context));
+        const steps = scriptMap.get(scripts.find(({name}) => name === "ScriptTest")!)!.getSteps();
+        steps.forEach(step => step({}, context));
         expect(log).toBeCalledWith("hello", "test");
         expect(log).toBeCalledWith("hello", "world");
     });
@@ -262,7 +264,7 @@ describe('convertor', () => {
                 }
                 const messages: Resolution[] = Array.isArray(action.custom) ? action.custom : [action.custom];
                 const resolutions = messages.map(m => calculateResolution(m));
-                results.push((parameters) => custom(...resolutions.map(r => r?.valueOf(parameters))));
+                results.add((parameters) => custom(...resolutions.map(r => r?.valueOf(parameters))));
             },
         ]}, {refreshSteps, stopRefresh});
         expect(custom).toBeCalledWith("hello", "test", "sub2");        

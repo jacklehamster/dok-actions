@@ -1,13 +1,13 @@
 import { Context, createContext } from "../../context/Context";
-import { ExecutionParameters, ExecutionStep, execute } from "../../execution/ExecutionStep";
+import { ExecutionParameters, execute } from "../../execution/ExecutionStep";
 import { ScriptProcessorHelper } from "../../processor/ScriptProcessor";
 import { Script } from "../../scripts/Script";
 import { convertScripts } from "../utils/script-utils";
-import { ConvertBehavior, ConvertorSet, Utils } from "./../Convertor";
+import { ConvertBehavior, ConvertorSet, StepScript, Utils } from "./../Convertor";
 
 export async function convertAction<T>(
         action: T,
-        stepResults: ExecutionStep[],
+        stepResults: StepScript,
         utils: Utils<T>,
         external: Record<string, any>,
         convertorSet: ConvertorSet): Promise<ConvertBehavior | void> {
@@ -32,7 +32,7 @@ export async function executeScript<T>(
     const context: Context = createContext();
     const scriptMap = await convertScripts(scripts, external, convertorSet, processorHelper);
     const script = scripts.find(({name}) => name === scriptName);
-    const steps = script ? scriptMap.get(script) : [];
+    const steps = (script ? scriptMap.get(script) : null) ?? new StepScript();
     execute(steps, parameters, context);
     return () => context.clear();
 }
@@ -43,7 +43,7 @@ export async function executeAction<T>(
         context: Context,
         utils: Utils<T>,
         convertorSet: ConvertorSet): Promise<void> {
-    const results: ExecutionStep[] = [];
+    const results: StepScript = new StepScript();
     if (ConvertBehavior.SKIP_REMAINING_ACTIONS !== await convertAction(action, results, utils, context.external, convertorSet)) {
         execute(results, parameters, context);
     }

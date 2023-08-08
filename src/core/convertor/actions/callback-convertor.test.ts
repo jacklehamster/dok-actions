@@ -1,7 +1,8 @@
 import { ActionsAction } from "../../actions/ActionsAction";
 import { CallbackAction } from "../../actions/CallbackAction";
 import { LogAction } from "../../actions/LogAction";
-import { ExecutionStep, execute } from "../../execution/ExecutionStep";
+import { execute } from "../../execution/ExecutionStep";
+import { StepScript } from "../Convertor";
 import { getDefaultConvertors } from "../default-convertors";
 import { convertActionsProperty } from "./actions-convertor";
 import { convertCallbackProperty } from "./callback-convertor";
@@ -18,7 +19,7 @@ describe('callback convertor', () => {
     });
 
     it('convert callback', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         const action: CallbackAction<LogAction> = {
             callback: { logCallback: [
                 {
@@ -38,7 +39,7 @@ describe('callback convertor', () => {
     });
 
     it('convert callback not executed', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript()
         const action: CallbackAction<LogAction> = {
             callback: { logCallback: [
                 {
@@ -57,7 +58,7 @@ describe('callback convertor', () => {
     });
 
     it('convert callback with extra params', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript()
         const action: CallbackAction<LogAction> = {
             callback: { logCallback: [
                 {
@@ -78,7 +79,7 @@ describe('callback convertor', () => {
     });
 
     it.skip('convert multiple actions', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         const action: ActionsAction<CallbackAction<LogAction>> = {
             actions: [
                 {
@@ -120,7 +121,7 @@ describe('callback convertor', () => {
 
 
     it.skip('convert multiple callback', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         const action: ActionsAction<CallbackAction<LogAction>> = {
             actions: [
                 {

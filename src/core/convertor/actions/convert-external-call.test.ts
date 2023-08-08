@@ -1,4 +1,5 @@
-import { ExecutionStep, execute } from "../../execution/ExecutionStep";
+import { execute } from "../../execution/ExecutionStep";
+import { StepScript } from "../Convertor";
 import { convertExternalCallProperty } from "./convert-external-call";
 import { convertHooksProperty } from "./hooks-convertor";
 
@@ -9,7 +10,7 @@ describe('external convertor', () => {
     const refreshSteps = jest.fn();
     const stopRefresh = jest.fn();
     it('convert external call', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertHooksProperty({
                 hooks: ["fun"],
             },
@@ -35,7 +36,7 @@ describe('external convertor', () => {
         const subject = {
             fun,
         };
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript()
         await convertHooksProperty({
                 hooks: ["subject"],
             },

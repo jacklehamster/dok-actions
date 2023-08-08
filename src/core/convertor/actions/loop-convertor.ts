@@ -1,5 +1,5 @@
-import { ExecutionParameters, ExecutionStep, execute } from "../../execution/ExecutionStep";
-import { ConvertBehavior, ConvertorSet, Utils } from "../Convertor";
+import { ExecutionParameters, execute } from "../../execution/ExecutionStep";
+import { ConvertBehavior, ConvertorSet, StepScript, Utils } from "../Convertor";
 import { calculateNumber } from "../../resolutions/calculateNumber";
 import { convertAction } from "./convert-action";
 import { LogicAction } from "../../actions/LogicAction";
@@ -10,7 +10,7 @@ import { calculateArray } from "../../resolutions/calculateArray";
 
 const VARIABLE_NAMES = "ijklmnopqrstuvwxyzabcdefgh".split("");
 
-function keepLooping(parameters: ExecutionParameters, context: Context, loops: ValueOf<number>[], steps: ExecutionStep[], depth: number = 0, base: number = 0) {
+function keepLooping(parameters: ExecutionParameters, context: Context, loops: ValueOf<number>[], steps: StepScript, depth: number = 0, base: number = 0) {
     if (depth >= loops.length) {
         execute(steps, parameters, context);
         return;
@@ -28,7 +28,7 @@ function keepLooping(parameters: ExecutionParameters, context: Context, loops: V
 
 export async function convertLoopProperty<T>(
         action: T & LogicAction,
-        stepResults: ExecutionStep[],
+        stepResults: StepScript,
         utils: Utils<T & LogicAction>,
         external: Record<string, any>,
         convertorSet: ConvertorSet): Promise<ConvertBehavior | void> {
@@ -44,15 +44,15 @@ export async function convertLoopProperty<T>(
         return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
     }
     const loopResolution = loops.map(loop => calculateNumber(loop, 0));
-    const subStepResults: ExecutionStep[] = [];
+    const subStepResults: StepScript = new StepScript();
     await convertAction<LogicAction>(subAction, subStepResults, utils, external, convertorSet);
-    stepResults.push((parameters, context) =>  keepLooping(parameters, context, loopResolution, subStepResults));
+    stepResults.add((parameters, context) =>  keepLooping(parameters, context, loopResolution, subStepResults));
     return ConvertBehavior.SKIP_REMAINING_CONVERTORS;
 }
 
 export async function convertWhileProperty<T>(
         action: T & LogicAction,
-        stepResults: ExecutionStep[],
+        stepResults: StepScript,
         utils: Utils<T & LogicAction>,
         external: Record<string, any>,
         convertorSet: ConvertorSet): Promise<ConvertBehavior | void> {
@@ -64,9 +64,9 @@ export async function convertWhileProperty<T>(
     }
     const { whileCondition, ...subAction } = action;
     const whileResolution = calculateBoolean(whileCondition);
-    const subStepResults: ExecutionStep[] = [];
+    const subStepResults: StepScript = new StepScript();
     await convertAction<LogicAction>(subAction, subStepResults, utils, external, convertorSet);
-    stepResults.push((parameters, context) =>  {
+    stepResults.add((parameters, context) =>  {
         while(whileResolution.valueOf(parameters)) {
             execute(subStepResults, parameters, context);
         }
@@ -76,7 +76,7 @@ export async function convertWhileProperty<T>(
 
 export async function convertLoopEachProperty<T>(
         action: T & LogicAction,
-        stepResults: ExecutionStep[],
+        stepResults: StepScript,
         utils: Utils<T & LogicAction>,
         external: Record<string, any>,
         convertorSet: ConvertorSet): Promise<ConvertBehavior | void> {
@@ -85,9 +85,9 @@ export async function convertLoopEachProperty<T>(
     }
     const { loopEach, ...subAction } = action;
     const loopEachResolution = calculateArray(loopEach);
-    const subStepResults: ExecutionStep[] = [];
+    const subStepResults: StepScript = new StepScript();
     await convertAction<LogicAction>(subAction, subStepResults, utils, external, convertorSet);
-    stepResults.push((parameters, context) =>  {
+    stepResults.add((parameters, context) =>  {
         const array = loopEachResolution?.valueOf(parameters);
         if (array) {
             for (let i = 0; i < array.length; i++) {

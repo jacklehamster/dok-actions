@@ -1,6 +1,7 @@
-import { ExecutionStep, execute } from "../../execution/ExecutionStep";
+import { execute } from "../../execution/ExecutionStep";
 import { convertActionsProperty } from "./actions-convertor";
 import { getDefaultConvertors } from "../default-convertors";
+import { StepScript } from "../Convertor";
 
 describe('actions convertor', () => {
     const log = jest.fn();
@@ -14,7 +15,7 @@ describe('actions convertor', () => {
     });
 
     it('convert actions', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertActionsProperty({
                 actions: [
                     {
@@ -32,7 +33,7 @@ describe('actions convertor', () => {
     });
 
     it('convert nested actions', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertActionsProperty({
                 actions: [
                     {

@@ -1,5 +1,4 @@
-import { ExecutionStep } from "../../execution/ExecutionStep";
-import { ConvertBehavior, ConvertorSet, Utils } from "../Convertor";
+import { ConvertBehavior, ConvertorSet, StepScript, Utils } from "../Convertor";
 import { calculateNumber } from "../../resolutions/calculateNumber";
 import { convertAction } from "./convert-action";
 import { RefreshAction } from "../../actions/RefreshAction";
@@ -10,7 +9,7 @@ export const DEFAULT_REFRESH_FRAME_RATE = 1;
 
 export async function convertRefreshProperty<T>(
         action: T & RefreshAction,
-        stepResults: ExecutionStep[],
+        stepResults: StepScript,
         utils: Utils<T & RefreshAction>,
         external: Record<string, any>,
         convertorSet: ConvertorSet): Promise<ConvertBehavior | void> {
@@ -18,14 +17,14 @@ export async function convertRefreshProperty<T>(
         return;
     }
     const { refresh, ...subAction } = action;
-    const subStepResults: ExecutionStep[] = [];
+    const subStepResults: StepScript = new StepScript();
     const processIdValue = calculateString(refresh.processId, "");
     const stop = calculateBoolean(refresh.stop);
     const cleanupAfterRefresh = calculateBoolean(refresh.cleanupAfterRefresh);
     const frameRate = calculateNumber(refresh.frameRate, DEFAULT_REFRESH_FRAME_RATE);
     await convertAction<RefreshAction>(subAction, subStepResults, utils, external, convertorSet);
 
-    stepResults.push((parameters, context) => {
+    stepResults.add((parameters, context) => {
         if (stop.valueOf(parameters)) {
             utils.stopRefresh(processIdValue.valueOf(parameters));
         } else {

@@ -1,4 +1,5 @@
-import { ExecutionStep, execute } from "../../execution/ExecutionStep";
+import { execute } from "../../execution/ExecutionStep";
+import { StepScript } from "../Convertor";
 import { convertLogProperty } from "./log-convertor";
 
 describe('log convertor', () => {
@@ -8,7 +9,7 @@ describe('log convertor', () => {
     const refreshSteps = jest.fn();
     const stopRefresh = jest.fn();
     it('convert log', async () => {
-        const results: ExecutionStep[] = [];
+        const results: StepScript = new StepScript();
         await convertLogProperty({
                 log: "log-test",
             },

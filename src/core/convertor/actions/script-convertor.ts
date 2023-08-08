@@ -1,10 +1,10 @@
 import { ScriptAction } from "../../actions/ScriptAction";
-import { ExecutionStep, execute } from "../../execution/ExecutionStep";
-import { ConvertBehavior, Utils } from "../Convertor";
+import { execute } from "../../execution/ExecutionStep";
+import { ConvertBehavior, StepScript, Utils } from "../Convertor";
 
 export async function convertScriptProperty<T>(
         action: ScriptAction,
-        results: ExecutionStep[],
+        results: StepScript,
         {getSteps}: Utils<T>): Promise<ConvertBehavior|void> {
     if (!action.executeScript) {
         return;
@@ -13,6 +13,6 @@ export async function convertScriptProperty<T>(
 
     const name = executeScript;
     const steps = getSteps({ name });
-    results.push((parameters, context) => execute(steps, parameters, context));
+    results.add((parameters, context) => execute(steps, parameters, context));
 }
 

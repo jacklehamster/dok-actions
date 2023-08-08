@@ -1,12 +1,11 @@
 import { LogAction } from "../../actions/LogAction";
-import { ExecutionStep } from "../../execution/ExecutionStep";
 import { Resolution } from "../../resolutions/Resolution";
 import { calculateResolution } from "../../resolutions/calculate";
-import { ConvertBehavior, Utils } from "../Convertor";
+import { ConvertBehavior, StepScript, Utils } from "../Convertor";
 
 export async function convertLogProperty<T>(
         action: LogAction,
-        results: ExecutionStep[],
+        results: StepScript,
         _: Utils<T>,
         external: Record<string, any>): Promise<ConvertBehavior|void> {
     if (action.log === undefined) {
@@ -14,5 +13,5 @@ export async function convertLogProperty<T>(
     }
     const messages: Resolution[] = Array.isArray(action.log) ? action.log : [action.log];
     const resolutions = messages.map(m => calculateResolution(m));
-    results.push((parameters)=> external.log(...resolutions.map(r => r?.valueOf(parameters))));    
+    results.add((parameters)=> external.log(...resolutions.map(r => r?.valueOf(parameters))));    
 }

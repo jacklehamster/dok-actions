@@ -46,6 +46,7 @@ export class Context<E = {}> {
 
     addPostAction(postAction: ExecutionWithParams) {
         if (!this.postActionListener.has(postAction)) {
+            postAction.parameters.postAction = postAction;
             this.postActionListener.add(postAction);
         }
     }
